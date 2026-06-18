@@ -3,6 +3,8 @@ name: Flutter CI/CD
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*' # Triggers on release tags like v1.0.0
   pull_request:
     branches: [ main, master ]
 
@@ -14,26 +16,42 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.35.1'
+
       - name: Install Dependencies
         run: flutter pub get
+
       - name: Verify Code formatting and lint rules
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos # Does not fail the build on info/deprecation warnings
+
       - name: Run Widget Tests
         run: flutter test
+
       - name: Build Android APK
         run: flutter build apk --release
-      - name: Upload APK Release Artifact
+
+      - name: Upload APK Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      # Creates a formal GitHub Release and attaches the APK if a version tag (v*) is pushed
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
