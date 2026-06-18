@@ -7,12 +7,12 @@ class SquishPopButton extends StatefulWidget {
   final Duration duration;
 
   const SquishPopButton({
-    Key? key,
+    super.key,
     required this.child,
     this.onTap,
     this.squishScale = 0.9,
     this.duration = const Duration(milliseconds: 100),
-  }) : super(key: key);
+  });
 
   @override
   State<SquishPopButton> createState() => _SquishPopButtonState();

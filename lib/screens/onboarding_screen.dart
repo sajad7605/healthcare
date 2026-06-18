@@ -4,7 +4,7 @@ import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -128,7 +128,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.25),
+                        color: Colors.white.withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white38, width: 1.5),
                       ),
@@ -167,7 +167,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                           color: _currentPage == index ? Colors.white : Colors.white54,
                           borderRadius: BorderRadius.circular(5),
                           boxShadow: _currentPage == index
-                              ? [BoxShadow(color: Colors.white.withOpacity(0.5), blurRadius: 6, spreadRadius: 1)]
+                              ? [BoxShadow(color: Colors.white.withValues(alpha: 0.5), blurRadius: 6, spreadRadius: 1)]
                               : null,
                         ),
                       ),
@@ -221,7 +221,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               right: -30 + (floatValue * 15),
               child: CustomPaint(
                 size: const Size(180, 100),
-                painter: CloudPainter(cloudColor: Colors.white.withOpacity(0.2)),
+                painter: CloudPainter(cloudColor: Colors.white.withValues(alpha: 0.2)),
               ),
             ),
             // Cloud 2
@@ -230,7 +230,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               left: -50 + ((1 - floatValue) * 20),
               child: CustomPaint(
                 size: const Size(220, 120),
-                painter: CloudPainter(cloudColor: Colors.white.withOpacity(0.15)),
+                painter: CloudPainter(cloudColor: Colors.white.withValues(alpha: 0.15)),
               ),
             ),
             // Cloud 3
@@ -239,7 +239,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               right: 60 - (floatValue * 20),
               child: CustomPaint(
                 size: const Size(140, 80),
-                painter: CloudPainter(cloudColor: Colors.white.withOpacity(0.1)),
+                painter: CloudPainter(cloudColor: Colors.white.withValues(alpha: 0.1)),
               ),
             ),
           ],
@@ -551,7 +551,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.7),
+        color: Colors.white.withValues(alpha: 0.7),
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 1),
       ),
@@ -583,7 +583,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.15),
+                color: accentColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Center(

@@ -5,7 +5,7 @@ import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 
 class MouthwashScreen extends StatefulWidget {
-  const MouthwashScreen({Key? key}) : super(key: key);
+  const MouthwashScreen({super.key});
 
   @override
   State<MouthwashScreen> createState() => _MouthwashScreenState();
@@ -233,7 +233,7 @@ class _MouthwashScreenState extends State<MouthwashScreen> with SingleTickerProv
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF2ECC71).withOpacity(0.4),
+                                color: const Color(0xFF2ECC71).withValues(alpha: 0.4),
                                 blurRadius: 15,
                                 offset: const Offset(0, 5),
                               )
@@ -279,11 +279,11 @@ class _WavePainter extends CustomPainter {
     final double targetHeight = h * fillLevel;
 
     final Paint wavePaint = Paint()
-      ..color = const Color(0xFF2ECC71).withOpacity(0.35)
+      ..color = const Color(0xFF2ECC71).withValues(alpha: 0.35)
       ..style = PaintingStyle.fill;
 
     final Paint wavePaint2 = Paint()
-      ..color = const Color(0xFF27AE60).withOpacity(0.25)
+      ..color = const Color(0xFF27AE60).withValues(alpha: 0.25)
       ..style = PaintingStyle.fill;
 
     // Draw secondary background wave
@@ -312,7 +312,7 @@ class _WavePainter extends CustomPainter {
 
     // Draw bubbles rising inside the filled wave
     final bubblePaint = Paint()
-      ..color = Colors.white.withOpacity(0.4)
+      ..color = Colors.white.withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
     
     final random = math.Random(12345); // Fixed seed to keep bubbles positions coherent

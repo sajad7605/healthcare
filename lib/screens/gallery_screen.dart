@@ -3,7 +3,7 @@ import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 
 class GalleryScreen extends StatefulWidget {
-  const GalleryScreen({Key? key}) : super(key: key);
+  const GalleryScreen({super.key});
 
   @override
   State<GalleryScreen> createState() => _GalleryScreenState();
@@ -160,7 +160,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -175,7 +175,7 @@ class _GalleryScreenState extends State<GalleryScreen> {
             flex: 3,
             child: Container(
               decoration: BoxDecoration(
-                color: card['badgeColor'].withOpacity(0.12),
+                color: card['badgeColor'].withValues(alpha: 0.12),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
               ),
               child: Center(

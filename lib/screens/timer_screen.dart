@@ -5,7 +5,7 @@ import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 
 class TimerScreen extends StatefulWidget {
-  const TimerScreen({Key? key}) : super(key: key);
+  const TimerScreen({super.key});
 
   @override
   State<TimerScreen> createState() => _TimerScreenState();
@@ -233,14 +233,14 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                                 width: bubble.size,
                                 height: bubble.size,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: const Color(0xFF35B8FF).withOpacity(0.5), width: 1),
+                                  border: Border.all(color: const Color(0xFF35B8FF).withValues(alpha: 0.5), width: 1),
                                 ),
                               ),
                             ),
                           );
-                        }).toList(),
+                        }),
 
                       // Glowing background ring
                       Container(
@@ -248,10 +248,10 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                         height: 250,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha: 0.4),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF9B59B6).withOpacity(0.1),
+                              color: const Color(0xFF9B59B6).withValues(alpha: 0.1),
                               blurRadius: 20,
                               spreadRadius: 5,
                             )
@@ -288,7 +288,7 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                         child: CircularProgressIndicator(
                           value: percent,
                           strokeWidth: 10,
-                          backgroundColor: Colors.white.withOpacity(0.6),
+                          backgroundColor: Colors.white.withValues(alpha: 0.6),
                           valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF9B59B6)),
                         ),
                       ),
@@ -354,7 +354,7 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF9B59B6).withOpacity(0.4),
+                                color: const Color(0xFF9B59B6).withValues(alpha: 0.4),
                                 blurRadius: 15,
                                 offset: const Offset(0, 5),
                               )

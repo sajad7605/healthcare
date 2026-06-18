@@ -4,7 +4,7 @@ import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 
 class VideoScreen extends StatefulWidget {
-  const VideoScreen({Key? key}) : super(key: key);
+  const VideoScreen({super.key});
 
   @override
   State<VideoScreen> createState() => _VideoScreenState();
@@ -119,7 +119,7 @@ class _VideoScreenState extends State<VideoScreen> {
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             )
@@ -137,7 +137,7 @@ class _VideoScreenState extends State<VideoScreen> {
                                   Container(
                                     width: 110,
                                     height: 110,
-                                    color: ep['accent'].withOpacity(0.12),
+                                    color: ep['accent'].withValues(alpha: 0.12),
                                     child: Center(
                                       child: Icon(
                                         Icons.play_circle_filled,
@@ -206,7 +206,7 @@ class _VideoScreenState extends State<VideoScreen> {
 class _MockVideoPlayerSheet extends StatefulWidget {
   final String title;
 
-  const _MockVideoPlayerSheet({Key? key, required this.title}) : super(key: key);
+  const _MockVideoPlayerSheet({required this.title});
 
   @override
   State<_MockVideoPlayerSheet> createState() => _MockVideoPlayerSheetState();

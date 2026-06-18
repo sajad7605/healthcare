@@ -4,7 +4,7 @@ import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({Key? key}) : super(key: key);
+  const DashboardScreen({super.key});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -217,7 +217,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                 borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: item['bgColor'].withOpacity(0.35),
+                                    color: item['bgColor'].withValues(alpha: 0.35),
                                     blurRadius: 12,
                                     offset: const Offset(0, 6),
                                   ),
@@ -231,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                     right: -20,
                                     child: CircleAvatar(
                                       radius: 60,
-                                      backgroundColor: Colors.white.withOpacity(0.12),
+                                      backgroundColor: Colors.white.withValues(alpha: 0.12),
                                     ),
                                   ),
 
@@ -256,7 +256,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                           item['subtitle'],
                                           style: TextStyle(
                                             fontSize: 11,
-                                            color: Colors.white.withOpacity(0.85),
+                                            color: Colors.white.withValues(alpha: 0.85),
                                             fontWeight: FontWeight.w500,
                                           ),
                                         ),
@@ -338,7 +338,7 @@ class _SimpleGalleryIconPainter extends CustomPainter {
 
     // Inner picture content (sky & sun)
     final picPaint = Paint()
-      ..color = const Color(0xFFF368E0).withOpacity(0.2)
+      ..color = const Color(0xFFF368E0).withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
     
     final innerPath = Path();
@@ -389,7 +389,7 @@ class _SimplePlayIconPainter extends CustomPainter {
 
     // Stand base
     final basePaint = Paint()
-      ..color = Colors.white.withOpacity(0.8)
+      ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTWH(w * 0.42, h * 0.75, w * 0.16, h * 0.08), basePaint);
     canvas.drawRRect(
@@ -410,7 +410,7 @@ class _SimpleSettingsIconPainter extends CustomPainter {
 
     // Renders custom plate/bowl with Apple and Banana (Nutrition / health settings)
     final platePaint = Paint()
-      ..color = Colors.white.withOpacity(0.8)
+      ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
     canvas.drawArc(
       Rect.fromCenter(center: Offset(w * 0.5, h * 0.6), width: w * 0.7, height: h * 0.35),

@@ -1,10 +1,9 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 
 class FlossScreen extends StatefulWidget {
-  const FlossScreen({Key? key}) : super(key: key);
+  const FlossScreen({super.key});
 
   @override
   State<FlossScreen> createState() => _FlossScreenState();
@@ -233,7 +232,7 @@ class _FlossScreenState extends State<FlossScreen> {
                             top: bug['y'],
                             child: _buildFoodBug(bug['color']),
                           );
-                        }).toList(),
+                        }),
 
                         // The draggable Floss line
                         Positioned(
@@ -256,7 +255,7 @@ class _FlossScreenState extends State<FlossScreen> {
                                       borderRadius: BorderRadius.circular(3),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(0xFFFFA801).withOpacity(0.5),
+                                          color: const Color(0xFFFFA801).withValues(alpha: 0.5),
                                           blurRadius: 8,
                                           spreadRadius: 2,
                                         ),
@@ -309,7 +308,7 @@ class _FlossScreenState extends State<FlossScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFFFA801).withOpacity(0.3), width: 1.5),
+                        border: Border.all(color: const Color(0xFFFFA801).withValues(alpha: 0.3), width: 1.5),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,

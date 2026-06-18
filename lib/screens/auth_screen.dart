@@ -3,7 +3,7 @@ import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({Key? key}) : super(key: key);
+  const AuthScreen({super.key});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -122,7 +122,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF00A2E8).withOpacity(0.3),
+                          color: const Color(0xFF00A2E8).withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -326,7 +326,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: const Color(0xFF35B8FF).withOpacity(0.15),
+            color: const Color(0xFF35B8FF).withValues(alpha: 0.15),
             width: 1.5,
           ),
         ),
