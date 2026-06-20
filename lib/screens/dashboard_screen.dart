@@ -25,10 +25,10 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     },
     {
       'title': 'مسواک بزن',
-      'subtitle': 'تایمر مسواک ۲ دقیقه‌ای',
+      'subtitle': 'بازی مسواک زدن تعاملی',
       'bgColor': const Color(0xFF9B59B6), // Purple
       'painter': 'brush',
-      'route': '/timer',
+      'route': '/brushing',
     },
     {
       'title': 'دهان‌شویه',
@@ -200,7 +200,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                           builder: (context, child) {
                             // Slide up + Fade in staggered animation
                             return Opacity(
-                              opacity: animation.value,
+                              opacity: animation.value.clamp(0.0, 1.0),
                               child: Transform.translate(
                                 offset: Offset(0, (1 - animation.value) * 50),
                                 child: child,

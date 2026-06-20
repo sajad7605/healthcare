@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/auth_screen.dart';
@@ -8,9 +9,21 @@ import 'screens/mouthwash_screen.dart';
 import 'screens/gallery_screen.dart';
 import 'screens/video_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/brushing_screen.dart';
+
 
 void main() {
   runApp(const HealthcareApp());
+}
+
+class AppScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+        PointerDeviceKind.trackpad,
+        PointerDeviceKind.stylus,
+      };
 }
 
 class HealthcareApp extends StatelessWidget {
@@ -20,6 +33,7 @@ class HealthcareApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'دندون یار کوچولو',
+      scrollBehavior: AppScrollBehavior(),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -63,6 +77,10 @@ class HealthcareApp extends StatelessWidget {
           case '/settings':
             page = const SettingsScreen();
             break;
+          case '/brushing':
+            page = const InteractiveBrushScreen();
+            break;
+
           default:
             page = const OnboardingScreen();
         }
