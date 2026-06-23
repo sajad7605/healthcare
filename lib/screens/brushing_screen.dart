@@ -22,19 +22,17 @@ class InteractiveBrushScreen extends StatefulWidget {
   State<InteractiveBrushScreen> createState() => _InteractiveBrushScreenState();
 }
 
-class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with TickerProviderStateMixin {
+class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
+    with TickerProviderStateMixin {
   BrushingStage _currentStage = BrushingStage.chooseBrush;
   int _selectedBrushIndex = -1;
 
-  // Draggable brush state
   Offset _brushPosition = const Offset(200, 500);
   bool _isDragging = false;
   double _brushAngle = -math.pi / 6;
 
-  // Cached screen bounds of teeth image for coordinate translation
   Rect _cachedBounds = Rect.zero;
 
-  // Gesture tracking & verification variables
   final List<Offset> _dragHistory = [];
   String _tooltipText = '';
   Timer? _tooltipTimer;
@@ -47,38 +45,31 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
   Timer? _countdownTimer;
   bool _isAngleAligned = false;
 
-  // Back and forth state
   Offset? _lastStrokePoint;
   String? _lastStrokeDirection;
   int _strokeDirectionSwitches = 0;
 
-  // Tongue swipe state
   Offset? _tongueDragStart;
   bool _isValidTongueDrag = false;
 
-  // Tooltip tracking distances
   double _linearDistanceInCircleStage = 0.0;
   Offset? _lastCircleCheckPoint;
   double _distanceInChewingStage = 0.0;
   Offset? _lastChewingCheckPoint;
 
-  // Particle systems
   final List<_FoamBubble> _bubbles = [];
   final List<_Sparkle> _sparkles = [];
   final List<_Confetti> _confetti = [];
 
-  // Game entities
   List<_Germ> _germs = [];
   double _cleanlinessProgress = 0.0;
   int _totalGerms = 5;
 
-  // Controllers
   late AnimationController _floatingController;
   late AnimationController _wiggleController;
   late AnimationController _celebrationController;
   Timer? _updateTimer;
 
-  // Brushes asset paths
   final List<String> _brushes = [
     'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 1.png',
     'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 2.png',
@@ -90,25 +81,21 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     super.initState();
     _brushes.shuffle();
 
-    // Floating animation for Stage 1 (Choose Brush)
     _floatingController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
 
-    // Wiggle/breathing animation for germs
     _wiggleController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..repeat(reverse: true);
 
-    // Continuous celebration animation
     _celebrationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     );
 
-    // Start game tick loop
     _updateTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       if (mounted) {
         _updateGameLoop();
@@ -127,29 +114,76 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     super.dispose();
   }
 
-  // Initialize germs for brushing stages
   void _initGerms(BrushingStage stage) {
     _germs.clear();
     if (stage == BrushingStage.circularBrushing) {
       _germs = [
-        _Germ(id: 1, position: const Offset(0.35, 0.46), color: Colors.lightGreenAccent.shade700),
-        _Germ(id: 2, position: const Offset(0.50, 0.49), color: Colors.redAccent.shade400),
-        _Germ(id: 3, position: const Offset(0.65, 0.46), color: Colors.amber.shade700),
-        _Germ(id: 4, position: const Offset(0.42, 0.40), color: Colors.purpleAccent.shade400),
-        _Germ(id: 5, position: const Offset(0.58, 0.40), color: Colors.cyanAccent.shade700),
+        _Germ(
+          id: 1,
+          position: const Offset(0.35, 0.46),
+          color: Colors.lightGreenAccent.shade700,
+        ),
+        _Germ(
+          id: 2,
+          position: const Offset(0.50, 0.49),
+          color: Colors.redAccent.shade400,
+        ),
+        _Germ(
+          id: 3,
+          position: const Offset(0.65, 0.46),
+          color: Colors.amber.shade700,
+        ),
+        _Germ(
+          id: 4,
+          position: const Offset(0.42, 0.40),
+          color: Colors.purpleAccent.shade400,
+        ),
+        _Germ(
+          id: 5,
+          position: const Offset(0.58, 0.40),
+          color: Colors.cyanAccent.shade700,
+        ),
       ];
     } else if (stage == BrushingStage.chewingSurfaces) {
       _germs = [
-        _Germ(id: 1, position: const Offset(0.30, 0.44), color: Colors.green.shade600),
-        _Germ(id: 2, position: const Offset(0.42, 0.48), color: Colors.orange.shade700),
-        _Germ(id: 3, position: const Offset(0.58, 0.48), color: Colors.red.shade600),
-        _Germ(id: 4, position: const Offset(0.70, 0.44), color: Colors.pink.shade700),
+        _Germ(
+          id: 1,
+          position: const Offset(0.30, 0.44),
+          color: Colors.green.shade600,
+        ),
+        _Germ(
+          id: 2,
+          position: const Offset(0.42, 0.48),
+          color: Colors.orange.shade700,
+        ),
+        _Germ(
+          id: 3,
+          position: const Offset(0.58, 0.48),
+          color: Colors.red.shade600,
+        ),
+        _Germ(
+          id: 4,
+          position: const Offset(0.70, 0.44),
+          color: Colors.pink.shade700,
+        ),
       ];
     } else if (stage == BrushingStage.brushTongue) {
       _germs = [
-        _Germ(id: 1, position: const Offset(0.45, 0.54), color: Colors.deepPurple.shade400),
-        _Germ(id: 2, position: const Offset(0.50, 0.58), color: Colors.purple.shade600),
-        _Germ(id: 3, position: const Offset(0.55, 0.52), color: Colors.blue.shade600),
+        _Germ(
+          id: 1,
+          position: const Offset(0.45, 0.54),
+          color: Colors.deepPurple.shade400,
+        ),
+        _Germ(
+          id: 2,
+          position: const Offset(0.50, 0.58),
+          color: Colors.purple.shade600,
+        ),
+        _Germ(
+          id: 3,
+          position: const Offset(0.55, 0.52),
+          color: Colors.blue.shade600,
+        ),
       ];
     }
     _totalGerms = _germs.length;
@@ -158,7 +192,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     });
   }
 
-  // Set up Stage 4 Confetti
   void _initCelebration() {
     _confetti.clear();
     final random = math.Random();
@@ -171,28 +204,27 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
       Colors.orangeAccent,
     ];
 
-    // Create 90 colorful confetti falling from various heights
     for (int i = 0; i < 90; i++) {
-      _confetti.add(_Confetti(
-        position: Offset(
-          random.nextDouble() * 400 - 50, // width spread
-          random.nextDouble() * -400 - 50, // start above screen
+      _confetti.add(
+        _Confetti(
+          position: Offset(
+            random.nextDouble() * 400 - 50,
+            random.nextDouble() * -400 - 50,
+          ),
+          vx: random.nextDouble() * 3 - 1.5,
+          vy: random.nextDouble() * 4 + 2,
+          size: random.nextDouble() * 10 + 6,
+          color: colors[random.nextInt(colors.length)],
+          rotation: random.nextDouble() * math.pi,
+          rotationSpeed: random.nextDouble() * 0.1 - 0.05,
         ),
-        vx: random.nextDouble() * 3 - 1.5,
-        vy: random.nextDouble() * 4 + 2,
-        size: random.nextDouble() * 10 + 6,
-        color: colors[random.nextInt(colors.length)],
-        rotation: random.nextDouble() * math.pi,
-        rotationSpeed: random.nextDouble() * 0.1 - 0.05,
-      ));
+      );
     }
     _celebrationController.repeat(reverse: true);
   }
 
-  // Central Game Loop for animations
   void _updateGameLoop() {
     setState(() {
-      // 1. Update bubbles physics
       for (int i = _bubbles.length - 1; i >= 0; i--) {
         final bubble = _bubbles[i];
         bubble.position += Offset(bubble.vx, bubble.vy);
@@ -202,7 +234,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
         }
       }
 
-      // 2. Update sparkles physics
       for (int i = _sparkles.length - 1; i >= 0; i--) {
         final sparkle = _sparkles[i];
         sparkle.progress += 0.03;
@@ -212,33 +243,30 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
         }
       }
 
-      // 3. Update confetti physics
       if (_currentStage == BrushingStage.cleanMouthDone) {
         for (var conf in _confetti) {
           conf.position += Offset(conf.vx, conf.vy);
           conf.rotation += conf.rotationSpeed;
-          // Loop confetti back to top when it falls off
+
           if (conf.position.dy > 900) {
-            conf.position = Offset(
-              math.Random().nextDouble() * 400 - 50,
-              -50,
-            );
+            conf.position = Offset(math.Random().nextDouble() * 400 - 50, -50);
             conf.vy = math.Random().nextDouble() * 4 + 2;
           }
         }
 
-        // Add random glittering sparkles on teeth
         if (math.Random().nextDouble() < 0.1 && _sparkles.length < 15) {
           final randomX = 0.2 + math.Random().nextDouble() * 0.6;
           final randomY = 0.38 + math.Random().nextDouble() * 0.18;
-          _sparkles.add(_Sparkle(
-            position: Offset(randomX * 360, randomY * 800),
-            vx: 0,
-            vy: 0,
-            size: math.Random().nextDouble() * 20 + 10,
-            color: Colors.white,
-            isStar: true,
-          ));
+          _sparkles.add(
+            _Sparkle(
+              position: Offset(randomX * 360, randomY * 800),
+              vx: 0,
+              vy: 0,
+              size: math.Random().nextDouble() * 20 + 10,
+              color: Colors.white,
+              isStar: true,
+            ),
+          );
         }
       }
     });
@@ -248,18 +276,17 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     const double imageWidth = 393.0;
     const double imageHeight = 852.0;
     const double imageAspectRatio = imageWidth / imageHeight;
-    final double screenAspectRatio = constraints.maxWidth / constraints.maxHeight;
+    final double screenAspectRatio =
+        constraints.maxWidth / constraints.maxHeight;
 
     double renderWidth, renderHeight, dx, dy;
 
     if (screenAspectRatio > imageAspectRatio) {
-      // Screen is wider than image. Height is constrained.
       renderHeight = constraints.maxHeight;
       renderWidth = renderHeight * imageAspectRatio;
       dx = (constraints.maxWidth - renderWidth) / 2.0;
       dy = 0.0;
     } else {
-      // Screen is taller than image. Width is constrained.
       renderWidth = constraints.maxWidth;
       renderHeight = renderWidth / imageAspectRatio;
       dx = 0.0;
@@ -271,11 +298,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     return rect;
   }
 
-  // Handle collision / brushing logic
   void _handleBrushing(Offset localPos, BoxConstraints constraints) {
     setState(() {
       final double dx = localPos.dx - _brushPosition.dx;
-      // Do not auto-rotate when aligning angle manually
+
       if (_currentStage != BrushingStage.place45Degrees) {
         if (dx.abs() > 1.0) {
           _brushAngle = dx > 0 ? -math.pi / 4 : -math.pi / 12;
@@ -285,19 +311,26 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
       _isDragging = true;
     });
 
-    // The brush tip is offset vertically (near bristles)
     final Offset brushTip = Offset(localPos.dx, localPos.dy - 70);
 
-    // Emit custom bubble foam from bristles while moving (high rate during free-brushing)
     final random = math.Random();
-    final double foamChance = _currentStage == BrushingStage.continue2Minutes ? 0.7 : 0.35;
+    final double foamChance = _currentStage == BrushingStage.continue2Minutes
+        ? 0.7
+        : 0.35;
     if (random.nextDouble() < foamChance) {
-      _bubbles.add(_FoamBubble(
-        position: brushTip + Offset(random.nextDouble() * 30 - 15, random.nextDouble() * 20 - 10),
-        vx: random.nextDouble() * 1.5 - 0.75,
-        vy: random.nextDouble() * -1.5 - 0.5,
-        radius: random.nextDouble() * 8 + 4,
-      ));
+      _bubbles.add(
+        _FoamBubble(
+          position:
+              brushTip +
+              Offset(
+                random.nextDouble() * 30 - 15,
+                random.nextDouble() * 20 - 10,
+              ),
+          vx: random.nextDouble() * 1.5 - 0.75,
+          vy: random.nextDouble() * -1.5 - 0.5,
+          radius: random.nextDouble() * 8 + 4,
+        ),
+      );
     }
 
     _validateStageGestures(localPos, constraints);
@@ -323,16 +356,17 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
         _detectTongueWarning(localPos, constraints);
         break;
       case BrushingStage.continue2Minutes:
-        // Free brush - damage no germs, just spark
         if (math.Random().nextDouble() < 0.2) {
-          _sparkles.add(_Sparkle(
-            position: localPos - const Offset(0, 60),
-            vx: math.Random().nextDouble() * 2 - 1,
-            vy: math.Random().nextDouble() * -2 - 1,
-            size: math.Random().nextDouble() * 10 + 5,
-            color: Colors.white,
-            isStar: true,
-          ));
+          _sparkles.add(
+            _Sparkle(
+              position: localPos - const Offset(0, 60),
+              vx: math.Random().nextDouble() * 2 - 1,
+              vy: math.Random().nextDouble() * -2 - 1,
+              size: math.Random().nextDouble() * 10 + 5,
+              color: Colors.white,
+              isStar: true,
+            ),
+          );
         }
         break;
       default:
@@ -347,10 +381,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     final double rx = (brushTip.dx - _cachedBounds.left) / _cachedBounds.width;
     final double ry = (brushTip.dy - _cachedBounds.top) / _cachedBounds.height;
 
-    // Correct position: border of teeth and upper gums
-    final bool isPositionCorrect = rx >= 0.30 && rx <= 0.70 && ry >= 0.35 && ry <= 0.48;
+    final bool isPositionCorrect =
+        rx >= 0.30 && rx <= 0.70 && ry >= 0.35 && ry <= 0.48;
 
-    // Correct angle: ±45° (approx. 0.78 rad or -0.78 rad) with 12 degrees tolerance
     final double angleDeg = (_brushAngle * 180 / math.pi).abs();
     final bool isAngleCorrect = (angleDeg - 45.0).abs() <= 12.0;
 
@@ -361,9 +394,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
         });
         HapticFeedback.heavyImpact();
         _emitTargetSparkles();
-        // Progress to next stage if user keeps alignment for 1.5 seconds
+
         Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted && _isAngleAligned && _currentStage == BrushingStage.place45Degrees) {
+          if (mounted &&
+              _isAngleAligned &&
+              _currentStage == BrushingStage.place45Degrees) {
             _transitionToNextStage();
           }
         });
@@ -380,14 +415,21 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
   void _emitTargetSparkles() {
     final random = math.Random();
     for (int i = 0; i < 20; i++) {
-      _sparkles.add(_Sparkle(
-        position: _brushPosition + Offset(random.nextDouble() * 60 - 30, random.nextDouble() * 60 - 100),
-        vx: random.nextDouble() * 4 - 2,
-        vy: random.nextDouble() * -4 - 2,
-        size: random.nextDouble() * 15 + 8,
-        color: Colors.lightGreenAccent,
-        isStar: true,
-      ));
+      _sparkles.add(
+        _Sparkle(
+          position:
+              _brushPosition +
+              Offset(
+                random.nextDouble() * 60 - 30,
+                random.nextDouble() * 60 - 100,
+              ),
+          vx: random.nextDouble() * 4 - 2,
+          vy: random.nextDouble() * -4 - 2,
+          size: random.nextDouble() * 15 + 8,
+          color: Colors.lightGreenAccent,
+          isStar: true,
+        ),
+      );
     }
   }
 
@@ -398,7 +440,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     }
     if (_dragHistory.length < 12) return;
 
-    // Calculate centroid
     double sumX = 0;
     double sumY = 0;
     for (var p in _dragHistory) {
@@ -408,7 +449,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     final double centerX = sumX / _dragHistory.length;
     final double centerY = sumY / _dragHistory.length;
 
-    // Compute bounding box size
     double minX = _dragHistory[0].dx;
     double maxX = _dragHistory[0].dx;
     double minY = _dragHistory[0].dy;
@@ -422,10 +462,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     final double width = maxX - minX;
     final double height = maxY - minY;
 
-    // Must be small, gentle circles
     if (width < 12 || width > 100 || height < 12 || height > 100) return;
 
-    // Compute accumulated angles relative to center
     double totalAngleChange = 0.0;
     double? lastAngle;
     for (var p in _dragHistory) {
@@ -443,14 +481,14 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
       lastAngle = angle;
     }
 
-    if (totalAngleChange.abs() >= 4.5) { // ~260 degrees rotation
+    if (totalAngleChange.abs() >= 4.5) {
       _dragHistory.clear();
       _onCircularStrokeDetected();
     }
   }
 
   void _onCircularStrokeDetected() {
-    _linearDistanceInCircleStage = 0.0; // Reset warning distance
+    _linearDistanceInCircleStage = 0.0;
     setState(() {
       _circleCount++;
     });
@@ -469,10 +507,13 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     final double distance = math.sqrt(dx * dx + dy * dy);
 
     if (distance > 15.0) {
-      String currentDir = dx.abs() > dy.abs() ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U');
+      String currentDir = dx.abs() > dy.abs()
+          ? (dx > 0 ? 'R' : 'L')
+          : (dy > 0 ? 'D' : 'U');
 
       if (_lastStrokeDirection != null && _lastStrokeDirection != currentDir) {
-        bool isOpposite = (_lastStrokeDirection == 'L' && currentDir == 'R') ||
+        bool isOpposite =
+            (_lastStrokeDirection == 'L' && currentDir == 'R') ||
             (_lastStrokeDirection == 'R' && currentDir == 'L') ||
             (_lastStrokeDirection == 'U' && currentDir == 'D') ||
             (_lastStrokeDirection == 'D' && currentDir == 'U');
@@ -484,7 +525,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
 
           if (_strokeDirectionSwitches >= 2) {
             _strokeDirectionSwitches = 0;
-            _distanceInChewingStage = 0.0; // Reset warning distance
+            _distanceInChewingStage = 0.0;
             setState(() {
               _strokeCount++;
             });
@@ -502,7 +543,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     final double rx = (localPos.dx - _cachedBounds.left) / _cachedBounds.width;
     final double ry = (localPos.dy - _cachedBounds.top) / _cachedBounds.height;
 
-    // Check if swipe starts near the back of the tongue (relativeY 0.40 - 0.55)
     if (rx > 0.35 && rx < 0.65 && ry > 0.38 && ry < 0.55) {
       _tongueDragStart = localPos;
       _isValidTongueDrag = true;
@@ -517,7 +557,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     final double dy = localPos.dy - _tongueDragStart!.dy;
     final double dx = localPos.dx - _tongueDragStart!.dx;
 
-    // Must swipe downwards
     if (dy > 60.0) {
       if (dy > dx.abs() * 1.5) {
         _isValidTongueDrag = false;
@@ -527,13 +566,20 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
           _tongueSwipeCount++;
           final random = math.Random();
           for (int i = 0; i < 8; i++) {
-            _sparkles.add(_Sparkle(
-              position: localPos + Offset(random.nextDouble() * 30 - 15, random.nextDouble() * 30 - 15),
-              vx: random.nextDouble() * 2 - 1,
-              vy: random.nextDouble() * -2 - 1,
-              size: random.nextDouble() * 10 + 5,
-              color: Colors.pinkAccent.shade100,
-            ));
+            _sparkles.add(
+              _Sparkle(
+                position:
+                    localPos +
+                    Offset(
+                      random.nextDouble() * 30 - 15,
+                      random.nextDouble() * 30 - 15,
+                    ),
+                vx: random.nextDouble() * 2 - 1,
+                vy: random.nextDouble() * -2 - 1,
+                size: random.nextDouble() * 10 + 5,
+                color: Colors.pinkAccent.shade100,
+              ),
+            );
           }
         });
         HapticFeedback.mediumImpact();
@@ -549,8 +595,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
 
     for (var germ in _germs) {
       if (germ.health > 0) {
-        final double absoluteX = _cachedBounds.left + germ.position.dx * _cachedBounds.width;
-        final double absoluteY = _cachedBounds.top + germ.position.dy * _cachedBounds.height;
+        final double absoluteX =
+            _cachedBounds.left + germ.position.dx * _cachedBounds.width;
+        final double absoluteY =
+            _cachedBounds.top + germ.position.dy * _cachedBounds.height;
         final Offset germOffset = Offset(absoluteX, absoluteY);
 
         final double distance = (brushTip - germOffset).distance;
@@ -561,13 +609,15 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
           });
 
           if (random.nextDouble() < 0.4) {
-            _sparkles.add(_Sparkle(
-              position: germOffset,
-              vx: random.nextDouble() * 4 - 2,
-              vy: random.nextDouble() * 4 - 2,
-              size: random.nextDouble() * 12 + 6,
-              color: Colors.amberAccent,
-            ));
+            _sparkles.add(
+              _Sparkle(
+                position: germOffset,
+                vx: random.nextDouble() * 4 - 2,
+                vy: random.nextDouble() * 4 - 2,
+                size: random.nextDouble() * 12 + 6,
+                color: Colors.amberAccent,
+              ),
+            );
           }
 
           HapticFeedback.lightImpact();
@@ -577,14 +627,16 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
             for (int k = 0; k < 12; k++) {
               final angle = k * (2 * math.pi / 12);
               final speed = random.nextDouble() * 3 + 2;
-              _sparkles.add(_Sparkle(
-                position: germOffset,
-                vx: math.cos(angle) * speed,
-                vy: math.sin(angle) * speed,
-                size: random.nextDouble() * 14 + 8,
-                color: germ.color,
-                isStar: true,
-              ));
+              _sparkles.add(
+                _Sparkle(
+                  position: germOffset,
+                  vx: math.cos(angle) * speed,
+                  vy: math.sin(angle) * speed,
+                  size: random.nextDouble() * 14 + 8,
+                  color: germ.color,
+                  isStar: true,
+                ),
+              );
             }
             _checkStageProgress();
           }
@@ -669,12 +721,17 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
             _secondsRemaining--;
             final random = math.Random();
             for (int i = 0; i < 3; i++) {
-              _bubbles.add(_FoamBubble(
-                position: Offset(random.nextDouble() * 360, 480 + random.nextDouble() * 120),
-                vx: random.nextDouble() * 2 - 1,
-                vy: random.nextDouble() * -2 - 1,
-                radius: random.nextDouble() * 10 + 5,
-              ));
+              _bubbles.add(
+                _FoamBubble(
+                  position: Offset(
+                    random.nextDouble() * 360,
+                    480 + random.nextDouble() * 120,
+                  ),
+                  vx: random.nextDouble() * 2 - 1,
+                  vy: random.nextDouble() * -2 - 1,
+                  radius: random.nextDouble() * 10 + 5,
+                ),
+              );
             }
           } else {
             _countdownTimer?.cancel();
@@ -693,23 +750,27 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     setState(() {
       _bubbles.clear();
       _sparkles.clear();
-      // Generate massive water splash particles
+
       for (int i = 0; i < 40; i++) {
         final double angle = random.nextDouble() * 2 * math.pi;
         final double speed = random.nextDouble() * 8 + 4;
-        _bubbles.add(_FoamBubble(
-          position: center,
-          vx: math.cos(angle) * speed,
-          vy: math.sin(angle) * speed - 2.0,
-          radius: random.nextDouble() * 14 + 6,
-        ));
-        _sparkles.add(_Sparkle(
-          position: center,
-          vx: math.cos(angle) * speed * 1.2,
-          vy: math.sin(angle) * speed * 1.2 - 2.0,
-          size: random.nextDouble() * 12 + 6,
-          color: Colors.blueAccent.shade100,
-        ));
+        _bubbles.add(
+          _FoamBubble(
+            position: center,
+            vx: math.cos(angle) * speed,
+            vy: math.sin(angle) * speed - 2.0,
+            radius: random.nextDouble() * 14 + 6,
+          ),
+        );
+        _sparkles.add(
+          _Sparkle(
+            position: center,
+            vx: math.cos(angle) * speed * 1.2,
+            vy: math.sin(angle) * speed * 1.2 - 2.0,
+            size: random.nextDouble() * 12 + 6,
+            color: Colors.blueAccent.shade100,
+          ),
+        );
       }
 
       Future.delayed(const Duration(milliseconds: 1500), () {
@@ -731,7 +792,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
   void _checkStageProgress() {
     final activeGermsCount = _germs.where((g) => g.health > 0).length;
     setState(() {
-      _cleanlinessProgress = _totalGerms > 0 ? (1.0 - (activeGermsCount / _totalGerms)) : 1.0;
+      _cleanlinessProgress = _totalGerms > 0
+          ? (1.0 - (activeGermsCount / _totalGerms))
+          : 1.0;
     });
 
     if (activeGermsCount == 0) {
@@ -785,24 +848,35 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, a1, a2) => const SizedBox(),
       transitionBuilder: (context, anim, secAnim, child) {
-        final scale = Tween<double>(begin: 0.8, end: 1.0).animate(
-          CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
-        );
+        final scale = Tween<double>(
+          begin: 0.8,
+          end: 1.0,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutBack));
         return Transform.scale(
           scale: scale.value,
           child: Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               title: Text(
                 title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.orange),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
               ),
               content: Text(
                 message,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: Color(0xFF2C3E50), height: 1.5),
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF2C3E50),
+                  height: 1.5,
+                ),
               ),
               actionsAlignment: MainAxisAlignment.center,
               actions: [
@@ -814,14 +888,21 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.orange,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
                       'دوباره انتخاب کن',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
@@ -833,7 +914,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     );
   }
 
-  // Display celebratory victory card
   void _showCelebrationDialog() {
     showGeneralDialog(
       context: context,
@@ -842,15 +922,18 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
       transitionDuration: const Duration(milliseconds: 600),
       pageBuilder: (context, a1, a2) => const SizedBox(),
       transitionBuilder: (context, anim, secAnim, child) {
-        final scale = Tween<double>(begin: 0.0, end: 1.0).animate(
-          CurvedAnimation(parent: anim, curve: Curves.elasticOut),
-        );
+        final scale = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.elasticOut));
         return Transform.scale(
           scale: scale.value,
           child: Directionality(
             textDirection: TextDirection.rtl,
             child: AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
               elevation: 10,
               backgroundColor: Colors.white,
               title: const Text(
@@ -875,14 +958,18 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Animated Sparkles
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(
                       3,
                       (index) => Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Icon(Icons.star, color: Colors.amber, size: 30 + (index == 1 ? 12.0 : 0.0)),
+                        child: Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: 30 + (index == 1 ? 12.0 : 0.0),
+                        ),
                       ),
                     ),
                   ),
@@ -892,7 +979,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
               actions: [
                 SquishPopButton(
                   onTap: () {
-                    Navigator.of(context).pop(); // Dismiss Dialog
+                    Navigator.of(context).pop();
                     _celebrationController.stop();
                     setState(() {
                       _brushes.shuffle();
@@ -904,7 +991,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF9B59B6),
                       borderRadius: BorderRadius.circular(24),
@@ -918,7 +1008,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     ),
                     child: const Text(
                       'بازی دوباره 🪥',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
@@ -926,11 +1020,14 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                 SquishPopButton(
                   onTap: () {
                     _celebrationController.stop();
-                    Navigator.of(context).pop(); // Dismiss Dialog
-                    Navigator.of(context).pop(); // Back to Dashboard
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pop();
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2ECC71),
                       borderRadius: BorderRadius.circular(24),
@@ -944,7 +1041,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     ),
                     child: const Text(
                       'بازگشت به خانه 🏠',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
@@ -966,7 +1067,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
             return Stack(
               clipBehavior: Clip.none,
               children: [
-                // 1. Fixed Background image
                 Positioned.fill(
                   child: Image.asset(
                     'assets/Gemini_Generated_Image_5zdvov5zdvov5zdv 1.png',
@@ -976,7 +1076,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                   ),
                 ),
 
-                // 1.5. Stage-specific object (teeth or tongue inside)
                 Positioned.fill(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 600),
@@ -992,7 +1091,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                   ),
                 ),
 
-                // 1.6 Shimmer lighting effect for last step
                 Positioned.fill(
                   child: IgnorePointer(
                     child: AnimatedSwitcher(
@@ -1004,7 +1102,14 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                                 animation: _celebrationController,
                                 builder: (context, child) {
                                   return Opacity(
-                                    opacity: 0.5 + 0.5 * math.sin(_celebrationController.value * math.pi * 2),
+                                    opacity:
+                                        0.5 +
+                                        0.5 *
+                                            math.sin(
+                                              _celebrationController.value *
+                                                  math.pi *
+                                                  2,
+                                            ),
                                     child: Image.asset(
                                       'assets/Gemini_Generated_Image_gv7eufgv7eufgv7e 1.png',
                                       fit: BoxFit.contain,
@@ -1018,17 +1123,16 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                   ),
                 ),
 
-                // 2. Custom header overlays (Progress and instructions)
-                if (_currentStage != BrushingStage.chooseBrush) _buildGameHeader(constraints),
+                if (_currentStage != BrushingStage.chooseBrush)
+                  _buildGameHeader(constraints),
 
-                // 3. Stage 1 Content: Choose brush
-                if (_currentStage == BrushingStage.chooseBrush) _buildChooseBrushStage(constraints),
+                if (_currentStage == BrushingStage.chooseBrush)
+                  _buildChooseBrushStage(constraints),
 
-                // 4. Interactive brushing layers
-                if (_currentStage != BrushingStage.chooseBrush && _currentStage != BrushingStage.cleanMouthDone)
+                if (_currentStage != BrushingStage.chooseBrush &&
+                    _currentStage != BrushingStage.cleanMouthDone)
                   _buildBrushingStage(constraints),
 
-                // 5. Particles layers (bubbles & sparkles)
                 Positioned.fill(
                   child: IgnorePointer(
                     child: CustomPaint(
@@ -1040,7 +1144,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                   ),
                 ),
 
-                // 6. Confetti layer for success stage
                 if (_currentStage == BrushingStage.cleanMouthDone)
                   Positioned.fill(
                     child: IgnorePointer(
@@ -1050,7 +1153,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     ),
                   ),
 
-                // 7. Back button
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 10,
                   right: 20,
@@ -1062,15 +1164,22 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                         color: Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
-                          BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
                         ],
                       ),
-                      child: const Icon(Icons.arrow_back, color: Color(0xFF2C3E50), size: 24),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Color(0xFF2C3E50),
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),
 
-                // 8. Link to simple countdown timer (available on selection screen)
                 if (_currentStage == BrushingStage.chooseBrush)
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 10,
@@ -1078,25 +1187,37 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     child: SquishPopButton(
                       onTap: () => Navigator.pushNamed(context, '/timer'),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: const [
-                            BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: Offset(0, 3),
+                            ),
                           ],
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.timer_outlined, color: Color(0xFF9B59B6), size: 18),
+                            Icon(
+                              Icons.timer_outlined,
+                              color: Color(0xFF9B59B6),
+                              size: 18,
+                            ),
                             SizedBox(width: 6),
                             Text(
                               'تایمر ساده',
                               style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF9B59B6)),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9B59B6),
+                              ),
                             ),
                           ],
                         ),
@@ -1111,7 +1232,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     );
   }
 
-  // Get object asset path based on stage
   String _getStageObject() {
     switch (_currentStage) {
       case BrushingStage.chooseBrush:
@@ -1129,7 +1249,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     }
   }
 
-  // Build the HUD header with progress bar and instructions
   Widget _buildGameHeader(BoxConstraints constraints) {
     return Positioned(
       top: MediaQuery.of(context).padding.top + 70,
@@ -1137,14 +1256,17 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
       right: 20,
       child: Column(
         children: [
-          // Instructional Text
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(24),
               boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
               ],
             ),
             child: Text(
@@ -1159,13 +1281,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
           ),
           const SizedBox(height: 12),
 
-          // Floating Warning Tooltip
           if (_tooltipText.isNotEmpty) ...[
             _buildTooltip(),
             const SizedBox(height: 12),
           ],
 
-          // Cleanliness progress bar (only for germ-popping stages)
           if (_currentStage == BrushingStage.circularBrushing ||
               _currentStage == BrushingStage.chewingSurfaces ||
               _currentStage == BrushingStage.brushTongue)
@@ -1183,7 +1303,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                       ),
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
-                        width: (constraints.maxWidth - 40) * _cleanlinessProgress,
+                        width:
+                            (constraints.maxWidth - 40) * _cleanlinessProgress,
                         height: 18,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
@@ -1203,7 +1324,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     shadows: [
-                      Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(1, 1)),
+                      Shadow(
+                        color: Colors.black54,
+                        blurRadius: 4,
+                        offset: Offset(1, 1),
+                      ),
                     ],
                   ),
                 ),
@@ -1235,7 +1360,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     }
   }
 
-  // Warning tooltip layout
   Widget _buildTooltip() {
     return AnimatedOpacity(
       opacity: _tooltipText.isNotEmpty ? 1.0 : 0.0,
@@ -1246,7 +1370,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
           color: Colors.orange.shade800.withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(16),
           boxShadow: const [
-            BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 6,
+              offset: Offset(0, 3),
+            ),
           ],
         ),
         child: Row(
@@ -1270,7 +1398,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     );
   }
 
-  // Brush angle adjustment dial (45 degrees alignment stage)
   Widget _buildRotationDial() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -1279,7 +1406,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
         color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(28),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -1287,14 +1418,20 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
         children: [
           const Text(
             'مسواک را با کشیدن غلتک به چپ و راست بچرخانید:',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2C3E50),
+            ),
           ),
           const SizedBox(height: 10),
           GestureDetector(
             onHorizontalDragUpdate: (details) {
               setState(() {
-                // Adjust sensitivity and clamp between -90 and 90 degrees
-                _brushAngle = (_brushAngle + details.delta.dx * 0.012).clamp(-math.pi / 2, math.pi / 2);
+                _brushAngle = (_brushAngle + details.delta.dx * 0.012).clamp(
+                  -math.pi / 2,
+                  math.pi / 2,
+                );
                 _checkAngleAlignment();
               });
             },
@@ -1303,7 +1440,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
               width: 280,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.blue.shade100, Colors.blue.shade50, Colors.blue.shade100],
+                  colors: [
+                    Colors.blue.shade100,
+                    Colors.blue.shade50,
+                    Colors.blue.shade100,
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(27),
                 border: Border.all(color: Colors.blue.shade300, width: 2),
@@ -1313,12 +1454,20 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(left: 14),
-                    child: Icon(Icons.arrow_back_ios, size: 16, color: Colors.blue),
+                    child: Icon(
+                      Icons.arrow_back_ios,
+                      size: 16,
+                      color: Colors.blue,
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.rotate_right, color: Colors.blueAccent, size: 20),
+                      const Icon(
+                        Icons.rotate_right,
+                        color: Colors.blueAccent,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'زاویه: ${(_brushAngle * 180 / math.pi).round()}°',
@@ -1332,7 +1481,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                   ),
                   const Padding(
                     padding: EdgeInsets.only(right: 14),
-                    child: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.blue),
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.blue,
+                    ),
                   ),
                 ],
               ),
@@ -1352,7 +1505,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     );
   }
 
-  // Circular timer progress widget
   Widget _buildTimerProgress() {
     final double maxSec = _isFastMode ? 15.0 : 120.0;
     final double progress = (_secondsRemaining / maxSec).clamp(0.0, 1.0);
@@ -1367,7 +1519,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
         color: Colors.white.withValues(alpha: 0.92),
         shape: BoxShape.circle,
         boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Stack(
@@ -1404,13 +1560,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
-  // Spit out button widget
   Widget _buildSpitButton() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1465,21 +1620,24 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     );
   }
 
-  // Stage 1: Choose Brush Screen UI
   Widget _buildChooseBrushStage(BoxConstraints constraints) {
     return Positioned.fill(
       child: SafeArea(
         child: Column(
           children: [
             const SizedBox(height: 80),
-            // Floating title banner
+
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.95),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
                 ],
               ),
               child: const Text(
@@ -1493,7 +1651,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
             ),
             const Spacer(),
 
-            // floating toothbrushes display area
             SizedBox(
               height: 320,
               child: Row(
@@ -1502,8 +1659,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                   return AnimatedBuilder(
                     animation: _floatingController,
                     builder: (context, child) {
-                      // Apply staggered floating using index-based phase offset
-                      final offset = math.sin((_floatingController.value * math.pi * 2) + index) * 15.0;
+                      final offset =
+                          math.sin(
+                            (_floatingController.value * math.pi * 2) + index,
+                          ) *
+                          15.0;
                       final isSelected = _selectedBrushIndex == index;
 
                       return Transform.translate(
@@ -1517,24 +1677,34 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
 
                             final selectedBrushAsset = _brushes[index];
 
-                            if (selectedBrushAsset == 'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 2.png') {
-                              // Correct
-                              Future.delayed(const Duration(milliseconds: 500), () {
-                                if (mounted) {
-                                  setState(() {
-                                    _currentStage = BrushingStage.place45Degrees;
-                                    _initGerms(BrushingStage.place45Degrees);
-                                  });
-                                }
-                              });
+                            if (selectedBrushAsset ==
+                                'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 2.png') {
+                              Future.delayed(
+                                const Duration(milliseconds: 500),
+                                () {
+                                  if (mounted) {
+                                    setState(() {
+                                      _currentStage =
+                                          BrushingStage.place45Degrees;
+                                      _initGerms(BrushingStage.place45Degrees);
+                                    });
+                                  }
+                                },
+                              );
                             } else {
-                              // Wrong brush
                               Future.delayed(const Duration(milliseconds: 300), () {
                                 if (mounted) {
-                                  if (selectedBrushAsset == 'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 1.png') {
-                                    _showWrongBrushDialog('اوه! خمیردندونش خیلی زیاده! 😅', 'این مسواک خمیردندون زیادی داره و ممکنه دهانت رو اذیت کنه. یه مسواک بهتر انتخاب کن.');
+                                  if (selectedBrushAsset ==
+                                      'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 1.png') {
+                                    _showWrongBrushDialog(
+                                      'اوه! خمیردندونش خیلی زیاده! 😅',
+                                      'این مسواک خمیردندون زیادی داره و ممکنه دهانت رو اذیت کنه. یه مسواک بهتر انتخاب کن.',
+                                    );
                                   } else {
-                                    _showWrongBrushDialog('اوه! خمیردندونش کمه! 😕', 'این مسواک خمیردندون کافی برای از بین بردن میکروب‌ها نداره. یکی دیگه انتخاب کن.');
+                                    _showWrongBrushDialog(
+                                      'اوه! خمیردندونش کمه! 😕',
+                                      'این مسواک خمیردندون کافی برای از بین بردن میکروب‌ها نداره. یکی دیگه انتخاب کن.',
+                                    );
                                   }
                                 }
                               });
@@ -1544,23 +1714,33 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                             duration: const Duration(milliseconds: 300),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isSelected ? Colors.white.withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.5),
+                              color: isSelected
+                                  ? Colors.white.withValues(alpha: 0.95)
+                                  : Colors.white.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: isSelected ? const Color(0xFF9B59B6) : Colors.transparent,
+                                color: isSelected
+                                    ? const Color(0xFF9B59B6)
+                                    : Colors.transparent,
                                 width: 3,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: const Color(0xFF9B59B6).withValues(alpha: 0.3),
+                                        color: const Color(
+                                          0xFF9B59B6,
+                                        ).withValues(alpha: 0.3),
                                         blurRadius: 16,
                                         spreadRadius: 2,
                                         offset: const Offset(0, 6),
                                       ),
                                     ]
                                   : [
-                                      const BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
+                                      const BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 8,
+                                        offset: Offset(0, 4),
+                                      ),
                                     ],
                             ),
                             child: Column(
@@ -1573,9 +1753,14 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                                 ),
                                 const SizedBox(height: 12),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? const Color(0xFF9B59B6) : Colors.white,
+                                    color: isSelected
+                                        ? const Color(0xFF9B59B6)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
@@ -1583,7 +1768,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: isSelected ? Colors.white : const Color(0xFF2C3E50),
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF2C3E50),
                                     ),
                                   ),
                                 ),
@@ -1605,7 +1792,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
     );
   }
 
-  // Interactive Game Stage (germ monsters & draggable brush)
   Widget _buildBrushingStage(BoxConstraints constraints) {
     return Positioned.fill(
       child: GestureDetector(
@@ -1616,7 +1802,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
           }
           _handleBrushing(details.localPosition, constraints);
         },
-        onPanUpdate: (details) => _handleBrushing(details.localPosition, constraints),
+        onPanUpdate: (details) =>
+            _handleBrushing(details.localPosition, constraints),
         onPanEnd: (_) {
           setState(() {
             _isDragging = false;
@@ -1626,9 +1813,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
         },
         child: Stack(
           children: [
-            // A. Place 45 Degrees silhouettes & targets
             if (_currentStage == BrushingStage.place45Degrees) ...[
-              // Gums highlight zone
               Positioned(
                 left: _cachedBounds.left + 0.28 * _cachedBounds.width,
                 top: _cachedBounds.top + 0.38 * _cachedBounds.height,
@@ -1641,7 +1826,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                         : Colors.redAccent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: _isAngleAligned ? Colors.green : Colors.redAccent.withValues(alpha: 0.8),
+                      color: _isAngleAligned
+                          ? Colors.green
+                          : Colors.redAccent.withValues(alpha: 0.8),
                       width: 3,
                     ),
                     boxShadow: _isAngleAligned
@@ -1650,15 +1837,19 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                               color: Colors.green.withValues(alpha: 0.4),
                               blurRadius: 10,
                               spreadRadius: 1,
-                            )
+                            ),
                           ]
                         : [],
                   ),
                   child: Center(
                     child: Text(
-                      _isAngleAligned ? 'آفرین! همینجا نگه دار 🌟' : 'مسواک را روی لثه‌ها تراز کن 📐',
+                      _isAngleAligned
+                          ? 'آفرین! همینجا نگه دار 🌟'
+                          : 'مسواک را روی لثه‌ها تراز کن 📐',
                       style: TextStyle(
-                        color: _isAngleAligned ? Colors.green.shade800 : Colors.redAccent.shade700,
+                        color: _isAngleAligned
+                            ? Colors.green.shade800
+                            : Colors.redAccent.shade700,
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
                       ),
@@ -1666,7 +1857,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                   ),
                 ),
               ),
-              // Ghost toothbrush outline tilted at 45 degrees
+
               Positioned(
                 left: _cachedBounds.left + 0.42 * _cachedBounds.width,
                 top: _cachedBounds.top + 0.27 * _cachedBounds.height,
@@ -1687,7 +1878,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
               ),
             ],
 
-            // B. Tongue area highlight in Tongue stage
             if (_currentStage == BrushingStage.brushTongue)
               Positioned(
                 left: _cachedBounds.left + 0.42 * _cachedBounds.width,
@@ -1697,7 +1887,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     animation: _floatingController,
                     builder: (context, child) {
                       return Opacity(
-                        opacity: 0.3 + 0.2 * math.sin(_floatingController.value * math.pi * 2),
+                        opacity:
+                            0.3 +
+                            0.2 *
+                                math.sin(
+                                  _floatingController.value * math.pi * 2,
+                                ),
                         child: const Icon(
                           Icons.arrow_downward,
                           size: 60,
@@ -1709,12 +1904,13 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                 ),
               ),
 
-            // C. Render Germ Monsters
             ..._germs.map((germ) {
               if (germ.health <= 0) return const SizedBox.shrink();
 
-              final double x = _cachedBounds.left + germ.position.dx * _cachedBounds.width;
-              final double y = _cachedBounds.top + germ.position.dy * _cachedBounds.height;
+              final double x =
+                  _cachedBounds.left + germ.position.dx * _cachedBounds.width;
+              final double y =
+                  _cachedBounds.top + germ.position.dy * _cachedBounds.height;
 
               return AnimatedBuilder(
                 animation: _wiggleController,
@@ -1725,8 +1921,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                     angle = (math.Random().nextDouble() * 0.2 - 0.1);
                     scaleOffset = 0.95;
                   } else {
-                    angle = math.sin(_wiggleController.value * math.pi * 2) * 0.05;
-                    scaleOffset = 1.0 + (math.sin(_wiggleController.value * math.pi * 2) * 0.05);
+                    angle =
+                        math.sin(_wiggleController.value * math.pi * 2) * 0.05;
+                    scaleOffset =
+                        1.0 +
+                        (math.sin(_wiggleController.value * math.pi * 2) *
+                            0.05);
                   }
 
                   return Positioned(
@@ -1754,21 +1954,27 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
               );
             }),
 
-            // D. Render chosen brush following dragging finger
-            if (_selectedBrushIndex != -1 && _currentStage != BrushingStage.spitOut)
+            if (_selectedBrushIndex != -1 &&
+                _currentStage != BrushingStage.spitOut)
               Positioned(
                 left: _brushPosition.dx - 25,
-                top: _brushPosition.dy - 190, // offset upwards so fingers don't block visual
+                top: _brushPosition.dy - 190,
                 child: IgnorePointer(
                   child: AnimatedRotation(
-                    turns: _isDragging ? (_brushAngle / (2 * math.pi)) : (_brushAngle / (2 * math.pi)),
+                    turns: _isDragging
+                        ? (_brushAngle / (2 * math.pi))
+                        : (_brushAngle / (2 * math.pi)),
                     duration: const Duration(milliseconds: 150),
                     curve: Curves.easeOut,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 100),
                       transform: Matrix4.translationValues(
-                        _isDragging ? (math.Random().nextDouble() * 4 - 2) : 0.0,
-                        _isDragging ? (math.Random().nextDouble() * 4 - 2) : 0.0,
+                        _isDragging
+                            ? (math.Random().nextDouble() * 4 - 2)
+                            : 0.0,
+                        _isDragging
+                            ? (math.Random().nextDouble() * 4 - 2)
+                            : 0.0,
                         0.0,
                       ),
                       child: Image.asset(
@@ -1781,7 +1987,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                 ),
               ),
 
-            // E. Rotation dial/wheel for 45-degree angle stage
             if (_currentStage == BrushingStage.place45Degrees)
               Positioned(
                 bottom: 50,
@@ -1790,7 +1995,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                 child: Center(child: _buildRotationDial()),
               ),
 
-            // F. Circular timer and toggle button for 2-minute stage
             if (_currentStage == BrushingStage.continue2Minutes) ...[
               Positioned(
                 top: _cachedBounds.top + 0.36 * _cachedBounds.height,
@@ -1811,12 +2015,21 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: _isFastMode ? const Color(0xFFE67E22) : const Color(0xFF2980B9),
+                        color: _isFastMode
+                            ? const Color(0xFFE67E22)
+                            : const Color(0xFF2980B9),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 3)),
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
+                          ),
                         ],
                       ),
                       child: Row(
@@ -1829,7 +2042,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _isFastMode ? 'تغییر به حالت واقعی (۲ دقیقه)' : 'تغییر به حالت سریع (۱۵ ثانیه)',
+                            _isFastMode
+                                ? 'تغییر به حالت واقعی (۲ دقیقه)'
+                                : 'تغییر به حالت سریع (۱۵ ثانیه)',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -1844,7 +2059,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
               ),
             ],
 
-            // G. Spit button overlay for spitting stage
             if (_currentStage == BrushingStage.spitOut)
               Positioned(
                 top: _cachedBounds.top + 0.40 * _cachedBounds.height,
@@ -1859,7 +2073,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
   }
 }
 
-// Particle details models
 class _FoamBubble {
   Offset position;
   final double vx;
@@ -1914,7 +2127,6 @@ class _Confetti {
   });
 }
 
-// Game entity
 class _Germ {
   final int id;
   final Offset position;
@@ -1922,14 +2134,9 @@ class _Germ {
   double health = 1.0;
   bool isShaking = false;
 
-  _Germ({
-    required this.id,
-    required this.position,
-    required this.color,
-  });
+  _Germ({required this.id, required this.position, required this.color});
 }
 
-// Sparkles and Bubbles painter
 class _ParticlesPainter extends CustomPainter {
   final List<_FoamBubble> bubbles;
   final List<_Sparkle> sparkles;
@@ -1938,7 +2145,6 @@ class _ParticlesPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 1. Draw bubbles
     final bubblePaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
@@ -1951,13 +2157,15 @@ class _ParticlesPainter extends CustomPainter {
     for (var bubble in bubbles) {
       final opacity = bubble.life.clamp(0.0, 1.0);
       bubblePaint.color = Colors.white.withValues(alpha: opacity * 0.85);
-      bubbleStroke.color = const Color(0xFF35B8FF).withValues(alpha: opacity * 0.4);
-      
+      bubbleStroke.color = const Color(
+        0xFF35B8FF,
+      ).withValues(alpha: opacity * 0.4);
+
       canvas.drawCircle(bubble.position, bubble.radius, bubblePaint);
       canvas.drawCircle(bubble.position, bubble.radius, bubbleStroke);
 
-      // Cute inner reflection dot
-      final reflectPaint = Paint()..color = Colors.white.withValues(alpha: opacity * 0.9);
+      final reflectPaint = Paint()
+        ..color = Colors.white.withValues(alpha: opacity * 0.9);
       canvas.drawCircle(
         bubble.position + Offset(-bubble.radius * 0.3, -bubble.radius * 0.3),
         bubble.radius * 0.2,
@@ -1965,7 +2173,6 @@ class _ParticlesPainter extends CustomPainter {
       );
     }
 
-    // 2. Draw sparkles (stars or circular pops)
     for (var sparkle in sparkles) {
       final opacity = (1.0 - sparkle.progress).clamp(0.0, 1.0);
       final paint = Paint()
@@ -1973,14 +2180,22 @@ class _ParticlesPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
 
       if (sparkle.isStar) {
-        _drawStar(canvas, sparkle.position, sparkle.size * (1.0 - sparkle.progress), paint);
+        _drawStar(
+          canvas,
+          sparkle.position,
+          sparkle.size * (1.0 - sparkle.progress),
+          paint,
+        );
       } else {
-        canvas.drawCircle(sparkle.position, sparkle.size * (1.0 - sparkle.progress), paint);
+        canvas.drawCircle(
+          sparkle.position,
+          sparkle.size * (1.0 - sparkle.progress),
+          paint,
+        );
       }
     }
   }
 
-  // Draw a 4-point star for sparkles
   void _drawStar(Canvas canvas, Offset center, double size, Paint paint) {
     final Path path = Path();
     final double half = size / 2;
@@ -1997,11 +2212,10 @@ class _ParticlesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ParticlesPainter oldDelegate) {
-    return true; // Continuously animated
+    return true;
   }
 }
 
-// Confetti painter for Stage 4
 class _ConfettiPainter extends CustomPainter {
   final List<_Confetti> confetti;
 
@@ -2018,9 +2232,16 @@ class _ConfettiPainter extends CustomPainter {
       canvas.translate(conf.position.dx, conf.position.dy);
       canvas.rotate(conf.rotation);
 
-      // Draw random rectangles or circles
       if (conf.size.toInt() % 2 == 0) {
-        canvas.drawRect(Rect.fromLTWH(-conf.size / 2, -conf.size / 4, conf.size, conf.size / 2), paint);
+        canvas.drawRect(
+          Rect.fromLTWH(
+            -conf.size / 2,
+            -conf.size / 4,
+            conf.size,
+            conf.size / 2,
+          ),
+          paint,
+        );
       } else {
         canvas.drawCircle(Offset.zero, conf.size / 2, paint);
       }
@@ -2030,11 +2251,10 @@ class _ConfettiPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ConfettiPainter oldDelegate) {
-    return true; // physics-based continuous rendering
+    return true;
   }
 }
 
-// Cute germ custom painter
 class CuteGermPainter extends CustomPainter {
   final Color color;
   final double health;
@@ -2057,56 +2277,69 @@ class CuteGermPainter extends CustomPainter {
       ..color = color.withValues(alpha: 0.95)
       ..style = PaintingStyle.fill;
 
-    // Wobble shape calculations
     final double wobble = math.sin(animationValue * math.pi * 2) * 2.5;
 
-    // Main blob path
     final Path bodyPath = Path();
     bodyPath.moveTo(w * 0.2, h * 0.5 + wobble);
-    bodyPath.cubicTo(w * 0.15, h * 0.15, w * 0.85, h * 0.15, w * 0.8, h * 0.5 + wobble);
-    bodyPath.cubicTo(w * 0.95, h * 0.85, w * 0.05, h * 0.85, w * 0.2, h * 0.5 + wobble);
+    bodyPath.cubicTo(
+      w * 0.15,
+      h * 0.15,
+      w * 0.85,
+      h * 0.15,
+      w * 0.8,
+      h * 0.5 + wobble,
+    );
+    bodyPath.cubicTo(
+      w * 0.95,
+      h * 0.85,
+      w * 0.05,
+      h * 0.85,
+      w * 0.2,
+      h * 0.5 + wobble,
+    );
     bodyPath.close();
     canvas.drawPath(bodyPath, bodyPaint);
 
-    // Draw little details like spikes or feet
     final Paint darkDetailPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.15)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(w * 0.5, h * 0.72), w * 0.08, darkDetailPaint);
 
-    // White eyes
     final Paint eyeWhite = Paint()..color = Colors.white;
     final Paint eyePupil = Paint()..color = Colors.black;
 
-    // Left Eye
     canvas.drawCircle(Offset(w * 0.38, h * 0.42), w * 0.11, eyeWhite);
     canvas.drawCircle(Offset(w * 0.39, h * 0.42), w * 0.05, eyePupil);
 
-    // Right Eye
     canvas.drawCircle(Offset(w * 0.62, h * 0.42), w * 0.11, eyeWhite);
     canvas.drawCircle(Offset(w * 0.61, h * 0.42), w * 0.05, eyePupil);
 
-    // Angry Brows
     final Paint browPaint = Paint()
       ..color = const Color(0xFF2C3E50)
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(w * 0.26, h * 0.30), Offset(w * 0.44, h * 0.36), browPaint);
-    canvas.drawLine(Offset(w * 0.74, h * 0.30), Offset(w * 0.56, h * 0.36), browPaint);
+    canvas.drawLine(
+      Offset(w * 0.26, h * 0.30),
+      Offset(w * 0.44, h * 0.36),
+      browPaint,
+    );
+    canvas.drawLine(
+      Offset(w * 0.74, h * 0.30),
+      Offset(w * 0.56, h * 0.36),
+      browPaint,
+    );
 
-    // Grumpy mouth
     final Paint mouthPaint = Paint()
       ..color = const Color(0xFF2C3E50)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
-    
+
     final Path mouthPath = Path();
     mouthPath.moveTo(w * 0.4, h * 0.64);
     mouthPath.quadraticBezierTo(w * 0.5, h * 0.56, w * 0.6, h * 0.64);
     canvas.drawPath(mouthPath, mouthPaint);
 
-    // Cute fangs
     final Paint fangPaint = Paint()..color = Colors.white;
     final Path fang1 = Path();
     fang1.moveTo(w * 0.43, h * 0.61);

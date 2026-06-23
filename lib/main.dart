@@ -11,7 +11,6 @@ import 'screens/video_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/brushing_screen.dart';
 
-
 void main() {
   runApp(const HealthcareApp());
 }
@@ -19,11 +18,11 @@ void main() {
 class AppScrollBehavior extends MaterialScrollBehavior {
   @override
   Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.trackpad,
-        PointerDeviceKind.stylus,
-      };
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 }
 
 class HealthcareApp extends StatelessWidget {
@@ -47,7 +46,6 @@ class HealthcareApp extends StatelessWidget {
       ),
       initialRoute: '/',
       onGenerateRoute: (settings) {
-        // Custom animated route transitions for a premium, cartoonish look
         Widget page;
         switch (settings.name) {
           case '/':
@@ -88,7 +86,6 @@ class HealthcareApp extends StatelessWidget {
         return PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => page,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            // Elastic Scale / Fade transition between screens
             final scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
               CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
             );
@@ -98,10 +95,7 @@ class HealthcareApp extends StatelessWidget {
 
             return FadeTransition(
               opacity: fadeAnimation,
-              child: ScaleTransition(
-                scale: scaleAnimation,
-                child: child,
-              ),
+              child: ScaleTransition(scale: scaleAnimation, child: child),
             );
           },
           settings: settings,
