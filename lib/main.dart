@@ -39,7 +39,7 @@ class HealthcareApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         primaryColor: const Color(0xFF00A2E8),
         scaffoldBackgroundColor: Colors.white,
-        fontFamily: 'Vazirmatn', // Clean Persian font placeholder
+        fontFamily: 'YekanBakh',
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Color(0xFF2C3E50)),
           bodyMedium: TextStyle(color: Color(0xFF2C3E50)),

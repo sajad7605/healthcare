@@ -264,16 +264,16 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                                         const Spacer(),
 
                                         // Centered Cute Vector Graphic
-                                        Center(
-                                          child: SizedBox(
-                                            width: 80,
-                                            height: 80,
-                                            child: CustomPaint(
-                                              painter: _getPainter(item['painter']),
+                                        Expanded(
+                                          child: Center(
+                                            child: AspectRatio(
+                                              aspectRatio: 1.0,
+                                              child: CustomPaint(
+                                                painter: _getPainter(item['painter']),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(height: 8),
                                       ],
                                     ),
                                   ),
