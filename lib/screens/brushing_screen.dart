@@ -1254,12 +1254,14 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen> with Ti
           children: [
             const Icon(Icons.info_outline, color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Text(
-              _tooltipText,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
+            Flexible(
+              child: Text(
+                _tooltipText,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
             ),
           ],
