@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
+import '../api/healthcare_api.dart';
 
 class TimerScreen extends StatefulWidget {
   const TimerScreen({super.key});
@@ -107,6 +108,30 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
   }
 
   void _showCelebrationDialog() {
+    // Log activity to API
+    try {
+      final activeChild = HealthcareApi.instance.currentChild;
+      if (activeChild != null) {
+        HealthcareApi.instance.children.logActivity(
+          activeChild.id,
+          ActivityLogRequest(
+            activityType: 'brushing_timer',
+            durationSeconds: 120,
+          ),
+        ).then((res) {
+          final oldStars = HealthcareApi.instance.currentChild!.stars;
+          HealthcareApi.instance.currentChild = ChildProfile(
+            id: activeChild.id,
+            childName: activeChild.childName,
+            childAge: activeChild.childAge,
+            avatarUrl: activeChild.avatarUrl,
+            stars: oldStars + res.starsEarned,
+            createdAt: activeChild.createdAt,
+          );
+        });
+      }
+    } catch (_) {}
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -135,6 +160,29 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                   'مسواک زدنت با موفقیت تموم شد. دندون‌هات الان دارن از تمیزی برق می‌زنن! ⭐',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 15, height: 1.5, color: Color(0xFF2C3E50)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3CD),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.star, color: Colors.amber, size: 20),
+                      SizedBox(width: 6),
+                      Text(
+                        '+۳ ستاره دریافت کردی!',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE67E22),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

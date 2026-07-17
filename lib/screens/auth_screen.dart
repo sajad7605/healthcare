@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
+import '../api/healthcare_api.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,6 +12,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
   bool _isLogin = true; // true = Login (2 fields), false = Register (6 fields)
+  bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
 
   // Text Controllers
@@ -32,10 +34,81 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  void _submit() {
+  void _submit() async {
+    if (_isLoading) return;
     if (_formKey.currentState!.validate()) {
-      // Simulate successful login/register
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        if (_isLogin) {
+          final response = await HealthcareApi.instance.auth.loginUser(
+            LoginRequest(
+              phone: _phoneController.text.trim(),
+              password: _passwordController.text,
+              role: 'Parent',
+            ),
+          );
+          
+          HealthcareApi.instance.currentParent = response.parent;
+          HealthcareApi.instance.currentChild = response.child ?? 
+              (response.kids != null && response.kids!.isNotEmpty ? response.kids!.first : null);
+          HealthcareApi.instance.childrenList = response.kids;
+
+          if (HealthcareApi.instance.currentChild == null) {
+            try {
+              final kids = await HealthcareApi.instance.children.listChildren();
+              if (kids.isNotEmpty) {
+                HealthcareApi.instance.currentChild = kids.first;
+                HealthcareApi.instance.childrenList = kids;
+              }
+            } catch (_) {}
+          }
+        } else {
+          final response = await HealthcareApi.instance.auth.registerParent(
+            ParentRegisterRequest(
+              parentName: _parentController.text.trim(),
+              phone: _phoneController.text.trim(),
+              password: _passwordController.text,
+              childName: _nameController.text.trim(),
+              childAge: int.tryParse(_ageController.text) ?? 5,
+            ),
+          );
+
+          HealthcareApi.instance.currentParent = response.parent;
+          HealthcareApi.instance.currentChild = response.child;
+          HealthcareApi.instance.childrenList = [response.child];
+        }
+
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        }
+      } on ApiException catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message, style: const TextStyle(fontFamily: 'YekanBakh')),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('خطای نامشخصی رخ داده است.', style: TextStyle(fontFamily: 'YekanBakh')),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -129,14 +202,23 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       ],
                     ),
                     child: Center(
-                      child: Text(
-                        _isLogin ? 'ورود' : 'ثبت نام و شروع',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.5,
+                              ),
+                            )
+                          : Text(
+                              _isLogin ? 'ورود' : 'ثبت نام و شروع',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                 ),

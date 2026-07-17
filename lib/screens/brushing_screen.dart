@@ -3,12 +3,18 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../widgets/squish_pop.dart';
+import '../api/healthcare_api.dart';
 
 enum BrushingStage {
   chooseBrush,
+  chooseTime,
   place45Degrees,
-  circularBrushing,
-  chewingSurfaces,
+  frontTeethUpper,
+  frontTeethLower,
+  backTeethUpperInner,
+  backTeethUpperOuter,
+  backTeethUpperChewing,
+  backTeethLower,
   brushTongue,
   continue2Minutes,
   spitOut,
@@ -26,6 +32,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     with TickerProviderStateMixin {
   BrushingStage _currentStage = BrushingStage.chooseBrush;
   int _selectedBrushIndex = -1;
+  int _selectedTimeIndex = -1;
 
   Offset _brushPosition = const Offset(200, 500);
   bool _isDragging = false;
@@ -116,35 +123,79 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
   void _initGerms(BrushingStage stage) {
     _germs.clear();
-    if (stage == BrushingStage.circularBrushing) {
+    if (stage == BrushingStage.frontTeethUpper) {
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.35, 0.46),
+          position: const Offset(0.35, 0.41),
           color: Colors.lightGreenAccent.shade700,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.49),
+          position: const Offset(0.50, 0.38),
           color: Colors.redAccent.shade400,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.65, 0.46),
+          position: const Offset(0.65, 0.41),
           color: Colors.amber.shade700,
         ),
+      ];
+    } else if (stage == BrushingStage.frontTeethLower) {
+      _germs = [
         _Germ(
-          id: 4,
-          position: const Offset(0.42, 0.40),
-          color: Colors.purpleAccent.shade400,
+          id: 1,
+          position: const Offset(0.36, 0.52),
+          color: Colors.teal.shade600,
         ),
         _Germ(
-          id: 5,
-          position: const Offset(0.58, 0.40),
-          color: Colors.cyanAccent.shade700,
+          id: 2,
+          position: const Offset(0.50, 0.55),
+          color: Colors.orangeAccent.shade700,
+        ),
+        _Germ(
+          id: 3,
+          position: const Offset(0.64, 0.52),
+          color: Colors.pinkAccent.shade400,
         ),
       ];
-    } else if (stage == BrushingStage.chewingSurfaces) {
+    } else if (stage == BrushingStage.backTeethUpperInner) {
+      _germs = [
+        _Germ(
+          id: 1,
+          position: const Offset(0.28, 0.40),
+          color: Colors.deepOrange.shade600,
+        ),
+        _Germ(
+          id: 2,
+          position: const Offset(0.72, 0.40),
+          color: Colors.indigo.shade500,
+        ),
+        _Germ(
+          id: 3,
+          position: const Offset(0.50, 0.42),
+          color: Colors.lightGreenAccent.shade700,
+        ),
+      ];
+    } else if (stage == BrushingStage.backTeethUpperOuter) {
+      _germs = [
+        _Germ(
+          id: 1,
+          position: const Offset(0.26, 0.36),
+          color: Colors.cyan.shade700,
+        ),
+        _Germ(
+          id: 2,
+          position: const Offset(0.74, 0.36),
+          color: Colors.redAccent.shade400,
+        ),
+        _Germ(
+          id: 3,
+          position: const Offset(0.50, 0.34),
+          color: Colors.amber.shade600,
+        ),
+      ];
+    } else if (stage == BrushingStage.backTeethUpperChewing) {
       _germs = [
         _Germ(
           id: 1,
@@ -165,6 +216,24 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
           id: 4,
           position: const Offset(0.70, 0.44),
           color: Colors.pink.shade700,
+        ),
+      ];
+    } else if (stage == BrushingStage.backTeethLower) {
+      _germs = [
+        _Germ(
+          id: 1,
+          position: const Offset(0.30, 0.52),
+          color: Colors.purple.shade500,
+        ),
+        _Germ(
+          id: 2,
+          position: const Offset(0.50, 0.56),
+          color: Colors.blue.shade600,
+        ),
+        _Germ(
+          id: 3,
+          position: const Offset(0.70, 0.52),
+          color: Colors.teal.shade600,
         ),
       ];
     } else if (stage == BrushingStage.brushTongue) {
@@ -343,13 +412,29 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       case BrushingStage.place45Degrees:
         _checkAngleAlignment();
         break;
-      case BrushingStage.circularBrushing:
-        _checkCircularMotion(localPos);
-        _detectLinearBrushingWarning(localPos);
+      case BrushingStage.frontTeethUpper:
+        _checkVerticalMotion(localPos, expectDownward: true);
+        _detectVerticalBrushingWarning(localPos, message: 'دندان‌های جلو بالا را از بالا به پایین بکش! ⬇️');
         break;
-      case BrushingStage.chewingSurfaces:
+      case BrushingStage.frontTeethLower:
+        _checkVerticalMotion(localPos, expectDownward: false);
+        _detectVerticalBrushingWarning(localPos, message: 'دندان‌های جلو پایین را از پایین به بالا بکش! ⬆️');
+        break;
+      case BrushingStage.backTeethUpperInner:
+        _checkVerticalMotion(localPos, expectDownward: true);
+        _detectVerticalBrushingWarning(localPos, message: 'سطح داخلی دندان‌های عقب بالا را از بالا به پایین بکش! ⬇️');
+        break;
+      case BrushingStage.backTeethUpperOuter:
+        _checkVerticalMotion(localPos, expectDownward: true);
+        _detectVerticalBrushingWarning(localPos, message: 'سطح خارجی دندان‌های عقب بالا را از بالا به پایین بکش! ⬇️');
+        break;
+      case BrushingStage.backTeethUpperChewing:
         _checkBackAndForthMotion(localPos);
         _detectChewingWarning(localPos);
+        break;
+      case BrushingStage.backTeethLower:
+        _checkVerticalMotion(localPos, expectDownward: true);
+        _detectVerticalBrushingWarning(localPos, message: 'دندان‌های عقب پایین را مسواک بزن! ↕️');
         break;
       case BrushingStage.brushTongue:
         _updateTongueDrag(localPos, constraints);
@@ -433,67 +518,55 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     }
   }
 
-  void _checkCircularMotion(Offset currentPos) {
-    _dragHistory.add(currentPos);
-    if (_dragHistory.length > 25) {
-      _dragHistory.removeAt(0);
+  void _checkVerticalMotion(Offset currentPos, {bool expectDownward = true}) {
+    if (_lastCircleCheckPoint == null) {
+      _lastCircleCheckPoint = currentPos;
+      return;
     }
-    if (_dragHistory.length < 12) return;
 
-    double sumX = 0;
-    double sumY = 0;
-    for (var p in _dragHistory) {
-      sumX += p.dx;
-      sumY += p.dy;
-    }
-    final double centerX = sumX / _dragHistory.length;
-    final double centerY = sumY / _dragHistory.length;
+    final double dx = currentPos.dx - _lastCircleCheckPoint!.dx;
+    final double dy = currentPos.dy - _lastCircleCheckPoint!.dy;
+    final double distance = math.sqrt(dx * dx + dy * dy);
 
-    double minX = _dragHistory[0].dx;
-    double maxX = _dragHistory[0].dx;
-    double minY = _dragHistory[0].dy;
-    double maxY = _dragHistory[0].dy;
-    for (var p in _dragHistory) {
-      if (p.dx < minX) minX = p.dx;
-      if (p.dx > maxX) maxX = p.dx;
-      if (p.dy < minY) minY = p.dy;
-      if (p.dy > maxY) maxY = p.dy;
-    }
-    final double width = maxX - minX;
-    final double height = maxY - minY;
+    if (distance > 10.0) {
+      // Detect primarily vertical movement
+      if (dy.abs() > dx.abs() * 0.8) {
+        String currentDir = dy > 0 ? 'D' : 'U';
+        // For downward stages, reward D->U->D switches; for upward, reward U->D->U
+        String primaryDir = expectDownward ? 'D' : 'U';
+        String secondaryDir = expectDownward ? 'U' : 'D';
 
-    if (width < 12 || width > 100 || height < 12 || height > 100) return;
+        if (_lastStrokeDirection != null && _lastStrokeDirection != currentDir) {
+          bool isVerticalSwitch =
+              (_lastStrokeDirection == secondaryDir && currentDir == primaryDir) ||
+              (_lastStrokeDirection == primaryDir && currentDir == secondaryDir);
 
-    double totalAngleChange = 0.0;
-    double? lastAngle;
-    for (var p in _dragHistory) {
-      final double angle = math.atan2(p.dy - centerY, p.dx - centerX);
-      if (lastAngle != null) {
-        double diff = angle - lastAngle;
-        while (diff < -math.pi) {
-          diff += 2 * math.pi;
+          if (isVerticalSwitch && distance < 150.0) {
+            _strokeDirectionSwitches++;
+            HapticFeedback.lightImpact();
+            _damageGermsInRadius(50.0, damage: 0.22);
+
+            if (_strokeDirectionSwitches >= 2) {
+              _strokeDirectionSwitches = 0;
+              _linearDistanceInCircleStage = 0.0;
+              _onVerticalStrokeDetected();
+            }
+          }
         }
-        while (diff > math.pi) {
-          diff -= 2 * math.pi;
-        }
-        totalAngleChange += diff;
+
+        _lastStrokeDirection = currentDir;
       }
-      lastAngle = angle;
-    }
-
-    if (totalAngleChange.abs() >= 4.5) {
-      _dragHistory.clear();
-      _onCircularStrokeDetected();
+      _lastCircleCheckPoint = currentPos;
     }
   }
 
-  void _onCircularStrokeDetected() {
+  void _onVerticalStrokeDetected() {
     _linearDistanceInCircleStage = 0.0;
     setState(() {
       _circleCount++;
     });
     HapticFeedback.lightImpact();
-    _damageGermsInRadius(35.0, damage: 0.15);
+    _damageGermsInRadius(50.0, damage: 0.22);
   }
 
   void _checkBackAndForthMotion(Offset currentPos) {
@@ -506,7 +579,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     final double dy = currentPos.dy - _lastStrokePoint!.dy;
     final double distance = math.sqrt(dx * dx + dy * dy);
 
-    if (distance > 15.0) {
+    if (distance > 10.0) {
       String currentDir = dx.abs() > dy.abs()
           ? (dx > 0 ? 'R' : 'L')
           : (dy > 0 ? 'D' : 'U');
@@ -518,10 +591,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             (_lastStrokeDirection == 'U' && currentDir == 'D') ||
             (_lastStrokeDirection == 'D' && currentDir == 'U');
 
-        if (isOpposite && distance < 100.0) {
+        if (isOpposite && distance < 150.0) {
           _strokeDirectionSwitches++;
           HapticFeedback.lightImpact();
-          _damageGermsInRadius(35.0, damage: 0.12);
+          _damageGermsInRadius(50.0, damage: 0.18);
 
           if (_strokeDirectionSwitches >= 2) {
             _strokeDirectionSwitches = 0;
@@ -557,8 +630,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     final double dy = localPos.dy - _tongueDragStart!.dy;
     final double dx = localPos.dx - _tongueDragStart!.dx;
 
-    if (dy > 60.0) {
-      if (dy > dx.abs() * 1.5) {
+    if (dy > 40.0) {
+      if (dy > dx.abs() * 1.2) {
         _isValidTongueDrag = false;
         _tongueDragStart = null;
 
@@ -583,7 +656,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
           }
         });
         HapticFeedback.mediumImpact();
-        _damageGermsInRadius(60.0, damage: 0.34);
+        _damageGermsInRadius(70.0, damage: 0.45);
       }
     }
   }
@@ -649,7 +722,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     }
   }
 
-  void _detectLinearBrushingWarning(Offset currentPos) {
+  void _detectVerticalBrushingWarning(Offset currentPos, {String? message}) {
     if (_lastCircleCheckPoint == null) {
       _lastCircleCheckPoint = currentPos;
       return;
@@ -658,8 +731,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _linearDistanceInCircleStage += dist;
     _lastCircleCheckPoint = currentPos;
 
-    if (_linearDistanceInCircleStage > 160.0) {
-      _showTooltip("برای تمیز کردن دندان‌ها، مسواک را دایره‌ای بچرخان! 🔄");
+    if (_linearDistanceInCircleStage > 250.0) {
+      _showTooltip(message ?? "مسواک را از بالا به پایین حرکت بده! ⬇️");
       _linearDistanceInCircleStage = 0.0;
     }
   }
@@ -673,7 +746,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _distanceInChewingStage += dist;
     _lastChewingCheckPoint = currentPos;
 
-    if (_distanceInChewingStage > 160.0) {
+    if (_distanceInChewingStage > 250.0) {
       _showTooltip("مسواک را به جلو و عقب بکش! ↔️");
       _distanceInChewingStage = 0.0;
     }
@@ -779,6 +852,41 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             _currentStage = BrushingStage.cleanMouthDone;
             _initCelebration();
           });
+
+          // API Connection: Log interactive brushing activity and update stars
+          try {
+            final activeChild = HealthcareApi.instance.currentChild;
+            if (activeChild != null) {
+              HealthcareApi.instance.children.logActivity(
+                activeChild.id,
+                ActivityLogRequest(
+                  activityType: 'brushing_interactive',
+                  durationSeconds: _isFastMode ? 15 : 120,
+                  completedSteps: const [
+                    'chooseBrush',
+                    'place45Degrees',
+                    'circularBrushing',
+                    'chewingSurfaces',
+                    'brushTongue',
+                    'spitOut',
+                    'cleanMouthDone'
+                  ],
+                ),
+              ).then((res) {
+                // Update local cached stars
+                final oldStars = HealthcareApi.instance.currentChild!.stars;
+                HealthcareApi.instance.currentChild = ChildProfile(
+                  id: activeChild.id,
+                  childName: activeChild.childName,
+                  childAge: activeChild.childAge,
+                  avatarUrl: activeChild.avatarUrl,
+                  stars: oldStars + res.starsEarned,
+                  createdAt: activeChild.createdAt,
+                );
+              });
+            }
+          } catch (_) {}
+
           Future.delayed(const Duration(seconds: 4), () {
             if (mounted) {
               _showCelebrationDialog();
@@ -812,20 +920,48 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _lastStrokePoint = null;
     _lastStrokeDirection = null;
     _tongueDragStart = null;
+    _lastCircleCheckPoint = null;
+    _strokeDirectionSwitches = 0;
+    _circleCount = 0;
+    _strokeCount = 0;
 
     if (_currentStage == BrushingStage.place45Degrees) {
       setState(() {
-        _currentStage = BrushingStage.circularBrushing;
-        _initGerms(BrushingStage.circularBrushing);
+        _currentStage = BrushingStage.frontTeethUpper;
+        _initGerms(BrushingStage.frontTeethUpper);
         _brushPosition = const Offset(200, 500);
       });
-    } else if (_currentStage == BrushingStage.circularBrushing) {
+    } else if (_currentStage == BrushingStage.frontTeethUpper) {
       setState(() {
-        _currentStage = BrushingStage.chewingSurfaces;
-        _initGerms(BrushingStage.chewingSurfaces);
+        _currentStage = BrushingStage.frontTeethLower;
+        _initGerms(BrushingStage.frontTeethLower);
         _brushPosition = const Offset(200, 500);
       });
-    } else if (_currentStage == BrushingStage.chewingSurfaces) {
+    } else if (_currentStage == BrushingStage.frontTeethLower) {
+      setState(() {
+        _currentStage = BrushingStage.backTeethUpperInner;
+        _initGerms(BrushingStage.backTeethUpperInner);
+        _brushPosition = const Offset(200, 500);
+      });
+    } else if (_currentStage == BrushingStage.backTeethUpperInner) {
+      setState(() {
+        _currentStage = BrushingStage.backTeethUpperOuter;
+        _initGerms(BrushingStage.backTeethUpperOuter);
+        _brushPosition = const Offset(200, 500);
+      });
+    } else if (_currentStage == BrushingStage.backTeethUpperOuter) {
+      setState(() {
+        _currentStage = BrushingStage.backTeethUpperChewing;
+        _initGerms(BrushingStage.backTeethUpperChewing);
+        _brushPosition = const Offset(200, 500);
+      });
+    } else if (_currentStage == BrushingStage.backTeethUpperChewing) {
+      setState(() {
+        _currentStage = BrushingStage.backTeethLower;
+        _initGerms(BrushingStage.backTeethLower);
+        _brushPosition = const Offset(200, 500);
+      });
+    } else if (_currentStage == BrushingStage.backTeethLower) {
       setState(() {
         _currentStage = BrushingStage.brushTongue;
         _initGerms(BrushingStage.brushTongue);
@@ -985,6 +1121,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                       _brushes.shuffle();
                       _currentStage = BrushingStage.chooseBrush;
                       _selectedBrushIndex = -1;
+                      _selectedTimeIndex = -1;
                       _bubbles.clear();
                       _sparkles.clear();
                       _confetti.clear();
@@ -1079,7 +1216,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 Positioned.fill(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 600),
-                    child: _currentStage == BrushingStage.chooseBrush
+                    child: (_currentStage == BrushingStage.chooseBrush ||
+                            _currentStage == BrushingStage.chooseTime)
                         ? const SizedBox(key: ValueKey('empty_stage'))
                         : Center(
                             key: ValueKey<BrushingStage>(_currentStage),
@@ -1123,13 +1261,18 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                   ),
                 ),
 
-                if (_currentStage != BrushingStage.chooseBrush)
+                if (_currentStage != BrushingStage.chooseBrush &&
+                    _currentStage != BrushingStage.chooseTime)
                   _buildGameHeader(constraints),
 
                 if (_currentStage == BrushingStage.chooseBrush)
                   _buildChooseBrushStage(constraints),
 
+                if (_currentStage == BrushingStage.chooseTime)
+                  _buildChooseTimeStage(constraints),
+
                 if (_currentStage != BrushingStage.chooseBrush &&
+                    _currentStage != BrushingStage.chooseTime &&
                     _currentStage != BrushingStage.cleanMouthDone)
                   _buildBrushingStage(constraints),
 
@@ -1180,7 +1323,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                   ),
                 ),
 
-                if (_currentStage == BrushingStage.chooseBrush)
+                if (_currentStage == BrushingStage.chooseBrush ||
+                    _currentStage == BrushingStage.chooseTime)
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 10,
                     left: 20,
@@ -1235,11 +1379,16 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   String _getStageObject() {
     switch (_currentStage) {
       case BrushingStage.chooseBrush:
+      case BrushingStage.chooseTime:
         return '';
       case BrushingStage.place45Degrees:
-      case BrushingStage.circularBrushing:
+      case BrushingStage.frontTeethUpper:
+      case BrushingStage.frontTeethLower:
         return 'assets/Group 2.png';
-      case BrushingStage.chewingSurfaces:
+      case BrushingStage.backTeethUpperInner:
+      case BrushingStage.backTeethUpperOuter:
+      case BrushingStage.backTeethUpperChewing:
+      case BrushingStage.backTeethLower:
       case BrushingStage.brushTongue:
       case BrushingStage.continue2Minutes:
       case BrushingStage.spitOut:
@@ -1286,8 +1435,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             const SizedBox(height: 12),
           ],
 
-          if (_currentStage == BrushingStage.circularBrushing ||
-              _currentStage == BrushingStage.chewingSurfaces ||
+          if (_currentStage == BrushingStage.frontTeethUpper ||
+              _currentStage == BrushingStage.frontTeethLower ||
+              _currentStage == BrushingStage.backTeethUpperInner ||
+              _currentStage == BrushingStage.backTeethUpperOuter ||
+              _currentStage == BrushingStage.backTeethUpperChewing ||
+              _currentStage == BrushingStage.backTeethLower ||
               _currentStage == BrushingStage.brushTongue)
             Row(
               children: [
@@ -1343,18 +1496,28 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     switch (_currentStage) {
       case BrushingStage.chooseBrush:
         return 'یک مسواک قشنگ انتخاب کن! 🪥';
+      case BrushingStage.chooseTime:
+        return 'زمان مناسب مسواک زدن را انتخاب کن! ⏱️';
       case BrushingStage.place45Degrees:
         return '۱. مسواک را با زاویه ۴۵ درجه روی لثه قرار بده! 📐';
-      case BrushingStage.circularBrushing:
-        return '۲. با حرکت‌های دایره‌ای کوچک و ملایم دندان‌ها را تمیز کن! 🔄 (حرکت‌ها: $_circleCount)';
-      case BrushingStage.chewingSurfaces:
-        return '۳. سطوح جویدنی را با حرکت‌های کوتاه عقب و جلو تمیز کن! ↔️ (حرکت‌ها: $_strokeCount)';
+      case BrushingStage.frontTeethUpper:
+        return '۲. دندان‌های جلو – فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
+      case BrushingStage.frontTeethLower:
+        return '۳. دندان‌های جلو – فک پایین را از پایین به بالا بکش! ⬆️ (حرکت: $_circleCount)';
+      case BrushingStage.backTeethUpperInner:
+        return '۴. دندان‌های عقب دارای ۳ سطح هستند\nسطح داخلی فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
+      case BrushingStage.backTeethUpperOuter:
+        return '۵. سطح خارجی دندان‌های عقب فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
+      case BrushingStage.backTeethUpperChewing:
+        return '۶. سطح جویدنی دندان‌های عقب فک بالا را با حرکت جلو-عقب تمیز کن! ↔️ (حرکت: $_strokeCount)';
+      case BrushingStage.backTeethLower:
+        return '۷. حالا به بخش عقبی فک پایین بروید و آن را مسواک بزنید! ↕️ (حرکت: $_circleCount)';
       case BrushingStage.brushTongue:
-        return '۴. زبان را به آرامی از عقب به جلو مسواک بکش! ⬇️ ($_tongueSwipeCount/۳)';
+        return '۸. زبان را به آرامی از عقب به جلو مسواک بکش! ⬇️ ($_tongueSwipeCount/۳)';
       case BrushingStage.continue2Minutes:
-        return '۵. مسواک زدن را ادامه بده تا زمان تمام شود! ⏳';
+        return '۹. مسواک زدن را ادامه بده تا زمان تمام شود! ⏳';
       case BrushingStage.spitOut:
-        return '۶. حالا آب و خمیردندان را تف کن! 💦';
+        return '۱۰. حالا آب و خمیردندان را تف کن! 💦';
       case BrushingStage.cleanMouthDone:
         return 'دندون‌هات از تمیزی دارن برق می‌زنن! 😍⭐';
     }
@@ -1685,8 +1848,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                                   if (mounted) {
                                     setState(() {
                                       _currentStage =
-                                          BrushingStage.place45Degrees;
-                                      _initGerms(BrushingStage.place45Degrees);
+                                          BrushingStage.chooseTime;
+                                      _selectedTimeIndex = -1;
                                     });
                                   }
                                 },
@@ -1792,6 +1955,289 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     );
   }
 
+  Widget _buildChooseTimeStage(BoxConstraints constraints) {
+    final List<Map<String, dynamic>> timeOptions = [
+      {'label': '۲ دقیقه', 'icon': Icons.timer, 'minutes': 2, 'color': const Color(0xFF2ECC71)},
+      {'label': '۵ دقیقه', 'icon': Icons.timer, 'minutes': 5, 'color': const Color(0xFFE67E22)},
+      {'label': '۱۰ دقیقه', 'icon': Icons.timer, 'minutes': 10, 'color': const Color(0xFFE74C3C)},
+    ];
+
+    return Positioned.fill(
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 80),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Text(
+                'زمان مناسب مسواک زدن را انتخاب کن! ⏱️',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF9B59B6),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Text(
+                'چه مدت باید دندان‌هایمان را مسواک بزنیم؟ 🤔',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF2C3E50),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            const Spacer(),
+
+            SizedBox(
+              height: 220,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(timeOptions.length, (index) {
+                  final option = timeOptions[index];
+                  final isSelected = _selectedTimeIndex == index;
+
+                  return AnimatedBuilder(
+                    animation: _floatingController,
+                    builder: (context, child) {
+                      final offset =
+                          math.sin(
+                            (_floatingController.value * math.pi * 2) + index * 1.2,
+                          ) *
+                          12.0;
+
+                      return Transform.translate(
+                        offset: Offset(0, offset),
+                        child: SquishPopButton(
+                          onTap: () {
+                            setState(() {
+                              _selectedTimeIndex = index;
+                            });
+                            HapticFeedback.mediumImpact();
+
+                            if (option['minutes'] == 2) {
+                              Future.delayed(
+                                const Duration(milliseconds: 500),
+                                () {
+                                  if (mounted) {
+                                    setState(() {
+                                      _currentStage =
+                                          BrushingStage.place45Degrees;
+                                      _initGerms(BrushingStage.place45Degrees);
+                                    });
+                                  }
+                                },
+                              );
+                            } else {
+                              Future.delayed(const Duration(milliseconds: 300), () {
+                                if (mounted) {
+                                  if (option['minutes'] == 5) {
+                                    _showWrongTimeDialog(
+                                      'اوه! این زمان زیاده! ⏰',
+                                      '۵ دقیقه خیلی زیاده! زمان مناسب مسواک زدن ۲ دقیقه است. دوباره انتخاب کن.',
+                                    );
+                                  } else {
+                                    _showWrongTimeDialog(
+                                      'اوه! این خیلی زیاده! 😅',
+                                      '۱۰ دقیقه واقعاً زیاده و ممکنه لثه‌هات رو اذیت کنه! زمان مناسب ۲ دقیقه است.',
+                                    );
+                                  }
+                                }
+                              });
+                            }
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: 105,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 20,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? Colors.white.withValues(alpha: 0.95)
+                                  : Colors.white.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: isSelected
+                                    ? (option['color'] as Color)
+                                    : Colors.transparent,
+                                width: 3,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: (option['color'] as Color)
+                                            .withValues(alpha: 0.3),
+                                        blurRadius: 16,
+                                        spreadRadius: 2,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ]
+                                  : [
+                                      const BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 8,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: (option['color'] as Color)
+                                        .withValues(alpha: 0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    option['icon'] as IconData,
+                                    color: option['color'] as Color,
+                                    size: 36,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? (option['color'] as Color)
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    option['label'] as String,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: isSelected
+                                          ? Colors.white
+                                          : const Color(0xFF2C3E50),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ),
+            ),
+
+            const Spacer(),
+            const SizedBox(height: 60),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWrongTimeDialog(String title, String message) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Dismiss',
+      barrierColor: Colors.black.withValues(alpha: 0.4),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, a1, a2) => const SizedBox(),
+      transitionBuilder: (context, anim, secAnim, child) {
+        final scale = Tween<double>(
+          begin: 0.8,
+          end: 1.0,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutBack));
+        return Transform.scale(
+          scale: scale.value,
+          child: Directionality(
+            textDirection: TextDirection.rtl,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+              content: Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF2C3E50),
+                  height: 1.5,
+                ),
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                SquishPopButton(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _selectedTimeIndex = -1;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'دوباره انتخاب کن',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildBrushingStage(BoxConstraints constraints) {
     return Positioned.fill(
       child: GestureDetector(
@@ -1877,6 +2323,87 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 ),
               ),
             ],
+
+            // Animated direction arrow hints for brushing stages
+            if (_currentStage == BrushingStage.frontTeethUpper ||
+                _currentStage == BrushingStage.backTeethUpperInner ||
+                _currentStage == BrushingStage.backTeethUpperOuter ||
+                _currentStage == BrushingStage.backTeethLower)
+              Positioned(
+                left: _cachedBounds.left + 0.42 * _cachedBounds.width,
+                top: _cachedBounds.top + 0.32 * _cachedBounds.height,
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _floatingController,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity:
+                            0.3 +
+                            0.3 *
+                                math.sin(
+                                  _floatingController.value * math.pi * 2,
+                                ),
+                        child: const Icon(
+                          Icons.arrow_downward,
+                          size: 60,
+                          color: Colors.lightBlueAccent,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+            if (_currentStage == BrushingStage.frontTeethLower)
+              Positioned(
+                left: _cachedBounds.left + 0.42 * _cachedBounds.width,
+                top: _cachedBounds.top + 0.48 * _cachedBounds.height,
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _floatingController,
+                    builder: (context, child) {
+                      return Opacity(
+                        opacity:
+                            0.3 +
+                            0.3 *
+                                math.sin(
+                                  _floatingController.value * math.pi * 2,
+                                ),
+                        child: const Icon(
+                          Icons.arrow_upward,
+                          size: 60,
+                          color: Colors.greenAccent,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+            if (_currentStage == BrushingStage.backTeethUpperChewing)
+              Positioned(
+                left: _cachedBounds.left + 0.35 * _cachedBounds.width,
+                top: _cachedBounds.top + 0.42 * _cachedBounds.height,
+                child: IgnorePointer(
+                  child: AnimatedBuilder(
+                    animation: _floatingController,
+                    builder: (context, child) {
+                      final t = _floatingController.value;
+                      final direction = (t * 2).floor() % 2 == 0
+                          ? Icons.arrow_forward
+                          : Icons.arrow_back;
+                      return Opacity(
+                        opacity: 0.4 + 0.3 * math.sin(t * math.pi * 2),
+                        child: Icon(
+                          direction,
+                          size: 60,
+                          color: Colors.orangeAccent,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
 
             if (_currentStage == BrushingStage.brushTongue)
               Positioned(

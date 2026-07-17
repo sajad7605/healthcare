@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
+import '../api/healthcare_api.dart';
 
 class MouthwashScreen extends StatefulWidget {
   const MouthwashScreen({super.key});
@@ -69,6 +70,29 @@ class _MouthwashScreenState extends State<MouthwashScreen> with SingleTickerProv
   }
 
   void _showFreshBreathCelebration() {
+    try {
+      final activeChild = HealthcareApi.instance.currentChild;
+      if (activeChild != null) {
+        HealthcareApi.instance.children.logActivity(
+          activeChild.id,
+          ActivityLogRequest(
+            activityType: 'mouthwash',
+            durationSeconds: 30,
+          ),
+        ).then((res) {
+          final oldStars = HealthcareApi.instance.currentChild!.stars;
+          HealthcareApi.instance.currentChild = ChildProfile(
+            id: activeChild.id,
+            childName: activeChild.childName,
+            childAge: activeChild.childAge,
+            avatarUrl: activeChild.avatarUrl,
+            stars: oldStars + res.starsEarned,
+            createdAt: activeChild.createdAt,
+          );
+        });
+      }
+    } catch (_) {}
+
     showDialog(
       context: context,
       barrierDismissible: false,

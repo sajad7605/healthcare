@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
+import '../api/healthcare_api.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -84,6 +85,21 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     _gridController.forward();
+    _fetchChildProfileIfNeeded();
+  }
+
+  Future<void> _fetchChildProfileIfNeeded() async {
+    if (HealthcareApi.instance.currentChild == null && HealthcareApi.instance.apiClient.authToken != null) {
+      try {
+        final kids = await HealthcareApi.instance.children.listChildren();
+        if (kids.isNotEmpty && mounted) {
+          setState(() {
+            HealthcareApi.instance.currentChild = kids.first;
+            HealthcareApi.instance.childrenList = kids;
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   @override
@@ -120,21 +136,39 @@ class _DashboardScreenState extends State<DashboardScreen>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'سلام دوست من! 👋',
-                            style: TextStyle(
+                          Text(
+                            'سلام ${HealthcareApi.instance.currentChild?.childName ?? 'دوست من'}! 👋',
+                            style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF2C3E50),
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            'امروز برای دندون‌هات چیکار کردی؟',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w500,
+                          SquishPopButton(
+                            onTap: () => Navigator.pushNamed(context, '/achievements'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF3CD),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFFFD700)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.emoji_events_rounded, color: Colors.amber, size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${HealthcareApi.instance.currentChild?.stars ?? 0} ستاره و جوایز من 🏆',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFFE67E22),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -163,9 +197,20 @@ class _DashboardScreenState extends State<DashboardScreen>
                               ),
                             ],
                           ),
-                          child: CustomPaint(
-                            painter: ToothPainter(expression: 'winking'),
-                          ),
+                          child: HealthcareApi.instance.currentChild?.avatarUrl != null &&
+                                  HealthcareApi.instance.currentChild!.avatarUrl!.startsWith('http')
+                              ? ClipOval(
+                                  child: Image.network(
+                                    HealthcareApi.instance.currentChild!.avatarUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => CustomPaint(
+                                      painter: ToothPainter(expression: 'winking'),
+                                    ),
+                                  ),
+                                )
+                              : CustomPaint(
+                                  painter: ToothPainter(expression: 'winking'),
+                                ),
                         ),
                       ),
                     ],
@@ -173,6 +218,68 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
 
                 const SizedBox(height: 10),
+
+                // Achievements & Rewards Banner
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SquishPopButton(
+                    onTap: () => Navigator.pushNamed(context, '/achievements'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFD700), Color(0xFFFFA502)],
+                          begin: Alignment.centerRight,
+                          end: Alignment.centerLeft,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Text('🎁', style: TextStyle(fontSize: 24)),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'دستاوردها، اهداف و فروشگاه جوایز',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'برای دیدن مدال‌ها و دریافت جایزه کلیک کن!',
+                                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
 
                 Expanded(
                   child: Padding(
@@ -204,7 +311,24 @@ class _DashboardScreenState extends State<DashboardScreen>
                           },
                           child: SquishPopButton(
                             onTap: () {
-                              Navigator.pushNamed(context, item['route']);
+                              final route = item['route'] as String;
+                              if (route == '/floss' || route == '/brushing') {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/intro_video',
+                                  arguments: {
+                                    'videoPath': route == '/floss'
+                                        ? 'assets/video/nakh.mp4'
+                                        : 'assets/video/msvak.mp4',
+                                    'nextRoute': route,
+                                    'title': route == '/floss'
+                                        ? 'کارتون آموزشی نخ دندان 🧵'
+                                        : 'کارتون آموزشی مسواک زدن 🦷',
+                                  },
+                                );
+                              } else {
+                                Navigator.pushNamed(context, route);
+                              }
                             },
                             child: Container(
                               decoration: BoxDecoration(

@@ -1,0 +1,1761 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "دندون یار کوچولو (Little Tooth Buddy) Backend API",
+    "description": "API backend documentation for the dental hygiene application 'Little Tooth Buddy', supporting both kid-oriented games/activities tracking and parent-oriented dashboards, goals setting, notifications configuration, and rewards management.",
+    "version": "1.1.0",
+    "contact": {
+      "name": "Dental Buddy Support",
+      "email": "support@dentbuddy.ir",
+      "url": "https://dentbuddy.ir"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api/v1",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://api.dentbuddy.ir/api/v1",
+      "description": "Production Server"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "ثبت‌نام و ورود والدین (Parent Auth & Registration)"
+    },
+    {
+      "name": "Children Management",
+      "description": "مدیریت پروفایل کودکان توسط والدین (Children Profile CRUD)"
+    },
+    {
+      "name": "Activity Logs",
+      "description": "ثبت و دریافت فعالیت‌های دندانپزشکی کودک (Dental Activities Tracker)"
+    },
+    {
+      "name": "Dashboard",
+      "description": "داشبورد یکپارچه کودک برای نمایش سریع اطلاعات (Consolidated Child Dashboard)"
+    },
+    {
+      "name": "Goals & Milestones",
+      "description": "اهداف تعریف شده توسط والدین برای تشویق کودک (Custom Goals Manager)"
+    },
+    {
+      "name": "Rewards & Claims",
+      "description": "سیستم خرج ستاره‌ها و جوایز کودکان (Stars Shop & Claims Approval)"
+    },
+    {
+      "name": "Teeth Gallery & Badges",
+      "description": "آلبوم عکس‌های دندونی و نشان‌های افتخار (Tooth Photo Tracker & Achievement Badges)"
+    },
+    {
+      "name": "Settings",
+      "description": "تنظیمات آلارم مسواک و نوتیفیکیشن‌ها (Brushing Reminders Sync)"
+    },
+    {
+      "name": "Educational Content",
+      "description": "ویدیوها و کارتون‌های آموزشی و توصیه‌های علمی (Cartoons & Parental Guide Tips)"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "ثبت نام والدین و کودک (Parent & Child Registration)",
+        "description": "Registers a parent account using a mobile number and registers their first child profile simultaneously, returning authentication token.",
+        "operationId": "registerParent",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParentRegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registration successful, returns JWT token, parent and child details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentRegisterResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or phone number format is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict: Phone number is already registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "ورود به حساب کاربری والدین یا کودک (User & Child Login)",
+        "description": "Authenticates a user (parent or child) using the parent's phone and password. Based on the selected role, issues a JWT token containing different rules/claims (Parent or Child role). If logging in as a child, the token will contain a 'Child' role restricting access to administrative endpoints, and the active child's profile details will be returned.",
+        "operationId": "loginUser",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful, returns JWT token with corresponding role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload format or missing childId when logging in as a child",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Incorrect phone number or password",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parent/profile": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "دریافت اطلاعات پروفایل والدین (Get Parent Profile)",
+        "description": "Retrieves the current authenticated parent's details.",
+        "operationId": "getParentProfile",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentProfile"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parent/children": {
+      "get": {
+        "tags": [
+          "Children Management"
+        ],
+        "summary": "لیست کودکان والدین (List Children)",
+        "description": "Retrieves a list of all child profiles linked to the current logged-in parent.",
+        "operationId": "listChildren",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChildProfile"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Children Management"
+        ],
+        "summary": "افزودن پروفایل کودک جدید (Add Child Profile)",
+        "description": "Registers an additional child profile under the parent's account.",
+        "operationId": "addChild",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChildRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Child profile added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid validation fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parent/children/{childId}": {
+      "put": {
+        "tags": [
+          "Children Management"
+        ],
+        "summary": "ویرایش اطلاعات کودک (Update Child)",
+        "description": "Updates details such as name, age, or avatar of a specific child profile.",
+        "operationId": "updateChild",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChildRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Child profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildProfile"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Child profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Children Management"
+        ],
+        "summary": "حذف پروفایل کودک (Delete Child Profile)",
+        "description": "Deletes a child profile and cascades deletion of activity history, custom goals, and rewards claimed.",
+        "operationId": "deleteChild",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Child deleted successfully"
+          },
+          "404": {
+            "description": "Child profile not found"
+          }
+        }
+      }
+    },
+    "/kids/{childId}/dashboard": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "نمایش داده‌های یکپارچه داشبورد کودک (Get Child Dashboard)",
+        "description": "A consolidated endpoint that returns child profile, recent dental logs, active goals progress, available rewards, reminder settings, and stats all in one call. Reduces network requests on dashboard screens.",
+        "operationId": "getChildDashboard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Consolidated dashboard response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChildDashboardData"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Child profile not found"
+          }
+        }
+      }
+    },
+    "/kids/{childId}/activities": {
+      "get": {
+        "tags": [
+          "Activity Logs"
+        ],
+        "summary": "تاریخچه فعالیت‌های دندان (Get Activity Logs)",
+        "description": "Retrieves the historical list of dental hygiene tasks logged for this child profile.",
+        "operationId": "getActivityLogs",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Number of logs to retrieve"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Pagination offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of activities logged",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityLogResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Activity Logs"
+        ],
+        "summary": "ثبت فعالیت دندان جدید (Log Activity)",
+        "description": "Records completion of a dental task (e.g. interactive brushing game, standard timer brushing, flossing, or mouthwash usage). Automatically computes stars/points, updates streaks, and progresses active goals.",
+        "operationId": "logActivity",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityLogRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Activity recorded, stars granted, and goals updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityLogResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid activity log request parameter"
+          }
+        }
+      }
+    },
+    "/kids/{childId}/stats": {
+      "get": {
+        "tags": [
+          "Activity Logs"
+        ],
+        "summary": "آمار سلامت و ستاره‌ها (Get Child Stats)",
+        "description": "Computes aggregate counters for each brushing type, flossing, mouthwash, active streak count, and morning/night validation for the day.",
+        "operationId": "getChildStats",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KidStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kids/{childId}/goals": {
+      "get": {
+        "tags": [
+          "Goals & Milestones"
+        ],
+        "summary": "اهداف در حال پیشرفت کودک (Get Child Goals)",
+        "description": "Retrieves both system-default goals and custom goals assigned by the parent with their active counts and completion percentages.",
+        "operationId": "listChildGoals",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Goal"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parent/children/{childId}/goals": {
+      "post": {
+        "tags": [
+          "Goals & Milestones"
+        ],
+        "summary": "ایجاد هدف جدید توسط والدین (Create Custom Goal)",
+        "description": "Allows parents to set motivational guidelines for their child, linking target task counts to star rewards.",
+        "operationId": "createCustomGoal",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGoalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Goal set successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kids/{childId}/rewards": {
+      "get": {
+        "tags": [
+          "Rewards & Claims"
+        ],
+        "summary": "لیست جوایز در دسترس (List Rewards)",
+        "description": "Lists all defined rewards that this child can redeem using their stars balance.",
+        "operationId": "listChildRewards",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Reward"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parent/children/{childId}/rewards": {
+      "post": {
+        "tags": [
+          "Rewards & Claims"
+        ],
+        "summary": "ایجاد جایزه جدید توسط والدین (Create Reward)",
+        "description": "Parents can custom define a real-world or virtual reward (e.g. buying toy, going to cinema) that will require a designated number of stars to claim.",
+        "operationId": "createReward",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRewardRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Reward created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Reward"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kids/{childId}/rewards/claim": {
+      "post": {
+        "tags": [
+          "Rewards & Claims"
+        ],
+        "summary": "درخواست دریافت جایزه توسط کودک (Claim Reward Request)",
+        "description": "Initializes a request by a child to purchase a reward using their stars. Deducts stars from their account and creates a claim entry set to 'pending' state.",
+        "operationId": "claimReward",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimRewardRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Claim initialized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RewardClaim"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Insufficient stars or reward unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/parent/rewards/claims/{claimId}/approve": {
+      "post": {
+        "tags": [
+          "Rewards & Claims"
+        ],
+        "summary": "تایید جایزه توسط والدین (Approve Reward Claim)",
+        "description": "Approves a pending reward claim, indicating the parent has physically delivered the reward to the child.",
+        "operationId": "approveRewardClaim",
+        "parameters": [
+          {
+            "name": "claimId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique claim entry identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reward claim marked as approved/given",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RewardClaim"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Claim record not found"
+          }
+        }
+      }
+    },
+    "/kids/{childId}/settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "دریافت تنظیمات یادآوری (Get Reminder Settings)",
+        "description": "Obtains morning, evening notifications configuration, and push details for the child.",
+        "operationId": "getReminderSettings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "به‌روزرسانی تنظیمات یادآوری (Update Reminder Settings)",
+        "description": "Updates morning/night alarm hours and notification preferences.",
+        "operationId": "updateReminderSettings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationSettings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kids/{childId}/badges": {
+      "get": {
+        "tags": [
+          "Teeth Gallery & Badges"
+        ],
+        "summary": "آلبوم موفقیت‌ها و نشان‌ها (Get Earned Badges)",
+        "description": "Retrieves the list of badges/milestones earned by the child, mapped directly to dashboard configurations.",
+        "operationId": "getUnlockedBadges",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Badge"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kids/{childId}/photos": {
+      "get": {
+        "tags": [
+          "Teeth Gallery & Badges"
+        ],
+        "summary": "گالری تصاویر دندان (Get Teeth Gallery)",
+        "description": "Retrieves photos of the child's teeth (lost teeth, cavity tracks) uploaded to the album.",
+        "operationId": "getTeethPhotos",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TeethPhoto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Teeth Gallery & Badges"
+        ],
+        "summary": "بارگذاری عکس دندان (Upload Tooth Photo)",
+        "description": "Uploads a photo of the child's tooth (e.g. for dental tracking or losing tooth) using multipart form-data.",
+        "operationId": "uploadToothPhoto",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "File upload parameter containing the tooth image"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Title/Caption for the photo card (e.g., 'دندون لق بالایی افتاد!')",
+                    "example": "اولین دندان شیری که افتاد"
+                  }
+                },
+                "required": [
+                  "photo"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Photo uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeethPhoto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid image file format"
+          }
+        }
+      }
+    },
+    "/kids/{childId}/photos/{photoId}": {
+      "delete": {
+        "tags": [
+          "Teeth Gallery & Badges"
+        ],
+        "summary": "حذف عکس از گالری دندان (Delete Tooth Photo)",
+        "description": "Deletes an uploaded photo from the child's tooth gallery.",
+        "operationId": "deleteToothPhoto",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/ChildIdPath"
+          },
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique ID of the photo to remove"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Photo deleted successfully"
+          },
+          "404": {
+            "description": "Photo not found"
+          }
+        }
+      }
+    },
+    "/videos": {
+      "get": {
+        "tags": [
+          "Educational Content"
+        ],
+        "summary": "لیست کارتون‌ها و ویدیوهای آموزشی (Get Educational Cartoons)",
+        "description": "Obtains URLs and details of cartoons, quizzes, and educational modules for children.",
+        "operationId": "listVideos",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Video"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tips": {
+      "get": {
+        "tags": [
+          "Educational Content"
+        ],
+        "summary": "مطالب و نکات علمی دندانپزشکی والدین (Get Parent Tips)",
+        "description": "Obtains list of parent-targeted recommendations, tips, and dentist posts.",
+        "operationId": "listTips",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tip"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "ChildIdPath": {
+        "name": "childId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "شناسه یکتای کودک (Unique UUID of the child profile)"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Standard Bearer authorization header using a JWT access token. Format: 'Bearer <token>'"
+      }
+    },
+    "schemas": {
+      "ParentRegisterRequest": {
+        "type": "object",
+        "required": [
+          "parentName",
+          "phone",
+          "password",
+          "childName",
+          "childAge"
+        ],
+        "properties": {
+          "parentName": {
+            "type": "string",
+            "description": "نام پدر یا مادر (Full name of the parent)",
+            "example": "سارا محمدی",
+            "maxLength": 60
+          },
+          "phone": {
+            "type": "string",
+            "description": "شماره تلفن همراه والدین (Parent Iranian phone number)",
+            "pattern": "^09[0-9]{9}$",
+            "example": "09121234567"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "رمز عبور دلخواه (Min 6 characters)",
+            "minLength": 6,
+            "example": "sarapass123"
+          },
+          "childName": {
+            "type": "string",
+            "description": "نام کودک قهرمان (Name of the child)",
+            "example": "کیان",
+            "maxLength": 50
+          },
+          "childAge": {
+            "type": "integer",
+            "description": "سن کودک (Child age in years)",
+            "minimum": 1,
+            "maximum": 18,
+            "example": 7
+          }
+        }
+      },
+      "ParentRegisterResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT authentication token to place in Authorization header",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "parent": {
+            "$ref": "#/components/schemas/ParentProfile"
+          },
+          "child": {
+            "$ref": "#/components/schemas/ChildProfile"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "phone",
+          "password"
+        ],
+        "properties": {
+          "phone": {
+            "type": "string",
+            "description": "Parent registered phone number",
+            "pattern": "^09[0-9]{9}$",
+            "example": "09121234567"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Parent secure password",
+            "example": "sarapass123"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "Parent",
+              "Child"
+            ],
+            "default": "Parent",
+            "description": "نقش مورد نظر جهت ورود (Parent یا Child). در صورت انتخاب Child، قوانین مربوط به کودکان اعمال می‌شود.",
+            "example": "Parent"
+          },
+          "childId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "شناسه کودک (اگر نقش Child انتخاب شده باشد الزامی است)",
+            "example": "c5943b18-fc33-40ea-90bd-f4c2c77d6ba1"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "JWT authentication token containing role claim",
+            "example": "eyJhbGciOiJIUzI1NiIsInR..."
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "Parent",
+              "Child"
+            ],
+            "description": "نقش تایید شده در سیستم برای این نشست",
+            "example": "Parent"
+          },
+          "parent": {
+            "$ref": "#/components/schemas/ParentProfile"
+          },
+          "child": {
+            "$ref": "#/components/schemas/ChildProfile"
+          },
+          "kids": {
+            "type": "array",
+            "description": "لیست کل کودکان ثبت شده در این اکانت (تنها در صورتی بازگردانده می‌شود که ورود با نقش Parent انجام شده باشد)",
+            "items": {
+              "$ref": "#/components/schemas/ChildProfile"
+            }
+          }
+        }
+      },
+      "ParentProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "b182d334-a130-4be6-8e5d-b0a34fbf1d89"
+          },
+          "parentName": {
+            "type": "string",
+            "example": "سارا محمدی"
+          },
+          "phone": {
+            "type": "string",
+            "example": "09121234567"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-29T08:00:00Z"
+          }
+        }
+      },
+      "ChildProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "c5943b18-fc33-40ea-90bd-f4c2c77d6ba1"
+          },
+          "childName": {
+            "type": "string",
+            "example": "کیان"
+          },
+          "childAge": {
+            "type": "integer",
+            "example": 7
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL of the child's chosen tooth avatar expression",
+            "example": "https://api.dentbuddy.ir/avatars/tooth_happy.png"
+          },
+          "stars": {
+            "type": "integer",
+            "description": "موجودی ستاره‌های کودک برای خرید جایزه (Child current stars balance)",
+            "example": 18
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-29T08:01:00Z"
+          }
+        }
+      },
+      "CreateChildRequest": {
+        "type": "object",
+        "required": [
+          "childName",
+          "childAge"
+        ],
+        "properties": {
+          "childName": {
+            "type": "string",
+            "description": "نام کودک",
+            "example": "عسل",
+            "maxLength": 50
+          },
+          "childAge": {
+            "type": "integer",
+            "description": "سن کودک",
+            "minimum": 1,
+            "maximum": 18,
+            "example": 5
+          },
+          "avatarUrl": {
+            "type": "string",
+            "description": "آدرس عکس پروفایل اولیه",
+            "example": "https://api.dentbuddy.ir/avatars/tooth_winking.png"
+          }
+        }
+      },
+      "UpdateChildRequest": {
+        "type": "object",
+        "properties": {
+          "childName": {
+            "type": "string",
+            "example": "کیان قهرمان"
+          },
+          "childAge": {
+            "type": "integer",
+            "example": 8
+          },
+          "avatarUrl": {
+            "type": "string",
+            "example": "https://api.dentbuddy.ir/avatars/tooth_cool.png"
+          }
+        }
+      },
+      "ActivityLogRequest": {
+        "type": "object",
+        "required": [
+          "activityType",
+          "durationSeconds"
+        ],
+        "properties": {
+          "activityType": {
+            "type": "string",
+            "enum": [
+              "brushing_timer",
+              "brushing_interactive",
+              "flossing",
+              "mouthwash"
+            ],
+            "description": "نوع فعالیت بهداشت دهان",
+            "example": "brushing_interactive"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "description": "مدت زمان انجام فعالیت به ثانیه",
+            "example": 120
+          },
+          "completedSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "مراحل طی شده در بازی مسواک تعاملی (Interactive brush game stages)",
+            "example": [
+              "chooseBrush",
+              "place45Degrees",
+              "circularBrushing",
+              "chewingSurfaces",
+              "brushTongue",
+              "spitOut",
+              "cleanMouthDone"
+            ]
+          }
+        }
+      },
+      "ActivityLogResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "60e9d1bf-52d6-444f-bc9b-381c6ee38734"
+          },
+          "childId": {
+            "type": "string",
+            "format": "uuid",
+            "example": "c5943b18-fc33-40ea-90bd-f4c2c77d6ba1"
+          },
+          "activityType": {
+            "type": "string",
+            "example": "brushing_interactive"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "example": 120
+          },
+          "starsEarned": {
+            "type": "integer",
+            "description": "تعداد ستاره‌های به دست آمده برای این فعالیت (Stars earned)",
+            "example": 3
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-29T08:15:00Z"
+          }
+        }
+      },
+      "KidStats": {
+        "type": "object",
+        "properties": {
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "totalStars": {
+            "type": "integer",
+            "description": "Total earned stars overall",
+            "example": 54
+          },
+          "currentStreakDays": {
+            "type": "integer",
+            "description": "روزهای متوالی مسواک زدن (Consecutive brushing streak in days)",
+            "example": 6
+          },
+          "brushingCount": {
+            "type": "integer",
+            "description": "کل دفعات مسواک زدن",
+            "example": 18
+          },
+          "flossingCount": {
+            "type": "integer",
+            "description": "کل دفعات نخ دندان زدن",
+            "example": 4
+          },
+          "mouthwashCount": {
+            "type": "integer",
+            "description": "کل دفعات دهانشویه",
+            "example": 5
+          },
+          "morningBrushingCompletedToday": {
+            "type": "boolean",
+            "description": "Has child completed morning brushing today",
+            "example": true
+          },
+          "nightBrushingCompletedToday": {
+            "type": "boolean",
+            "description": "Has child completed night brushing today",
+            "example": false
+          }
+        }
+      },
+      "Goal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "f0412db5-05e8-4663-8a33-6df18765362e"
+          },
+          "title": {
+            "type": "string",
+            "description": "عنوان هدف",
+            "example": "قهرمان مسواک هفتگی"
+          },
+          "description": {
+            "type": "string",
+            "description": "توضیح دستیابی به هدف",
+            "example": "۷ روز متوالی مسواک زدن در صبح و شب بدون فراموشی"
+          },
+          "targetCount": {
+            "type": "integer",
+            "description": "تعداد فعالیت‌های هدف‌گذاری شده",
+            "example": 14
+          },
+          "currentProgress": {
+            "type": "integer",
+            "description": "تعداد فعالیت‌های انجام شده تا الان",
+            "example": 10
+          },
+          "starsReward": {
+            "type": "integer",
+            "description": "جایزه ستاره هدف",
+            "example": 15
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "completed"
+            ],
+            "example": "active"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateGoalRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "targetCount",
+          "starsReward"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "عنوان هدف تعیین شده والدین",
+            "example": "مسواک زدن ۳ روز پیاپی",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "توضیحات اختیاری برای انگیزه دادن",
+            "example": "۳ روز مسواک بزن تا ستاره جایزه بگیری!",
+            "maxLength": 250
+          },
+          "targetCount": {
+            "type": "integer",
+            "description": "تعداد مراتب انجام کار مورد نیاز",
+            "minimum": 1,
+            "example": 6
+          },
+          "starsReward": {
+            "type": "integer",
+            "description": "ستاره تشویقی دریافتی بعد از تکمیل",
+            "minimum": 1,
+            "example": 8
+          }
+        }
+      },
+      "Reward": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "e5c6a1bf-10bd-4b08-b12e-ca283b8a101d"
+          },
+          "title": {
+            "type": "string",
+            "description": "نام جایزه خانوادگی",
+            "example": "رفتن به پارک بازی"
+          },
+          "description": {
+            "type": "string",
+            "description": "جزییات جایزه انتخابی",
+            "example": "یک عصر گردش در پارک و سوار شدن ترن هوایی"
+          },
+          "starsRequired": {
+            "type": "integer",
+            "description": "تعداد ستاره لازم برای خرید",
+            "example": 35
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "claimed",
+              "redeemed"
+            ],
+            "description": "وضعیت جایزه (در دسترس، درخواست شده توسط کودک، تحویل داده شده توسط والدین)",
+            "example": "available"
+          }
+        }
+      },
+      "CreateRewardRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "starsRequired"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "عنوان جایزه",
+            "example": "خرید تفنگ آب‌پاش",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "description": "توضیح جایزه",
+            "example": "تفنگ آب‌پاش قرمز رنگ بزرگ",
+            "maxLength": 300
+          },
+          "starsRequired": {
+            "type": "integer",
+            "description": "ستاره مورد نیاز برای دریافت",
+            "minimum": 1,
+            "example": 40
+          }
+        }
+      },
+      "ClaimRewardRequest": {
+        "type": "object",
+        "required": [
+          "rewardId"
+        ],
+        "properties": {
+          "rewardId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "شناسه جایزه مدنظر",
+            "example": "e5c6a1bf-10bd-4b08-b12e-ca283b8a101d"
+          }
+        }
+      },
+      "RewardClaim": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "c01bc3b8-8092-411a-bc01-f923b0a7ea29"
+          },
+          "reward": {
+            "$ref": "#/components/schemas/Reward"
+          },
+          "childId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "approved"
+            ],
+            "description": "وضعیت تایید والدین (در انتظار تایید، تایید شده)",
+            "example": "pending"
+          },
+          "claimedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "NotificationSettings": {
+        "type": "object",
+        "required": [
+          "morningReminderTime",
+          "nightReminderTime"
+        ],
+        "properties": {
+          "morningReminderTime": {
+            "type": "string",
+            "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+            "description": "زمان یادآوری صبح (ساعت:دقیقه)",
+            "example": "08:15"
+          },
+          "nightReminderTime": {
+            "type": "string",
+            "pattern": "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",
+            "description": "زمان یادآوری شب (ساعت:دقیقه)",
+            "example": "21:30"
+          },
+          "pushNotificationsEnabled": {
+            "type": "boolean",
+            "description": "فعال بودن هشدارهای گوشی برای مسواک",
+            "example": true
+          }
+        }
+      },
+      "Badge": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "bad9c01f-fc82-410a-b30a-dc011f0a21a9"
+          },
+          "title": {
+            "type": "string",
+            "description": "نام کارت افتخاری",
+            "example": "قهرمان مسواک زدن! 🦸‍♂️"
+          },
+          "description": {
+            "type": "string",
+            "description": "توضیح نحوه کسب نشان",
+            "example": "یک هفته مسواک زدن منظم و بدون فراموشی در صبح و شب."
+          },
+          "badgeColor": {
+            "type": "string",
+            "description": "رنگ پس زمینه کارت به صورت کد هگز",
+            "example": "#FF7675"
+          },
+          "toothExpression": {
+            "type": "string",
+            "description": "حالت نقاشی دندان در کارت (مثال: happy, winking, brushing)",
+            "example": "happy"
+          },
+          "unlockedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-28T19:30:00Z"
+          }
+        }
+      },
+      "TeethPhoto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "اولین دندون افتاده! 🦷✨"
+          },
+          "photoUrl": {
+            "type": "string",
+            "description": "آدرس مستقیم فایل تصویر دندان روی سرور",
+            "example": "https://api.dentbuddy.ir/uploads/photos/tooth_loss_1.jpg"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-29T08:10:00Z"
+          }
+        }
+      },
+      "Video": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "کارتون مسواک زدن بَبَئی"
+          },
+          "description": {
+            "type": "string",
+            "example": "چگونه بَبَئی دندوناشو تمیز و سفید نگه میداره"
+          },
+          "videoUrl": {
+            "type": "string",
+            "example": "https://api.dentbuddy.ir/content/videos/brushing_lamb.mp4"
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "example": "https://api.dentbuddy.ir/content/thumbnails/brushing_lamb.jpg"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "example": 180
+          }
+        }
+      },
+      "Tip": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "example": "چگونه به دندان درآوردن نوزاد کمک کنیم؟"
+          },
+          "content": {
+            "type": "string",
+            "example": "استفاده از دندونی خنک و ماساژ لثه می‌تواند درد نوزاد را کاهش دهد..."
+          },
+          "author": {
+            "type": "string",
+            "example": "دکتر حسینی (متخصص دندانپزشکی کودکان)"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-06-25"
+          }
+        }
+      },
+      "ChildDashboardData": {
+        "type": "object",
+        "properties": {
+          "child": {
+            "$ref": "#/components/schemas/ChildProfile"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/KidStats"
+          },
+          "activeGoals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Goal"
+            }
+          },
+          "availableRewards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Reward"
+            }
+          },
+          "settings": {
+            "$ref": "#/components/schemas/NotificationSettings"
+          },
+          "recentActivities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityLogResponse"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "description": "HTTP Status Code of the error",
+            "example": 401
+          },
+          "message": {
+            "type": "string",
+            "description": "توضیح فارسی خطا (Human-readable error description in Persian)",
+            "example": "رمز عبور یا شماره تلفن نامعتبر است."
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-29T08:25:00Z"
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "example": "برخی فیلدهای وارد شده نامعتبر هستند."
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "خطاهای مربوط به هر فیلد (Key-value map of field errors)",
+            "example": {
+              "phone": "فرمت شماره تلفن وارد شده صحیح نیست. باید به صورت 09xxxxxxxxx باشد.",
+              "password": "رمز عبور باید حداقل دارای ۶ کاراکتر باشد."
+            }
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

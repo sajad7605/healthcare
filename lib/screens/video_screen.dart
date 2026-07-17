@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
+import '../api/healthcare_api.dart';
+import 'intro_video_screen.dart';
 
 class VideoScreen extends StatefulWidget {
   const VideoScreen({super.key});
@@ -11,35 +13,55 @@ class VideoScreen extends StatefulWidget {
 }
 
 class _VideoScreenState extends State<VideoScreen> {
-  final List<Map<String, dynamic>> _episodes = [
-    {
-      'title': 'نبرد مسواک برقی و میکروب شکلاتی ⚔️',
-      'duration': '۵:۳۰',
-      'accent': const Color(0xFF341F97),
-      'views': '۱۲۰ بازدید',
-    },
-    {
-      'title': 'ماجرای اولین ملاقات با دندانپزشک مهربان 🏥',
-      'duration': '۴:۱۵',
-      'accent': const Color(0xFF10AC84),
-      'views': '۸۵ بازدید',
-    },
-    {
-      'title': 'آموزش نخ دندان با خمیر دندان نعنایی 🍃',
-      'duration': '۶:۰۰',
-      'accent': const Color(0xFFEE5253),
-      'views': '۲۱۰ بازدید',
-    },
+  List<Video> _videos = [];
+  bool _isLoading = true;
+  String? _errorMsg;
+
+  final List<Color> _accentColors = const [
+    Color(0xFF341F97),
+    Color(0xFF10AC84),
+    Color(0xFFEE5253),
   ];
 
-  void _playMockVideo(String title) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return _MockVideoPlayerSheet(title: title);
-      },
+  @override
+  void initState() {
+    super.initState();
+    _loadVideos();
+  }
+
+  Future<void> _loadVideos() async {
+    try {
+      final data = await HealthcareApi.instance.educational.listVideos();
+      setState(() {
+        _videos = data.isEmpty
+            ? [
+                Video(id: '1', title: 'کارتون آموزشی مسواک زدن 🦷', description: 'آموزش شستن صحیح دندان‌ها', videoUrl: 'assets/video/msvak.mp4', durationSeconds: 60),
+                Video(id: '2', title: 'کارتون آموزشی نخ دندان 🧵', description: 'چگونه از نخ دندان استفاده کنیم؟', videoUrl: 'assets/video/nakh.mp4', durationSeconds: 60),
+              ]
+            : data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _videos = [
+          Video(id: '1', title: 'کارتون آموزشی مسواک زدن 🦷', description: 'آموزش شستن صحیح دندان‌ها', videoUrl: 'assets/video/msvak.mp4', durationSeconds: 60),
+          Video(id: '2', title: 'کارتون آموزشی نخ دندان 🧵', description: 'چگونه از نخ دندان استفاده کنیم؟', videoUrl: 'assets/video/nakh.mp4', durationSeconds: 60),
+        ];
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _playVideo(Video video) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => IntroVideoScreen(
+          videoPath: video.videoUrl.isNotEmpty ? video.videoUrl : 'assets/video/msvak.mp4',
+          nextRoute: '',
+          title: video.title,
+        ),
+      ),
     );
   }
 
@@ -89,9 +111,9 @@ class _VideoScreenState extends State<VideoScreen> {
                 ),
 
                 const SizedBox(height: 20),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Text(
                     'کارتون‌های مورد علاقه‌ات رو تماشا کن و یاد بگیر چطور قهرمان دندون‌هات باشی! 🎬',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -105,93 +127,159 @@ class _VideoScreenState extends State<VideoScreen> {
 
                 const SizedBox(height: 20),
 
-                // Episode List
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: _episodes.length,
-                    itemBuilder: (context, index) {
-                      final ep = _episodes[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            )
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(24),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => _playMockVideo(ep['title']),
-                              child: Row(
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF341F97),
+                          ),
+                        )
+                      : _errorMsg != null
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  // Mock thumbnail on the right (RTL layout)
-                                  Container(
-                                    width: 110,
-                                    height: 110,
-                                    color: ep['accent'].withValues(alpha: 0.12),
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.play_circle_filled,
-                                        size: 48,
-                                        color: ep['accent'],
-                                      ),
+                                  Text(
+                                    _errorMsg!,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Color(0xFF2C3E50),
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-
-                                  // Text details on the left
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            ep['title'],
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF2C3E50),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Row(
-                                            children: [
-                                              Icon(Icons.access_time, size: 14, color: Colors.grey.shade500),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                ep['duration'],
-                                                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                                              ),
-                                              const SizedBox(width: 16),
-                                              Icon(Icons.remove_red_eye_outlined, size: 14, color: Colors.grey.shade500),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                ep['views'],
-                                                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                                              ),
-                                            ],
-                                          )
-                                        ],
-                                      ),
-                                    ),
+                                  const SizedBox(height: 12),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _isLoading = true;
+                                        _errorMsg = null;
+                                      });
+                                      _loadVideos();
+                                    },
+                                    child: const Text('تلاش مجدد'),
                                   )
                                 ],
                               ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                            )
+                          : _videos.isEmpty
+                              ? const Center(
+                                  child: Text(
+                                    'ویدیویی پیدا نشد 🧐',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color(0xFF2C3E50),
+                                    ),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                                  itemCount: _videos.length,
+                                  itemBuilder: (context, index) {
+                                    final video = _videos[index];
+                                    final accent = _accentColors[index % _accentColors.length];
+                                    
+                                    final minutes = video.durationSeconds ~/ 60;
+                                    final remainingSeconds = video.durationSeconds % 60;
+                                    final durationText = '$minutes:${remainingSeconds.toString().padLeft(2, '0')}';
+
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(24),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.05),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          )
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(24),
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            onTap: () => _playVideo(video),
+                                            child: Row(
+                                              children: [
+                                                // Thumbnail on the right
+                                                Container(
+                                                  width: 110,
+                                                  height: 110,
+                                                  color: accent.withValues(alpha: 0.12),
+                                                  child: video.thumbnailUrl != null && video.thumbnailUrl!.startsWith('http')
+                                                      ? Image.network(
+                                                          video.thumbnailUrl!,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (c, e, s) => Center(
+                                                            child: Icon(
+                                                              Icons.play_circle_filled,
+                                                              size: 48,
+                                                              color: accent,
+                                                            ),
+                                                          ),
+                                                        )
+                                                      : Center(
+                                                          child: Icon(
+                                                            Icons.play_circle_filled,
+                                                            size: 48,
+                                                            color: accent,
+                                                          ),
+                                                        ),
+                                                ),
+
+                                                // Text details on the left
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.all(16.0),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          video.title,
+                                                          style: const TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: Color(0xFF2C3E50),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(height: 12),
+                                                        Row(
+                                                          children: [
+                                                            Icon(Icons.access_time, size: 14, color: Colors.grey.shade500),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              durationText,
+                                                              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                                            ),
+                                                            const SizedBox(width: 16),
+                                                            Icon(Icons.video_library_outlined, size: 14, color: Colors.grey.shade500),
+                                                            const SizedBox(width: 4),
+                                                            Expanded(
+                                                              child: Text(
+                                                                video.description ?? 'کارتون آموزشی دندان',
+                                                                style: TextStyle(
+                                                                  fontSize: 12,
+                                                                  color: Colors.grey.shade500,
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
                 ),
               ],
             ),

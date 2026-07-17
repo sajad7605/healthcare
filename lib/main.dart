@@ -10,8 +10,13 @@ import 'screens/gallery_screen.dart';
 import 'screens/video_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/brushing_screen.dart';
+import 'screens/intro_video_screen.dart';
+import 'screens/achievement_screen.dart';
+import 'package:fvp/fvp.dart' as fvp;
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  fvp.registerWith();
   runApp(const HealthcareApp());
 }
 
@@ -77,6 +82,17 @@ class HealthcareApp extends StatelessWidget {
             break;
           case '/brushing':
             page = const InteractiveBrushScreen();
+            break;
+          case '/achievements':
+            page = const AchievementScreen();
+            break;
+          case '/intro_video':
+            final args = settings.arguments as Map<String, dynamic>;
+            page = IntroVideoScreen(
+              videoPath: args['videoPath'] as String,
+              nextRoute: args['nextRoute'] as String,
+              title: args['title'] as String,
+            );
             break;
 
           default:
