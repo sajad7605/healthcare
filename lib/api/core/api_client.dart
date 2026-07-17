@@ -8,7 +8,7 @@ class ApiClient {
   String? _authToken;
 
   ApiClient({
-    String baseUrl = 'https://test.chawer.ir',
+    String baseUrl = 'https://h.ghahremansalamat.ir',
     String? token,
   })  : _baseUrl = baseUrl,
         _authToken = token {
