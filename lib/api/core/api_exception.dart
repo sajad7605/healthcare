@@ -46,7 +46,8 @@ class ApiException implements Exception {
           message = 'درخواست توسط کاربر لغو شد.';
           break;
         case DioExceptionType.connectionError:
-          message = 'مشکل در برقراری ارتباط با شبکه سرور.';
+          final details = error.error != null ? ' (${error.error})' : '';
+          message = 'مشکل در برقراری ارتباط با شبکه سرور.$details';
           break;
         default:
           message = 'خطای غیرمنتظره‌ای رخ داده است.';

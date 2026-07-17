@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'api_exception.dart';
 
 class ApiClient {
@@ -23,6 +24,16 @@ class ApiClient {
         },
       ),
     );
+
+    if (_dio.httpClientAdapter is IOHttpClientAdapter) {
+      (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+        final client = HttpClient();
+        // Allow self-signed or development SSL certificates on native devices
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+        return client;
+      };
+    }
 
     _dio.interceptors.add(
       InterceptorsWrapper(
