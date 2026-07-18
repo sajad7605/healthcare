@@ -21,7 +21,14 @@ class AuthService {
       ApiEndpoints.registerParent(v),
       data: request.toJson(),
     );
-    return ParentRegisterResponse.fromJson(response.data as Map<String, dynamic>);
+    final registerResponse = ParentRegisterResponse.fromJson(response.data as Map<String, dynamic>);
+    
+    // Automatically configure the token in the ApiClient on successful registration
+    if (registerResponse.token.isNotEmpty) {
+      apiClient.setAuthToken(registerResponse.token);
+    }
+    
+    return registerResponse;
   }
 
   /// Login parent or child

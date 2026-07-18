@@ -139,6 +139,7 @@ class _GalleryScreenState extends State<GalleryScreen>
           SnackBar(
             content: Text('خطا در آپلود: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 8),
           ),
         );
       }

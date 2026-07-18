@@ -20,9 +20,36 @@ class ApiException implements Exception {
 
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {
-      // Check for ErrorResponse or ValidationErrorResponse
-      if (data.containsKey('message') && data['message'] != null) {
-        message = data['message'].toString();
+      // Top-level 'message' field (ApiResult envelope from backend)
+      final rawMessage = data['message']?.toString() ?? '';
+      if (rawMessage.isNotEmpty) {
+        message = rawMessage;
+      }
+      // Nested data map may also have message
+      else if (data.containsKey('data') && data['data'] is Map) {
+        final nested = data['data'] as Map;
+        final nestedMsg = nested['message']?.toString() ?? '';
+        if (nestedMsg.isNotEmpty) message = nestedMsg;
+      }
+
+      // If message is a JSON object (from exception middleware), parse it
+      if (message.startsWith('{')) {
+        try {
+          final exMatch = RegExp(r'"Exception"\s*:\s*"((?:[^"\\]|\\.)*)"').firstMatch(message);
+          if (exMatch != null) {
+            message = exMatch.group(1)?.replaceAll(r'\"', '"') ?? message;
+          }
+          final innerMatch = RegExp(r'"InnerException"\s*:\s*"((?:[^"\\]|\\.)*)"').firstMatch(message);
+          if (innerMatch != null) {
+            final inner = innerMatch.group(1)?.replaceAll(r'\"', '"') ?? '';
+            if (inner.isNotEmpty) message += '\n↳ $inner';
+          }
+          final inner2Match = RegExp(r'"InnerInnerException"\s*:\s*"((?:[^"\\]|\\.)*)"').firstMatch(message);
+          if (inner2Match != null) {
+            final inner2 = inner2Match.group(1)?.replaceAll(r'\"', '"') ?? '';
+            if (inner2.isNotEmpty) message += '\n↳↳ $inner2';
+          }
+        } catch (_) {}
       }
 
       if (data.containsKey('errors') && data['errors'] is Map) {
@@ -31,6 +58,8 @@ class ApiException implements Exception {
           (key, value) => MapEntry(key.toString(), value.toString()),
         );
       }
+    } else if (data is String && data.isNotEmpty) {
+      message = data;
     } else {
       // General fallbacks based on DioExceptionType
       switch (error.type) {

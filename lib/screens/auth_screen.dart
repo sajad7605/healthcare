@@ -96,9 +96,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('خطای نامشخصی رخ داده است.', style: TextStyle(fontFamily: 'YekanBakh')),
+            SnackBar(
+              content: Text('خطا: $e', style: const TextStyle(fontFamily: 'YekanBakh')),
               backgroundColor: Colors.redAccent,
+              duration: const Duration(seconds: 8),
             ),
           );
         }

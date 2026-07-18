@@ -9,7 +9,8 @@ class ApiClient {
   String? _authToken;
 
   ApiClient({
-    String baseUrl = 'https://h.ghahremansalamat.ir',
+   String baseUrl = 'https://h.ghahremansalamat.ir',
+    //String baseUrl = 'http://127.0.0.1:5158',
     String? token,
   })  : _baseUrl = baseUrl,
         _authToken = token {
@@ -19,7 +20,6 @@ class ApiClient {
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
       ),
@@ -191,11 +191,14 @@ class ApiClient {
 
       final formData = FormData.fromMap(formDataMap);
 
+      final requestOptions = options ?? Options();
+      requestOptions.contentType = 'multipart/form-data';
+
       return await _dio.post<T>(
         path,
         data: formData,
         queryParameters: queryParameters,
-        options: options,
+        options: requestOptions,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);

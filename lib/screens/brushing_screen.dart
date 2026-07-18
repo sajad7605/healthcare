@@ -51,6 +51,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   bool _isFastMode = true;
   Timer? _countdownTimer;
   bool _isAngleAligned = false;
+  bool _isCelebrationShown = false;
 
   Offset? _lastStrokePoint;
   String? _lastStrokeDirection;
@@ -854,38 +855,46 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
           });
 
           // API Connection: Log interactive brushing activity and update stars
-          try {
-            final activeChild = HealthcareApi.instance.currentChild;
-            if (activeChild != null) {
-              HealthcareApi.instance.children.logActivity(
-                activeChild.id,
-                ActivityLogRequest(
-                  activityType: 'brushing_interactive',
-                  durationSeconds: _isFastMode ? 15 : 120,
-                  completedSteps: const [
-                    'chooseBrush',
-                    'place45Degrees',
-                    'circularBrushing',
-                    'chewingSurfaces',
-                    'brushTongue',
-                    'spitOut',
-                    'cleanMouthDone'
-                  ],
-                ),
-              ).then((res) {
-                // Update local cached stars
-                final oldStars = HealthcareApi.instance.currentChild!.stars;
-                HealthcareApi.instance.currentChild = ChildProfile(
-                  id: activeChild.id,
-                  childName: activeChild.childName,
-                  childAge: activeChild.childAge,
-                  avatarUrl: activeChild.avatarUrl,
-                  stars: oldStars + res.starsEarned,
-                  createdAt: activeChild.createdAt,
+          final activeChild = HealthcareApi.instance.currentChild;
+          if (activeChild != null) {
+            HealthcareApi.instance.children.logActivity(
+              activeChild.id,
+              ActivityLogRequest(
+                activityType: 'brushing_interactive',
+                durationSeconds: _isFastMode ? 15 : 120,
+                completedSteps: const [
+                  'chooseBrush',
+                  'place45Degrees',
+                  'circularBrushing',
+                  'chewingSurfaces',
+                  'brushTongue',
+                  'spitOut',
+                  'cleanMouthDone'
+                ],
+              ),
+            ).then((res) {
+              // Update local cached stars
+              final oldStars = HealthcareApi.instance.currentChild?.stars ?? 0;
+              HealthcareApi.instance.currentChild = ChildProfile(
+                id: activeChild.id,
+                childName: activeChild.childName,
+                childAge: activeChild.childAge,
+                avatarUrl: activeChild.avatarUrl,
+                stars: oldStars + res.starsEarned,
+                createdAt: activeChild.createdAt,
+              );
+            }).catchError((err) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('خطا در ثبت فعالیت: $err'),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 6),
+                  ),
                 );
-              });
-            }
-          } catch (_) {}
+              }
+            });
+          }
 
           Future.delayed(const Duration(seconds: 4), () {
             if (mounted) {
@@ -1051,6 +1060,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   }
 
   void _showCelebrationDialog() {
+    if (_isCelebrationShown) return;
+    _isCelebrationShown = true;
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -1118,6 +1129,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                     Navigator.of(context).pop();
                     _celebrationController.stop();
                     setState(() {
+                      _isCelebrationShown = false;
                       _brushes.shuffle();
                       _currentStage = BrushingStage.chooseBrush;
                       _selectedBrushIndex = -1;
@@ -1157,6 +1169,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 SquishPopButton(
                   onTap: () {
                     _celebrationController.stop();
+                    _isCelebrationShown = false;
                     Navigator.of(context).pop();
                     Navigator.of(context).pop();
                   },

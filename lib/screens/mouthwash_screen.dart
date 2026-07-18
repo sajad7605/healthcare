@@ -70,28 +70,36 @@ class _MouthwashScreenState extends State<MouthwashScreen> with SingleTickerProv
   }
 
   void _showFreshBreathCelebration() {
-    try {
-      final activeChild = HealthcareApi.instance.currentChild;
-      if (activeChild != null) {
-        HealthcareApi.instance.children.logActivity(
-          activeChild.id,
-          ActivityLogRequest(
-            activityType: 'mouthwash',
-            durationSeconds: 30,
-          ),
-        ).then((res) {
-          final oldStars = HealthcareApi.instance.currentChild!.stars;
-          HealthcareApi.instance.currentChild = ChildProfile(
-            id: activeChild.id,
-            childName: activeChild.childName,
-            childAge: activeChild.childAge,
-            avatarUrl: activeChild.avatarUrl,
-            stars: oldStars + res.starsEarned,
-            createdAt: activeChild.createdAt,
+    final activeChild = HealthcareApi.instance.currentChild;
+    if (activeChild != null) {
+      HealthcareApi.instance.children.logActivity(
+        activeChild.id,
+        ActivityLogRequest(
+          activityType: 'mouthwash',
+          durationSeconds: 30,
+        ),
+      ).then((res) {
+        final oldStars = HealthcareApi.instance.currentChild?.stars ?? 0;
+        HealthcareApi.instance.currentChild = ChildProfile(
+          id: activeChild.id,
+          childName: activeChild.childName,
+          childAge: activeChild.childAge,
+          avatarUrl: activeChild.avatarUrl,
+          stars: oldStars + res.starsEarned,
+          createdAt: activeChild.createdAt,
+        );
+      }).catchError((err) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('خطا در ثبت فعالیت: $err'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 6),
+            ),
           );
-        });
-      }
-    } catch (_) {}
+        }
+      });
+    }
 
     showDialog(
       context: context,
