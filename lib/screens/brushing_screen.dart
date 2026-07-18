@@ -183,21 +183,22 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperOuter) {
-      // Outer surface of upper back teeth — slightly higher than inner
+      // Outer surface of upper back teeth — the outer cheek-side gum line
+      // In Group 2(2).png the upper jaw outer top is ~y 0.31–0.35, x 0.30–0.70
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.24, 0.34),
+          position: const Offset(0.32, 0.32),
           color: Colors.cyan.shade700,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.76, 0.34),
+          position: const Offset(0.68, 0.32),
           color: Colors.redAccent.shade400,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.50, 0.33),
+          position: const Offset(0.50, 0.31),
           color: Colors.amber.shade600,
         ),
       ];
@@ -226,21 +227,22 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.backTeethLower) {
-      // Lower back teeth in Group 2(2).png appear at ~y 0.60–0.66
+      // Lower back teeth in Group 2(2).png: the lower molar row is visible
+      // at roughly y 0.57–0.62, centered x 0.30–0.70
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.28, 0.61),
+          position: const Offset(0.33, 0.59),
           color: Colors.purple.shade500,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.63),
+          position: const Offset(0.50, 0.58),
           color: Colors.blue.shade600,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.72, 0.61),
+          position: const Offset(0.67, 0.59),
           color: Colors.teal.shade600,
         ),
       ];
@@ -387,7 +389,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       _isDragging = true;
     });
 
-    final Offset brushTip = Offset(localPos.dx, localPos.dy - 70);
+    final Offset brushTip = Offset(localPos.dx, localPos.dy - 50);
 
     final random = math.Random();
     final double foamChance = _currentStage == BrushingStage.continue2Minutes
@@ -608,7 +610,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
   void _damageGermsInRadius(double radius, {double damage = 0.05}) {
     if (_cachedBounds == Rect.zero) return;
-    final Offset brushTip = Offset(_brushPosition.dx, _brushPosition.dy - 70);
+    final Offset brushTip = Offset(_brushPosition.dx, _brushPosition.dy - 50);
     final random = math.Random();
 
     for (var germ in _germs) {
@@ -2263,13 +2265,13 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             if (_selectedBrushIndex != -1 &&
                 _currentStage != BrushingStage.spitOut)
               Positioned(
-                left: _brushPosition.dx - 25,
-                top: _brushPosition.dy - 190,
+                // Brush head is ~30% from the top of the image.
+                // Offset so the bristle tip appears at the touch point.
+                left: _brushPosition.dx - 20,
+                top: _brushPosition.dy - 130,
                 child: IgnorePointer(
                   child: AnimatedRotation(
-                    turns: _isDragging
-                        ? (_brushAngle / (2 * math.pi))
-                        : (_brushAngle / (2 * math.pi)),
+                    turns: _brushAngle / (2 * math.pi),
                     duration: const Duration(milliseconds: 150),
                     curve: Curves.easeOut,
                     child: AnimatedContainer(
@@ -2285,7 +2287,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                       ),
                       child: Image.asset(
                         'assets/Gemini_Generated_Image_nt5olnt5olnt5oln 1(1).png',
-                        height: 220,
+                        height: 160,
                         fit: BoxFit.contain,
                       ),
                     ),
