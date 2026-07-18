@@ -79,7 +79,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   final List<String> _brushes = [
     'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 1.png',
     'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 2.png',
-    'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 3.png',
+    'assets/Gemini_Generated_Image_x50vatx50vatx50v 1.png',
   ];
 
   @override
@@ -183,22 +183,23 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperOuter) {
-      // Outer surface of upper back teeth — the outer cheek-side gum line
-      // In Group 2(2).png the upper jaw outer top is ~y 0.31–0.35, x 0.30–0.70
+      // Outer (cheek-side) surface of upper back teeth.
+      // In Group 2(2).png the outer upper arch edge sits at y≈0.30–0.35,
+      // and is visible roughly between x 0.35–0.65 (the visible top rim).
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.32, 0.32),
+          position: const Offset(0.35, 0.31),
           color: Colors.cyan.shade700,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.68, 0.32),
+          position: const Offset(0.65, 0.31),
           color: Colors.redAccent.shade400,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.50, 0.31),
+          position: const Offset(0.50, 0.30),
           color: Colors.amber.shade600,
         ),
       ];
@@ -227,22 +228,22 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.backTeethLower) {
-      // Lower back teeth in Group 2(2).png: the lower molar row is visible
-      // at roughly y 0.57–0.62, centered x 0.30–0.70
+      // Lower back teeth row is clearly visible in Group 2(2).png.
+      // The lower molar crowns sit at y≈0.58–0.63, centered x 0.33–0.67.
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.33, 0.59),
+          position: const Offset(0.35, 0.60),
           color: Colors.purple.shade500,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.58),
+          position: const Offset(0.50, 0.60),
           color: Colors.blue.shade600,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.67, 0.59),
+          position: const Offset(0.65, 0.60),
           color: Colors.teal.shade600,
         ),
       ];
@@ -1708,9 +1709,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                                       'این مسواک خمیردندون زیادی داره و ممکنه دهانت رو اذیت کنه. یه مسواک بهتر انتخاب کن.',
                                     );
                                   } else {
+                                    // x50vat giraffe brush — no toothpaste at all
                                     _showWrongBrushDialog(
-                                      'اوه! خمیردندونش کمه! 😕',
-                                      'این مسواک خمیردندون کافی برای از بین بردن میکروب‌ها نداره. یکی دیگه انتخاب کن.',
+                                      'اوه! خمیردندون نداره! 🦒',
+                                      'این مسواک هیچ خمیردندونی نداره! بدون خمیردندون دندون‌ها تمیز نمی‌شن. یه مسواک مناسب‌تر انتخاب کن.',
                                     );
                                   }
                                 }
