@@ -16,8 +16,8 @@ export 'services/educational_service.dart';
 
 class HealthcareApi {
   // Global singleton instance for easy app-wide access
-  static final ApiClient _defaultClient = ApiClient(baseUrl: 'https://h.ghahremansalamat.ir');
-  //static final ApiClient _defaultClient = ApiClient(baseUrl: 'http://127.0.0.1:5158');
+  //static final ApiClient _defaultClient = ApiClient(baseUrl: 'https://h.ghahremansalamat.ir');
+  static final ApiClient _defaultClient = ApiClient(baseUrl: 'http://127.0.0.1:5158');
 
   static final HealthcareApi instance = HealthcareApi(apiClient: _defaultClient);
 
