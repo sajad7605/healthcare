@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
+import '../api/healthcare_api.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -23,6 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   void initState() {
     super.initState();
     _pageController = PageController();
+    _fetchAppConfig();
 
     // Cloud floating animation (gentle and slow)
     _cloudFloatController = AnimationController(
@@ -50,6 +52,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     _brushingController.dispose();
     _breathingController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchAppConfig() async {
+    try {
+      final config = await HealthcareApi.instance.config.getConfig();
+      if (mounted) {
+        setState(() {
+          HealthcareApi.instance.activeConfig = config;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching config: $e');
+    }
   }
 
   void _nextPage() {
@@ -336,21 +351,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
           ),
           const SizedBox(height: 40),
           // Description
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Column(
               children: [
                 Text(
-                  'همدم دندون‌ها باش!',
-                  style: TextStyle(
+                  HealthcareApi.instance.activeConfig?.splashMessage ?? 'همدم دندون‌ها باش!',
+                  style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 16),
-                Text(
+                const SizedBox(height: 16),
+                const Text(
                   'یاد می‌گیریم چجوری دندون‌هامون رو مثل مروارید سفید و درخشان نگه داریم. مسواک زدن یه بازی شیرینه!',
                   style: TextStyle(
                     fontSize: 16,

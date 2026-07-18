@@ -430,10 +430,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 24),
                   Row(
-                    children: const [
-                      Icon(Icons.phone_in_talk_rounded, color: Color(0xFF2ECC71)),
-                      SizedBox(width: 8),
-                      Text('تلفن پشتیبانی: ۰۲۱-۱۲۳۴', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    children: [
+                      const Icon(Icons.phone_in_talk_rounded, color: Color(0xFF2ECC71)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'تلفن پشتیبانی: ${HealthcareApi.instance.activeConfig?.supportPhone.isNotEmpty == true ? HealthcareApi.instance.activeConfig!.supportPhone : "۰۲۱-۱۲۳۴"}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),

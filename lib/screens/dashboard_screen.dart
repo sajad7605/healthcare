@@ -86,6 +86,18 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     _gridController.forward();
     _fetchChildProfileIfNeeded();
+    _refreshConfig();
+  }
+
+  Future<void> _refreshConfig() async {
+    try {
+      final config = await HealthcareApi.instance.config.getConfig();
+      if (mounted) {
+        setState(() {
+          HealthcareApi.instance.activeConfig = config;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _fetchChildProfileIfNeeded() async {
@@ -278,6 +290,70 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                   ),
                 ),
+
+                if (HealthcareApi.instance.activeConfig?.motd.isNotEmpty ?? false) ...[
+                  const SizedBox(height: 14),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE0F7FA), Color(0xFFB2EBF2)],
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF00ACC1).withValues(alpha: 0.15),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        border: Border.all(color: const Color(0xFF00ACC1).withValues(alpha: 0.3), width: 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00ACC1).withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Text('💡', style: TextStyle(fontSize: 22)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'پیام انگیزشی امروز دندون‌یار',
+                                  style: TextStyle(
+                                    color: Color(0xFF006064),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  HealthcareApi.instance.activeConfig!.motd,
+                                  style: const TextStyle(
+                                    color: Color(0xFF00838F),
+                                    fontSize: 12.5,
+                                    height: 1.4,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 14),
 

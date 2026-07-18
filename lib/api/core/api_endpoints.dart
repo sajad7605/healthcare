@@ -30,6 +30,7 @@ class ApiEndpoints {
   // --- Educational Content ---
   static String videos(String version) => '/api/v$version/videos';
   static String tips(String version) => '/api/v$version/tips';
+  static String config(String version) => '/api/v$version/config';
 
   // --- Goals ---
   static String childGoals(String version, String childId) => '/api/v$version/kids/$childId/goals';

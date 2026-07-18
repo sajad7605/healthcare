@@ -17,7 +17,7 @@ class Video {
 
   factory Video.fromJson(Map<String, dynamic> json) {
     return Video(
-      id: json['id'] as String,
+      id: json['id'].toString(),
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
       videoUrl: json['videoUrl'] as String? ?? '',
@@ -55,7 +55,7 @@ class Tip {
 
   factory Tip.fromJson(Map<String, dynamic> json) {
     return Tip(
-      id: json['id'] as String,
+      id: json['id'].toString(),
       title: json['title'] as String? ?? '',
       content: json['content'] as String? ?? '',
       author: json['author'] as String?,
