@@ -8,7 +8,6 @@ import '../api/healthcare_api.dart';
 enum BrushingStage {
   chooseBrush,
   chooseTime,
-  place45Degrees,
   frontTeethUpper,
   frontTeethLower,
   backTeethUpperInner,
@@ -50,7 +49,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   int _secondsRemaining = 15;
   bool _isFastMode = true;
   Timer? _countdownTimer;
-  bool _isAngleAligned = false;
   bool _isCelebrationShown = false;
 
   Offset? _lastStrokePoint;
@@ -124,129 +122,139 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
   void _initGerms(BrushingStage stage) {
     _germs.clear();
+    // Positions are relative (0.0–1.0) to the rendered image bounds.
+    // Group 2.png (front teeth, portrait): upper teeth ~y 0.33–0.40, lower ~y 0.63–0.70
+    // Group 2(2).png (back teeth, portrait): upper ~y 0.34–0.42, lower ~y 0.58–0.65
     if (stage == BrushingStage.frontTeethUpper) {
+      // Germs sit on upper front teeth surface — top edge of the upper tooth row
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.35, 0.41),
+          position: const Offset(0.36, 0.37),
           color: Colors.lightGreenAccent.shade700,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.38),
+          position: const Offset(0.50, 0.35),
           color: Colors.redAccent.shade400,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.65, 0.41),
+          position: const Offset(0.64, 0.37),
           color: Colors.amber.shade700,
         ),
       ];
     } else if (stage == BrushingStage.frontTeethLower) {
+      // Germs on lower front teeth — bottom edge of lower tooth row
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.36, 0.52),
+          position: const Offset(0.36, 0.65),
           color: Colors.teal.shade600,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.55),
+          position: const Offset(0.50, 0.67),
           color: Colors.orangeAccent.shade700,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.64, 0.52),
+          position: const Offset(0.64, 0.65),
           color: Colors.pinkAccent.shade400,
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperInner) {
+      // Inner surface of upper back teeth — visible at top in Group 2(2).png
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.28, 0.40),
+          position: const Offset(0.28, 0.38),
           color: Colors.deepOrange.shade600,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.72, 0.40),
+          position: const Offset(0.72, 0.38),
           color: Colors.indigo.shade500,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.50, 0.42),
+          position: const Offset(0.50, 0.36),
           color: Colors.lightGreenAccent.shade700,
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperOuter) {
+      // Outer surface of upper back teeth — slightly higher than inner
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.26, 0.36),
+          position: const Offset(0.24, 0.34),
           color: Colors.cyan.shade700,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.74, 0.36),
+          position: const Offset(0.76, 0.34),
           color: Colors.redAccent.shade400,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.50, 0.34),
+          position: const Offset(0.50, 0.33),
           color: Colors.amber.shade600,
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperChewing) {
+      // Chewing surface of upper back teeth — on top of the back molar surfaces
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.30, 0.44),
+          position: const Offset(0.28, 0.40),
           color: Colors.green.shade600,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.42, 0.48),
+          position: const Offset(0.42, 0.38),
           color: Colors.orange.shade700,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.58, 0.48),
+          position: const Offset(0.58, 0.38),
           color: Colors.red.shade600,
         ),
         _Germ(
           id: 4,
-          position: const Offset(0.70, 0.44),
+          position: const Offset(0.72, 0.40),
           color: Colors.pink.shade700,
         ),
       ];
     } else if (stage == BrushingStage.backTeethLower) {
+      // Lower back teeth in Group 2(2).png appear at ~y 0.60–0.66
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.30, 0.52),
+          position: const Offset(0.28, 0.61),
           color: Colors.purple.shade500,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.56),
+          position: const Offset(0.50, 0.63),
           color: Colors.blue.shade600,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.70, 0.52),
+          position: const Offset(0.72, 0.61),
           color: Colors.teal.shade600,
         ),
       ];
     } else if (stage == BrushingStage.brushTongue) {
+      // Tongue sits in the center of the image ~y 0.54–0.62
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.45, 0.54),
+          position: const Offset(0.42, 0.55),
           color: Colors.deepPurple.shade400,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.58),
+          position: const Offset(0.50, 0.59),
           color: Colors.purple.shade600,
         ),
         _Germ(
@@ -372,11 +380,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     setState(() {
       final double dx = localPos.dx - _brushPosition.dx;
 
-      if (_currentStage != BrushingStage.place45Degrees) {
-        if (dx.abs() > 1.0) {
+      if (dx.abs() > 1.0) {
           _brushAngle = dx > 0 ? -math.pi / 4 : -math.pi / 12;
         }
-      }
       _brushPosition = localPos;
       _isDragging = true;
     });
@@ -410,9 +416,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _cachedBounds = _getImageBounds(constraints);
 
     switch (_currentStage) {
-      case BrushingStage.place45Degrees:
-        _checkAngleAlignment();
-        break;
       case BrushingStage.frontTeethUpper:
         _checkVerticalMotion(localPos, expectDownward: true);
         _detectVerticalBrushingWarning(localPos, message: 'دندان‌های جلو بالا را از بالا به پایین بکش! ⬇️');
@@ -457,65 +460,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         break;
       default:
         break;
-    }
-  }
-
-  void _checkAngleAlignment() {
-    if (_cachedBounds == Rect.zero) return;
-
-    final Offset brushTip = Offset(_brushPosition.dx, _brushPosition.dy - 70);
-    final double rx = (brushTip.dx - _cachedBounds.left) / _cachedBounds.width;
-    final double ry = (brushTip.dy - _cachedBounds.top) / _cachedBounds.height;
-
-    final bool isPositionCorrect =
-        rx >= 0.30 && rx <= 0.70 && ry >= 0.35 && ry <= 0.48;
-
-    final double angleDeg = (_brushAngle * 180 / math.pi).abs();
-    final bool isAngleCorrect = (angleDeg - 45.0).abs() <= 12.0;
-
-    if (isPositionCorrect && isAngleCorrect) {
-      if (!_isAngleAligned) {
-        setState(() {
-          _isAngleAligned = true;
-        });
-        HapticFeedback.heavyImpact();
-        _emitTargetSparkles();
-
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted &&
-              _isAngleAligned &&
-              _currentStage == BrushingStage.place45Degrees) {
-            _transitionToNextStage();
-          }
-        });
-      }
-    } else {
-      if (_isAngleAligned) {
-        setState(() {
-          _isAngleAligned = false;
-        });
-      }
-    }
-  }
-
-  void _emitTargetSparkles() {
-    final random = math.Random();
-    for (int i = 0; i < 20; i++) {
-      _sparkles.add(
-        _Sparkle(
-          position:
-              _brushPosition +
-              Offset(
-                random.nextDouble() * 60 - 30,
-                random.nextDouble() * 60 - 100,
-              ),
-          vx: random.nextDouble() * 4 - 2,
-          vy: random.nextDouble() * -4 - 2,
-          size: random.nextDouble() * 15 + 8,
-          color: Colors.lightGreenAccent,
-          isStar: true,
-        ),
-      );
     }
   }
 
@@ -934,13 +878,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _circleCount = 0;
     _strokeCount = 0;
 
-    if (_currentStage == BrushingStage.place45Degrees) {
-      setState(() {
-        _currentStage = BrushingStage.frontTeethUpper;
-        _initGerms(BrushingStage.frontTeethUpper);
-        _brushPosition = const Offset(200, 500);
-      });
-    } else if (_currentStage == BrushingStage.frontTeethUpper) {
+    if (_currentStage == BrushingStage.frontTeethUpper) {
       setState(() {
         _currentStage = BrushingStage.frontTeethLower;
         _initGerms(BrushingStage.frontTeethLower);
@@ -1394,7 +1332,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       case BrushingStage.chooseBrush:
       case BrushingStage.chooseTime:
         return '';
-      case BrushingStage.place45Degrees:
       case BrushingStage.frontTeethUpper:
       case BrushingStage.frontTeethLower:
         return 'assets/Group 2.png';
@@ -1511,26 +1448,24 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         return 'یک مسواک قشنگ انتخاب کن! 🪥';
       case BrushingStage.chooseTime:
         return 'زمان مناسب مسواک زدن را انتخاب کن! ⏱️';
-      case BrushingStage.place45Degrees:
-        return '۱. مسواک را با زاویه ۴۵ درجه روی لثه قرار بده! 📐';
       case BrushingStage.frontTeethUpper:
-        return '۲. دندان‌های جلو – فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
+        return '۱. دندان‌های جلو – فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
       case BrushingStage.frontTeethLower:
-        return '۳. دندان‌های جلو – فک پایین را از پایین به بالا بکش! ⬆️ (حرکت: $_circleCount)';
+        return '۲. دندان‌های جلو – فک پایین را از پایین به بالا بکش! ⬆️ (حرکت: $_circleCount)';
       case BrushingStage.backTeethUpperInner:
-        return '۴. دندان‌های عقب دارای ۳ سطح هستند\nسطح داخلی فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
+        return '۳. دندان‌های عقب دارای ۳ سطح هستند\nسطح داخلی فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
       case BrushingStage.backTeethUpperOuter:
-        return '۵. سطح خارجی دندان‌های عقب فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
+        return '۴. سطح خارجی دندان‌های عقب فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
       case BrushingStage.backTeethUpperChewing:
-        return '۶. سطح جویدنی دندان‌های عقب فک بالا را با حرکت جلو-عقب تمیز کن! ↔️ (حرکت: $_strokeCount)';
+        return '۵. سطح جویدنی دندان‌های عقب فک بالا را با حرکت جلو-عقب تمیز کن! ↔️ (حرکت: $_strokeCount)';
       case BrushingStage.backTeethLower:
-        return '۷. حالا به بخش عقبی فک پایین بروید و آن را مسواک بزنید! ↕️ (حرکت: $_circleCount)';
+        return '۶. حالا به بخش عقبی فک پایین بروید و آن را مسواک بزنید! ↕️ (حرکت: $_circleCount)';
       case BrushingStage.brushTongue:
-        return '۸. زبان را به آرامی از عقب به جلو مسواک بکش! ⬇️ ($_tongueSwipeCount/۳)';
+        return '۷. زبان را به آرامی از عقب به جلو مسواک بکش! ⬇️ ($_tongueSwipeCount/۳)';
       case BrushingStage.continue2Minutes:
-        return '۹. مسواک زدن را ادامه بده تا زمان تمام شود! ⏳';
+        return '۸. مسواک زدن را ادامه بده تا زمان تمام شود! ⏳';
       case BrushingStage.spitOut:
-        return '۱۰. حالا آب و خمیردندان را تف کن! 💦';
+        return '۹. حالا آب و خمیردندان را تف کن! 💦';
       case BrushingStage.cleanMouthDone:
         return 'دندون‌هات از تمیزی دارن برق می‌زنن! 😍⭐';
     }
@@ -1574,112 +1509,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     );
   }
 
-  Widget _buildRotationDial() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'مسواک را با کشیدن غلتک به چپ و راست بچرخانید:',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2C3E50),
-            ),
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onHorizontalDragUpdate: (details) {
-              setState(() {
-                _brushAngle = (_brushAngle + details.delta.dx * 0.012).clamp(
-                  -math.pi / 2,
-                  math.pi / 2,
-                );
-                _checkAngleAlignment();
-              });
-            },
-            child: Container(
-              height: 54,
-              width: 280,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue.shade100,
-                    Colors.blue.shade50,
-                    Colors.blue.shade100,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(27),
-                border: Border.all(color: Colors.blue.shade300, width: 2),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 14),
-                    child: Icon(
-                      Icons.arrow_back_ios,
-                      size: 16,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.rotate_right,
-                        color: Colors.blueAccent,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'زاویه: ${(_brushAngle * 180 / math.pi).round()}°',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1B4F72),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(right: 14),
-                    child: Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: Colors.blue,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'هدف: ۴۵ درجه یا ۴۵- درجه 🎯',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTimerProgress() {
     final double maxSec = _isFastMode ? 15.0 : 120.0;
@@ -2058,8 +1887,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                                   if (mounted) {
                                     setState(() {
                                       _currentStage =
-                                          BrushingStage.place45Degrees;
-                                      _initGerms(BrushingStage.place45Degrees);
+                                          BrushingStage.frontTeethUpper;
+                                      _initGerms(BrushingStage.frontTeethUpper);
                                     });
                                   }
                                 },
@@ -2272,70 +2101,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         },
         child: Stack(
           children: [
-            if (_currentStage == BrushingStage.place45Degrees) ...[
-              Positioned(
-                left: _cachedBounds.left + 0.28 * _cachedBounds.width,
-                top: _cachedBounds.top + 0.38 * _cachedBounds.height,
-                width: 0.44 * _cachedBounds.width,
-                height: 0.07 * _cachedBounds.height,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: _isAngleAligned
-                        ? Colors.green.withValues(alpha: 0.2)
-                        : Colors.redAccent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _isAngleAligned
-                          ? Colors.green
-                          : Colors.redAccent.withValues(alpha: 0.8),
-                      width: 3,
-                    ),
-                    boxShadow: _isAngleAligned
-                        ? [
-                            BoxShadow(
-                              color: Colors.green.withValues(alpha: 0.4),
-                              blurRadius: 10,
-                              spreadRadius: 1,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Center(
-                    child: Text(
-                      _isAngleAligned
-                          ? 'آفرین! همینجا نگه دار 🌟'
-                          : 'مسواک را روی لثه‌ها تراز کن 📐',
-                      style: TextStyle(
-                        color: _isAngleAligned
-                            ? Colors.green.shade800
-                            : Colors.redAccent.shade700,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              Positioned(
-                left: _cachedBounds.left + 0.42 * _cachedBounds.width,
-                top: _cachedBounds.top + 0.27 * _cachedBounds.height,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.4,
-                    child: Transform.rotate(
-                      angle: math.pi / 4,
-                      child: Image.asset(
-                        _brushes[0],
-                        height: 150,
-                        color: Colors.white,
-                        colorBlendMode: BlendMode.srcIn,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            // (place45Degrees step removed)
 
             // Animated direction arrow hints for brushing stages
             if (_currentStage == BrushingStage.frontTeethUpper ||
@@ -2518,7 +2284,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                         0.0,
                       ),
                       child: Image.asset(
-                        _brushes[_selectedBrushIndex],
+                        'assets/Gemini_Generated_Image_nt5olnt5olnt5oln 1(1).png',
                         height: 220,
                         fit: BoxFit.contain,
                       ),
@@ -2527,13 +2293,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 ),
               ),
 
-            if (_currentStage == BrushingStage.place45Degrees)
-              Positioned(
-                bottom: 50,
-                left: 0,
-                right: 0,
-                child: Center(child: _buildRotationDial()),
-              ),
+            // (place45Degrees rotation dial removed)
 
             if (_currentStage == BrushingStage.continue2Minutes) ...[
               Positioned(
