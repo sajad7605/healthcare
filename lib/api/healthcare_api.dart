@@ -21,7 +21,7 @@ class HealthcareApi {
   static final ApiClient _defaultClient = ApiClient(baseUrl: 'https://h.ghahremansalamat.ir');
   //static final ApiClient _defaultClient = ApiClient(baseUrl: 'http://127.0.0.1:5158');
 
-  static final HealthcareApi instance = HealthcareApi(apiClient: _defaultClient);
+  static HealthcareApi instance = HealthcareApi(apiClient: _defaultClient);
 
   final ApiClient apiClient;
   
