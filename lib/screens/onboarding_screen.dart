@@ -82,17 +82,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFF00A2E8),
-        body: Stack(
-          children: [
-            // Background Elements (Continuous gently bobbing clouds)
-            _buildCloudBackground(),
+    return Scaffold(
+      backgroundColor: const Color(0xFF00A2E8),
+      body: Stack(
+        children: [
+          // Background Elements (Continuous gently bobbing clouds)
+          _buildCloudBackground(),
 
-            // Onboarding Pages
-            PageView(
+          // Onboarding Pages: Set to LTR text direction so page slideshow transitions run strictly Left to Right
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: PageView(
               controller: _pageController,
               onPageChanged: (index) {
                 setState(() {
@@ -100,17 +100,29 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 });
               },
               children: [
-                _buildPageOne(screenWidth),
-                _buildPageTwo(screenWidth),
-                _buildPageThree(screenWidth),
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: _buildPageOne(screenWidth),
+                ),
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: _buildPageTwo(screenWidth),
+                ),
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: _buildPageThree(screenWidth),
+                ),
               ],
             ),
+          ),
 
-            // Top Header Bar
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 10,
-              left: 20,
-              right: 20,
+          // Top Header Bar
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            left: 20,
+            right: 20,
+            child: Directionality(
+              textDirection: TextDirection.rtl,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -160,16 +172,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 ],
               ),
             ),
+          ),
 
-            // Bottom Navigation Area
-            Positioned(
-              bottom: 40,
-              left: 30,
-              right: 30,
+          // Bottom Navigation Area
+          Positioned(
+            bottom: 40,
+            left: 30,
+            right: 30,
+            child: Directionality(
+              textDirection: TextDirection.ltr,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Page Indicators (Dots)
+                  // Page Indicators (Dots) in LTR order
                   Row(
                     children: List.generate(
                       3,
@@ -207,7 +222,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                         ],
                       ),
                       child: Icon(
-                        _currentPage == 2 ? Icons.done : Icons.arrow_back_ios_new,
+                        _currentPage == 2 ? Icons.done : Icons.arrow_forward_ios_rounded,
                         color: const Color(0xFF00A2E8),
                         size: 24,
                       ),
@@ -216,8 +231,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

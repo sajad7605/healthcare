@@ -18,9 +18,6 @@ class MockAppConfigService extends AppConfigService {
 
 class MockHealthcareApi extends HealthcareApi {
   MockHealthcareApi() : super(apiClient: ApiClient(baseUrl: ''));
-
-  @override
-  late final AppConfigService config = MockAppConfigService(apiClient);
 }
 
 void main() {
@@ -32,9 +29,11 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const HealthcareApp());
 
-    // Verify that onboarding logo/title is present
-    expect(find.text('دندون یار'), findsOneWidget);
-    expect(find.text('ورود / ثبت نام'), findsOneWidget);
+    // Verify that splash screen title is present
+    expect(find.text('دندون یار کوچولو'), findsOneWidget);
+
+    // Pump frames for splash animation
+    await tester.pump(const Duration(milliseconds: 500));
   });
 }
 

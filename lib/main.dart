@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -54,6 +55,9 @@ class HealthcareApp extends StatelessWidget {
         Widget page;
         switch (settings.name) {
           case '/':
+            page = const SplashScreen();
+            break;
+          case '/onboarding':
             page = const OnboardingScreen();
             break;
           case '/auth':

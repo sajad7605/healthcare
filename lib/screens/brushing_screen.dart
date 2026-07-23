@@ -35,7 +35,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
   Offset _brushPosition = const Offset(200, 500);
   bool _isDragging = false;
-  double _brushAngle = -math.pi / 6;
+  bool _isSpitHandled = false;
 
   Rect _cachedBounds = Rect.zero;
 
@@ -120,149 +120,170 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     super.dispose();
   }
 
+  Offset _pixelPos(double px, double py) => Offset(px / 1572.0, py / 3408.0);
+
   void _initGerms(BrushingStage stage) {
     _germs.clear();
-    // Positions are relative (0.0–1.0) to the rendered image bounds.
-    // Group 2.png (front teeth, portrait): upper teeth ~y 0.33–0.40, lower ~y 0.63–0.70
-    // Group 2(2).png (back teeth, portrait): upper ~y 0.34–0.42, lower ~y 0.58–0.65
     if (stage == BrushingStage.frontTeethUpper) {
-      // Germs sit on upper front teeth surface — top edge of the upper tooth row
+      // Group 2.png - Maxilla (upper jaw) from the front
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.36, 0.37),
+          position: _pixelPos(280, 1544),
           color: Colors.lightGreenAccent.shade700,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.35),
+          position: _pixelPos(520, 1132),
           color: Colors.redAccent.shade400,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.64, 0.37),
+          position: _pixelPos(1164, 1182),
           color: Colors.amber.shade700,
+        ),
+        _Germ(
+          id: 4,
+          position: _pixelPos(1332, 1536),
+          color: Colors.deepOrange.shade600,
         ),
       ];
     } else if (stage == BrushingStage.frontTeethLower) {
-      // Germs on lower front teeth — bottom edge of lower tooth row
+      // Group 2.png - Lower jaw from the front
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.36, 0.65),
+          position: _pixelPos(268, 1904),
           color: Colors.teal.shade600,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.67),
+          position: _pixelPos(552, 2192),
           color: Colors.orangeAccent.shade700,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.64, 0.65),
+          position: _pixelPos(1000, 2204),
           color: Colors.pinkAccent.shade400,
+        ),
+        _Germ(
+          id: 4,
+          position: _pixelPos(1256, 1840),
+          color: Colors.purple.shade500,
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperInner) {
-      // Inner surface of upper back teeth — visible at top in Group 2(2).png
+      // Group 2(2).png - Maxilla (upper jaw)
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.28, 0.38),
+          position: _pixelPos(300, 1450),
           color: Colors.deepOrange.shade600,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.72, 0.38),
+          position: _pixelPos(602, 1410),
           color: Colors.indigo.shade500,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.50, 0.36),
+          position: _pixelPos(937, 1438),
           color: Colors.lightGreenAccent.shade700,
+        ),
+        _Germ(
+          id: 4,
+          position: _pixelPos(1300, 1434),
+          color: Colors.cyan.shade700,
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperOuter) {
-      // Outer (cheek-side) surface of upper back teeth.
-      // In Group 2(2).png the outer upper arch edge sits at y≈0.30–0.35,
-      // and is visible roughly between x 0.35–0.65 (the visible top rim).
+      // Group 2(2).png - Maxilla (upper jaw)
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.35, 0.31),
+          position: _pixelPos(300, 1450),
           color: Colors.cyan.shade700,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.65, 0.31),
+          position: _pixelPos(602, 1410),
           color: Colors.redAccent.shade400,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.50, 0.30),
+          position: _pixelPos(937, 1438),
           color: Colors.amber.shade600,
+        ),
+        _Germ(
+          id: 4,
+          position: _pixelPos(1300, 1434),
+          color: Colors.pink.shade700,
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperChewing) {
-      // Chewing surface of upper back teeth — on top of the back molar surfaces
+      // Group 2(2).png - Maxilla (upper jaw chewing)
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.28, 0.40),
+          position: _pixelPos(300, 1450),
           color: Colors.green.shade600,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.42, 0.38),
+          position: _pixelPos(602, 1410),
           color: Colors.orange.shade700,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.58, 0.38),
+          position: _pixelPos(937, 1438),
           color: Colors.red.shade600,
         ),
         _Germ(
           id: 4,
-          position: const Offset(0.72, 0.40),
-          color: Colors.pink.shade700,
+          position: _pixelPos(1300, 1434),
+          color: Colors.purple.shade600,
         ),
       ];
     } else if (stage == BrushingStage.backTeethLower) {
-      // Lower back teeth row is clearly visible in Group 2(2).png.
-      // The lower molar crowns sit at y≈0.58–0.63, centered x 0.33–0.67.
+      // Group 2(2).png - Lower jaw
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.35, 0.60),
+          position: _pixelPos(413, 1865),
           color: Colors.purple.shade500,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.60),
+          position: _pixelPos(701, 1762),
           color: Colors.blue.shade600,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.65, 0.60),
+          position: _pixelPos(973, 1820),
           color: Colors.teal.shade600,
+        ),
+        _Germ(
+          id: 4,
+          position: _pixelPos(1256, 1877),
+          color: Colors.deepOrange.shade600,
         ),
       ];
     } else if (stage == BrushingStage.brushTongue) {
-      // Tongue sits in the center of the image ~y 0.54–0.62
+      // Group 2(2).png - Mouth/Tongue
       _germs = [
         _Germ(
           id: 1,
-          position: const Offset(0.42, 0.55),
+          position: _pixelPos(800, 1857),
           color: Colors.deepPurple.shade400,
         ),
         _Germ(
           id: 2,
-          position: const Offset(0.50, 0.59),
+          position: _pixelPos(770, 2081),
           color: Colors.purple.shade600,
         ),
         _Germ(
           id: 3,
-          position: const Offset(0.55, 0.52),
+          position: _pixelPos(785, 1969),
           color: Colors.blue.shade600,
         ),
       ];
@@ -380,17 +401,55 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   }
 
   void _handleBrushing(Offset localPos, BoxConstraints constraints) {
-    setState(() {
-      final double dx = localPos.dx - _brushPosition.dx;
+    _cachedBounds = _getImageBounds(constraints);
 
-      if (dx.abs() > 1.0) {
-          _brushAngle = dx > 0 ? -math.pi / 4 : -math.pi / 12;
+    final double touchX = localPos.dx;
+    final double touchY = localPos.dy - 30.0;
+
+    double targetX = touchX;
+    double targetY = touchY;
+
+    final bool isVerticalStage =
+        _currentStage == BrushingStage.frontTeethUpper ||
+        _currentStage == BrushingStage.frontTeethLower ||
+        _currentStage == BrushingStage.backTeethUpperInner ||
+        _currentStage == BrushingStage.backTeethUpperOuter ||
+        _currentStage == BrushingStage.backTeethLower ||
+        _currentStage == BrushingStage.brushTongue;
+
+    final bool isHorizontalStage =
+        _currentStage == BrushingStage.backTeethUpperChewing;
+
+    if (isVerticalStage) {
+      double minDx = double.infinity;
+      double bestGermX = touchX;
+
+      final activeGerms = _germs.where((g) => g.health > 0).toList();
+      final germsToCheck = activeGerms.isNotEmpty ? activeGerms : _germs;
+
+      for (var germ in germsToCheck) {
+        final double gX =
+            _cachedBounds.left + germ.position.dx * _cachedBounds.width;
+        final double dist = (gX - touchX).abs();
+        if (dist < minDx) {
+          minDx = dist;
+          bestGermX = gX;
         }
-      _brushPosition = localPos;
+      }
+
+      targetX = bestGermX;
+      targetY = touchY;
+    } else if (isHorizontalStage) {
+      final double surfaceY =
+          _cachedBounds.top + (1434.0 / 3408.0) * _cachedBounds.height;
+      targetY = surfaceY;
+      targetX = touchX;
+    }
+
+    setState(() {
+      _brushPosition = Offset(targetX, targetY);
       _isDragging = true;
     });
-
-    final Offset brushTip = Offset(localPos.dx, localPos.dy - 50);
 
     final random = math.Random();
     final double foamChance = _currentStage == BrushingStage.continue2Minutes
@@ -400,7 +459,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       _bubbles.add(
         _FoamBubble(
           position:
-              brushTip +
+              _brushPosition +
               Offset(
                 random.nextDouble() * 30 - 15,
                 random.nextDouble() * 20 - 10,
@@ -412,7 +471,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       );
     }
 
-    _validateStageGestures(localPos, constraints);
+    _validateStageGestures(_brushPosition, constraints);
   }
 
   void _validateStageGestures(Offset localPos, BoxConstraints constraints) {
@@ -564,7 +623,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     final double rx = (localPos.dx - _cachedBounds.left) / _cachedBounds.width;
     final double ry = (localPos.dy - _cachedBounds.top) / _cachedBounds.height;
 
-    if (rx > 0.35 && rx < 0.65 && ry > 0.38 && ry < 0.55) {
+    if (rx > 0.25 && rx < 0.75 && ry > 0.40 && ry < 0.70) {
       _tongueDragStart = localPos;
       _isValidTongueDrag = true;
     } else {
@@ -609,9 +668,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     }
   }
 
-  void _damageGermsInRadius(double radius, {double damage = 0.05}) {
+  void _damageGermsInRadius(double radius, {double damage = 0.08}) {
     if (_cachedBounds == Rect.zero) return;
-    final Offset brushTip = Offset(_brushPosition.dx, _brushPosition.dy - 50);
+    final Offset brushTip = _brushPosition;
     final random = math.Random();
 
     for (var germ in _germs) {
@@ -623,7 +682,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         final Offset germOffset = Offset(absoluteX, absoluteY);
 
         final double distance = (brushTip - germOffset).distance;
-        if (distance < radius + 30.0) {
+        if (distance < radius + 40.0) {
           setState(() {
             germ.health -= damage;
             germ.isShaking = true;
@@ -765,6 +824,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   }
 
   void _handleSpit() {
+    if (_isSpitHandled) return;
+    _isSpitHandled = true;
+
     HapticFeedback.heavyImpact();
     final random = math.Random();
     final center = const Offset(180, 450);
@@ -1068,9 +1130,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 SquishPopButton(
                   onTap: () {
                     Navigator.of(context).pop();
-                    _celebrationController.stop();
+                    if (_celebrationController.isAnimating) {
+                      _celebrationController.stop();
+                    }
                     setState(() {
                       _isCelebrationShown = false;
+                      _isSpitHandled = false;
                       _brushes.shuffle();
                       _currentStage = BrushingStage.chooseBrush;
                       _selectedBrushIndex = -1;
@@ -1109,10 +1174,15 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 const SizedBox(width: 12),
                 SquishPopButton(
                   onTap: () {
-                    _celebrationController.stop();
+                    if (_celebrationController.isAnimating) {
+                      _celebrationController.stop();
+                    }
                     _isCelebrationShown = false;
+                    _isSpitHandled = false;
                     Navigator.of(context).pop();
-                    Navigator.of(context).pop();
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -2267,31 +2337,26 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             if (_selectedBrushIndex != -1 &&
                 _currentStage != BrushingStage.spitOut)
               Positioned(
-                // Brush head is ~30% from the top of the image.
-                // Offset so the bristle tip appears at the touch point.
-                left: _brushPosition.dx - 20,
-                top: _brushPosition.dy - 130,
+                // Original image size: 273x149. Touch point: (33, 67)
+                // Width = 180 => dxOffset = 180 * (33/273) = 21.76, dyOffset = 180 * (67/273) = 44.18
+                left: _brushPosition.dx - 21.76,
+                top: _brushPosition.dy - 44.18,
                 child: IgnorePointer(
-                  child: AnimatedRotation(
-                    turns: _brushAngle / (2 * math.pi),
-                    duration: const Duration(milliseconds: 150),
-                    curve: Curves.easeOut,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 100),
-                      transform: Matrix4.translationValues(
-                        _isDragging
-                            ? (math.Random().nextDouble() * 4 - 2)
-                            : 0.0,
-                        _isDragging
-                            ? (math.Random().nextDouble() * 4 - 2)
-                            : 0.0,
-                        0.0,
-                      ),
-                      child: Image.asset(
-                        'assets/Gemini_Generated_Image_nt5olnt5olnt5oln 1(1).png',
-                        height: 160,
-                        fit: BoxFit.contain,
-                      ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 100),
+                    transform: Matrix4.translationValues(
+                      _isDragging
+                          ? (math.Random().nextDouble() * 4 - 2)
+                          : 0.0,
+                      _isDragging
+                          ? (math.Random().nextDouble() * 4 - 2)
+                          : 0.0,
+                      0.0,
+                    ),
+                    child: Image.asset(
+                      'assets/Gemini_Generated_Image_nt5olnt5olnt5oln 1.png',
+                      width: 180,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),

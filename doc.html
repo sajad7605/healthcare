@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>مستند فنی و راهنمای تحویل پروژه دندون یار کوچولو (ToothBuddy)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;800&display=swap');
+
+        :root {
+            --primary-color: #00A2E8;
+            --primary-dark: #007bb4;
+            --secondary-color: #2C3E50;
+            --light-bg: #F8FAFC;
+            --border-color: #E2E8F0;
+            --text-color: #1E293B;
+            --text-muted: #64748B;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            color: var(--text-color);
+            line-height: 1.8;
+            background-color: #ffffff;
+            font-size: 14px;
+        }
+
+        /* Cover Page Styling */
+        .cover-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 80px 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            page-break-after: always;
+            position: relative;
+        }
+
+        .cover-decor {
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            border: 2px solid rgba(0, 162, 232, 0.1);
+            border-radius: 20px;
+            pointer-events: none;
+        }
+
+        .cover-title-group {
+            margin-top: 15vh;
+        }
+
+        .cover-logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .cover-title {
+            font-size: 42px;
+            font-weight: 800;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .cover-subtitle {
+            font-size: 20px;
+            color: var(--primary-dark);
+            font-weight: 500;
+            margin-bottom: 40px;
+        }
+
+        .cover-meta {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 2;
+            margin-bottom: 5vh;
+        }
+
+        .cover-meta strong {
+            color: var(--secondary-color);
+        }
+
+        /* Page Layout & Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Headers */
+        h1, h2, h3, h4 {
+            color: var(--secondary-color);
+            font-weight: 700;
+            page-break-after: avoid;
+        }
+
+        h1 {
+            font-size: 26px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: var(--primary-dark);
+            border-right: 4px solid var(--primary-color);
+            padding-right: 10px;
+        }
+
+        h3 {
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin-bottom: 15px;
+            padding-right: 25px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        /* Architectural Diagrams */
+        .diagram-container {
+            margin: 25px 0;
+            background-color: var(--light-bg);
+            border: 1px dashed var(--primary-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .diagram-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--secondary-color);
+        }
+
+        /* Tech Badges */
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tech-tag {
+            background-color: #f1f5f9;
+            color: var(--secondary-color);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+        }
+
+        .tech-tag.primary {
+            background-color: rgba(0, 162, 232, 0.1);
+            color: var(--primary-dark);
+            border-color: rgba(0, 162, 232, 0.2);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            text-align: right;
+            font-size: 13px;
+        }
+
+        th {
+            background-color: var(--light-bg);
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #fafbfc;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 12px;
+            direction: ltr;
+            text-align: left;
+            overflow-x: auto;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+
+        code {
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            background-color: #f1f5f9;
+            color: #e11d48;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            direction: ltr;
+            display: inline-block;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border-radius: 0;
+            display: block;
+        }
+
+        /* Feature Card */
+        .feature-box {
+            background-color: var(--light-bg);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+
+        .feature-box h4 {
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+        }
+
+        .api-method {
+            display: inline-block;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            color: #ffffff;
+            margin-left: 8px;
+            font-family: sans-serif;
+        }
+
+        .api-method.get { background-color: #10B981; }
+        .api-method.post { background-color: #3B82F6; }
+        .api-method.put { background-color: #F59E0B; }
+        .api-method.delete { background-color: #EF4444; }
+
+        /* Print Settings */
+        @media print {
+            body {
+                background: none;
+                color: #000;
+                font-size: 13px;
+            }
+            .container {
+                max-width: 100%;
+                width: 100%;
+                padding: 0;
+            }
+            h1 {
+                margin-top: 30px;
+                border-bottom-color: #000;
+            }
+            h2 {
+                border-right-color: #000;
+            }
+            .cover-page {
+                height: 95vh;
+                background: none;
+                border: 1px solid #ccc;
+            }
+            .tech-tag {
+                border-color: #ccc;
+                background: none;
+            }
+            .tech-tag.primary {
+                border-color: #000;
+                color: #000;
+            }
+            pre {
+                background-color: #f8fafc;
+                color: #1e293b;
+                border: 1px solid #ccc;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <div class="cover-decor"></div>
+        <div class="cover-title-group">
+            <div class="cover-logo">🦷✨</div>
+            <h1 class="cover-title">پروژه دندون یار کوچولو</h1>
+            <h2 class="cover-subtitle">(Little Tooth Buddy)</h2>
+            <p style="font-size: 18px; color: var(--text-muted); text-align: center;">مستند فنی، تشریح معماری سیستم و راهنمای کامل استفاده از سامانه</p>
+        </div>
+        
+        <div class="cover-meta">
+            <p><strong>توسعه‌دهنده:</strong> سجاد رادور</p>
+            <p><strong>تاریخ گزارش:</strong> تیر ماه ۱۴۰۵ (تیر ۲۰۲۶)</p>
+            <p><strong>نسخه سند:</strong> ۱.۵.۰</p>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <!-- Chapter 1 -->
+        <h1>۱. مقدمه و اهداف پروژه</h1>
+        <p>
+            بهداشت دهان و دندان کودکان یکی از حیاتی‌ترین بخش‌های سلامت رشد آن‌هاست. با این وجود، تشویق کودکان به مسواک‌زدن و مراقبت مداوم روزانه معمولاً به یکی از چالش‌های والدین تبدیل می‌شود. پروژه <strong>«دندون یار کوچولو»</strong> با هدف حل این چالش از طریق گیمیفیکیشن (بازی‌وارسازی) و ایجاد یک محیط جذاب بصری برای کودکان طراحی و پیاده‌سازی شده است.
+        </p>
+        <p>
+            این پلتفرم به کودکان کمک می‌کند تا فرآیندهای روزانه مانند مسواک‌زدن، استفاده از دهان‌شویه و نخ دندان را در قالب بازی و دریافت امتیاز انجام دهند. از طرف دیگر، این سیستم ابزارهای نظارتی دقیقی را در اختیار والدین قرار می‌دهد تا بتوانند روند بهداشت دهان فرزندان خود را پیگیری، کنترل و با اهداف سفارشی هدایت کنند.
+        </p>
+
+        <div class="feature-box">
+            <h4>اهداف اصلی سیستم:</h4>
+            <ul>
+                <li>ایجاد عادت‌های مثبت بهداشت دهان و دندان در کودکان با استفاده از تکنیک‌های تعاملی و زمان‌سنج‌های جذاب.</li>
+                <li>فراهم آوردن پنل مدیریتی برای والدین جهت پایش دقیق عملکرد فرزندان و تعریف اهداف شخصی‌سازی شده.</li>
+                <li>ذخیره‌سازی و پایش تصویری دندان‌های کودک در یک بازه زمانی طولانی (گالری سیر تغییرات).</li>
+                <li>آموزش شیوه‌های صحیح مراقبت به وسیله ویدیوها و نکات آموزشی در درون اپلیکیشن.</li>
+            </ul>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- Chapter 2 -->
+        <h1>۲. ساختار و معماری سیستم</h1>
+        <p>
+            پلتفرم دندون یار کوچولو به صورت یک ساختار کلاینت-سرور پیاده‌سازی شده است و شامل دو بخش اصلی فرانت‌اند (اپلیکیشن موبایل) و بک‌اند (وب‌سایت مدیریتی و وب سرویس کلاینت) می‌باشد.
+        </p>
+
+        <h2>۲.۱. بخش فرانت‌اند (Flutter App)</h2>
+        <div class="tech-tags">
+            <span class="tech-tag primary">Flutter 3.9+</span>
+            <span class="tech-tag">Dart</span>
+            <span class="tech-tag">Dio HTTP</span>
+            <span class="tech-tag">Video Player (FVP)</span>
+            <span class="tech-tag">Image Picker</span>
+            <span class="tech-tag">YekanBakh Font</span>
+        </div>
+        <p>
+            بخش کلاینت سیستم یک اپلیکیشن موبایل چندسکویی (Cross-Platform) است که با استفاده از فریم‌ورک محبوب <strong>فلاتر (Flutter)</strong> توسعه یافته است. این کلاینت وظیفه ارائه تجربه کاربری پویا، انیمیشن‌های روان و هدایت کودک در فرآیند بهداشت را بر عهده دارد. ارتباط فرانت‌اند با سرور از طریق کتابخانه قدرتمند <code>Dio</code> و به صورت RESTful انجام می‌پذیرد.
+        </p>
+
+        <h2>۲.۲. بخش بک‌اند (ASP.NET Core Web API)</h2>
+        <div class="tech-tags">
+            <span class="tech-tag primary">.NET 8.0/9.0</span>
+            <span class="tech-tag">ASP.NET Core Web API</span>
+            <span class="tech-tag">Entity Framework Core</span>
+            <span class="tech-tag">SQLite Database</span>
+            <span class="tech-tag">Identity Core</span>
+            <span class="tech-tag">JWT Bearer Auth</span>
+            <span class="tech-tag">Autofac</span>
+            <span class="tech-tag">Serilog</span>
+        </div>
+        <p>
+            بخش سرور سیستم بر پایه پلتفرم پرقدرت <strong>ASP.NET Core Web API</strong> توسعه داده شده است. معماری این بخش بر اساس اصول <strong>معماری تمیز (Clean Architecture)</strong> پایه‌گذاری شده که لایه‌های مختلف را به شرح زیر تفکیک می‌کند:
+        </p>
+        <ul>
+            <li><strong>لایه دامنه (Domain):</strong> شامل قوانین پایه کسب‌وکار، انام‌ها (Enums) و متدهای الحاقی اصلی است.</li>
+            <li><strong>لایه برنامه (Application):</strong> شامل موجودیت‌های دیتابیس (Entities)، کلاس‌های نگاشت داده (DTOs/Models)، اینترفیس‌های سرویس‌ها و فایل‌های مربوط به مهاجرت‌های دیتابیس (Migrations) است.</li>
+            <li><strong>لایه زیرساخت (Infrastructure):</strong> شامل پیاده‌سازی سرویس‌ها (نظیر احراز هویت JWT، مدیریت مستأجرین و منطق کسب‌وکار دندون یار) است.</li>
+            <li><strong>لایه API (HealthcareApi):</strong> لایه ورودی و کنترلرها که درخواست‌های HTTP را دریافت کرده، اعتبارسنجی می‌کند و خروجی مناسب را بازمی‌گرداند.</li>
+        </ul>
+
+        <div class="diagram-container">
+            <div class="diagram-title">نمودار ساختار لایه‌های معماری سرور (.NET Clean Architecture)</div>
+            <div style="font-family: sans-serif; font-size: 13px; line-height: 2; color: #475569;">
+                [HealthcareApi (Controllers / Presentation)]<br>
+                ⬇️<br>
+                [HealthcareApi.Infrastructure (Service Implementations / JWT / Configurations)]<br>
+                ⬇️<br>
+                [HealthcareApi.Application (Entities / DbContext / Interfaces / Migrations)]<br>
+                ⬇️<br>
+                [HealthcareApi.Domain (Core Domain Rules & Enums)]
+            </div>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- Chapter 3 -->
+        <h1>۳. امکانات و سناریوهای کاربری فرانت‌اند</h1>
+        <p>
+            اپلیکیشن دندون یار کوچولو شامل صفحات و سناریوهای کاربری مختلفی است که تعامل بین والد، کودک و سرور را برقرار می‌سازد:
+        </p>
+
+        <div class="feature-box">
+            <h4>۱. ورود و عضویت والدین (Auth Screen)</h4>
+            <p>
+                والدین به عنوان کاربر اصلی ثبت‌نام می‌کنند. پس از وارد کردن شماره تلفن و رمز عبور، یک توکن JWT دریافت شده و کلاینت در تمامی درخواست‌های بعدی از آن استفاده می‌کند.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۲. داشبورد و مدیریت فرزندان (Dashboard & Children Management)</h4>
+            <p>
+                پس از ورود، والدین می‌توانند پروفایل کودکان خود را (نام، سن، آواتار) مدیریت کنند. کودک فعال در اپلیکیشن انتخاب می‌شود و داشبورد تعاملی مخصوص او لود می‌گردد.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۳. زمان‌سنج و راهنمای تعاملی مسواک‌زدن (Interactive Brushing)</h4>
+            <p>
+                هسته اصلی بخش کودکان، زمان‌سنج مسواک‌زدن تعاملی است. این بخش کودک را گام به گام (مثلاً مسواک‌زدن جلو، چپ، راست و دندان‌های بالا و پایین) به همراه تایمر راهنمایی می‌کند تا فرآیند مسواک‌زدن را به شکل صحیح و در مدت زمان استاندارد به پایان برساند. در انتهای فعالیت، کودک ستاره دریافت می‌کند.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۴. بخش نخ دندان و دهان‌شویه (Flossing & Mouthwash)</h4>
+            <p>
+                کودکان در این بخش یاد می‌گیرند که استفاده از نخ دندان و دهان‌شویه را پس از مسواک‌زدن به عنوان مکمل‌های بهداشتی ثبت کنند و ستاره‌های بیشتری به دست آورند.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۵. آلبوم تصاویر دندان‌ها (Teeth Gallery)</h4>
+            <p>
+                کودک یا والد با دوربین موبایل از دندان‌های کودک عکس می‌گیرند. این تصاویر با عنوان مشخص آپلود شده و یک گالری تاریخی برای دندانپزشک یا والد تشکیل می‌دهند تا روند بهبود دندان‌ها پایش شود.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶. مدال‌ها، اهداف و سیستم پاداش‌ها (Badges & Goals System)</h4>
+            <p>
+                با تکرار منظم کارها، کودک نشان‌ها و مدال‌های مختلف را باز می‌کند. همچنین والدین اهدافی (مثلاً ۱۰ بار مسواک‌زدن) تعریف می‌کنند که با رسیدن به آن‌ها، کودک امتیاز پاداش دریافت می‌کند. در پنل پاداش‌ها، کودک می‌تواند ستاره‌های خود را خرج کند تا پاداش‌های واقعی که والدین تعریف کرده‌اند (مانند رفتن به پارک یا خرید اسباب‌بازی) را به عنوان درخواست ثبت کند و والدین آن را تایید نمایند.
+            </p>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- Chapter 4 -->
+        <h1>۴. ساختار پایگاه داده و بک‌اند</h1>
+        <p>
+            سرور پروژه از دیتابیس **SQLite** استفاده می‌کند که به راحتی پرتابل و قابل جابجایی است. نقشه‌ها و روابط جداول به طور کامل توسط لایه Entity Framework Core مدیریت می‌شوند.
+        </p>
+
+        <h2>۴.۱. موجودیت‌های کلیدی پایگاه داده (Entities)</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 20%;">نام جدول/موجودیت</th>
+                    <th style="width: 25%;">کلیدهای اصلی/خارجی</th>
+                    <th>شرح و کاربرد</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Child</strong></td>
+                    <td>Id (Guid), ParentId</td>
+                    <td>نگهداری اطلاعات فرزند شامل نام، سن، لینک آواتار و تعداد ستاره‌های فعلی. هر کودک به یک کاربر والد متصل است.</td>
+                </tr>
+                <tr>
+                    <td><strong>ActivityLog</strong></td>
+                    <td>Id (Guid), ChildId</td>
+                    <td>ثبت گزارش فعالیت‌های بهداشتی کودک شامل نوع فعالیت (مسواک، نخ دندان، دهان‌شویه)، مدت زمان فعالیت به ثانیه، تاریخ انجام و ستاره‌های کسب شده.</td>
+                </tr>
+                <tr>
+                    <td><strong>Goal</strong></td>
+                    <td>Id (Guid), ChildId</td>
+                    <td>اهداف تعریف‌شده برای هر فرزند (مثلاً مسواک زدن‌های متوالی) به همراه وضعیت پیشرفت و تعداد ستاره‌های جایزه.</td>
+                </tr>
+                <tr>
+                    <td><strong>Reward</strong></td>
+                    <td>Id (Guid), ChildId</td>
+                    <td>پاداش‌های قابل دریافت توسط کودک که توسط والدین تعریف می‌شود و نیاز به تعداد مشخصی ستاره دارد.</td>
+                </tr>
+                <tr>
+                    <td><strong>RewardClaim</strong></td>
+                    <td>Id (Guid), ChildId, RewardId</td>
+                    <td>درخواست‌های ثبت‌شده توسط کودک برای قفل‌گشایی یک جایزه. دارای وضعیت تعلیق (Pending) یا تایید شده (Approved).</td>
+                </tr>
+                <tr>
+                    <td><strong>Badge</strong></td>
+                    <td>Id (Guid), ChildId</td>
+                    <td>نشان‌ها یا دستاوردهایی که کودک به واسطه استمرار در بهداشت به صورت خودکار باز کرده است.</td>
+                </tr>
+                <tr>
+                    <td><strong>TeethPhoto</strong></td>
+                    <td>Id (Guid), ChildId</td>
+                    <td>عکس‌های آپلود شده از دندان‌های کودک برای مقایسه روند رشد و بهداشت دندان‌ها.</td>
+                </tr>
+                <tr>
+                    <td><strong>AppConfig</strong></td>
+                    <td>Id (Int)</td>
+                    <td>تنظیمات عمومی کل سیستم شامل لینک ویدیو آغازین، پیغام روز (MOTD)، شماره تماس پشتیبانی و نسخه نرم‌افزار.</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="page-break"></div>
+
+        <h2>۴.۲. راهنمای اندپوینت‌های وب‌سرویس (API Route Guide)</h2>
+        <p>
+            تمامی درخواست‌ها به سرور با پیشوند <code>/api/v1</code> ارسال می‌شوند. در ادامه جدول کامل آدرس‌ها به همراه نقش‌های دسترسی آورده شده است:
+        </p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 8%;">متد</th>
+                    <th style="width: 32%;">آدرس اندپوینت (Route)</th>
+                    <th style="width: 15%;">دسترسی (Role)</th>
+                    <th>شرح و عملکرد</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Auth -->
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/auth/register</code></td>
+                    <td>عمومی</td>
+                    <td>ثبت‌نام والد جدید در سیستم با شماره تلفن و رمز عبور</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/auth/login</code></td>
+                    <td>عمومی</td>
+                    <td>ورود والد و دریافت توکن JWT</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/parent/profile</code></td>
+                    <td>Parent</td>
+                    <td>دریافت اطلاعات پروفایل والد جاری</td>
+                </tr>
+                <!-- Kids -->
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/parent/children</code></td>
+                    <td>Parent</td>
+                    <td>لیست فرزندان تحت مدیریت والد جاری</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/parent/children</code></td>
+                    <td>Parent</td>
+                    <td>افزودن فرزند جدید به سیستم</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method put">PUT</span></td>
+                    <td><code>/parent/children/{id}</code></td>
+                    <td>Parent</td>
+                    <td>ویرایش اطلاعات فرزند (نام، سن، آواتار)</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method delete">DELETE</span></td>
+                    <td><code>/parent/children/{id}</code></td>
+                    <td>Parent</td>
+                    <td>حذف فرزند و تمامی اطلاعات وابسته به او</td>
+                </tr>
+                <!-- Dashboard -->
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/kids/{id}/dashboard</code></td>
+                    <td>Child / Parent</td>
+                    <td>دریافت کل اطلاعات صفحه اصلی کودک (آمار، ستاره‌ها، اهداف و...)</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/kids/{id}/settings</code></td>
+                    <td>Child / Parent</td>
+                    <td>دریافت زمان یادآوری مسواک صبح و شب</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method put">PUT</span></td>
+                    <td><code>/kids/{id}/settings</code></td>
+                    <td>Child / Parent</td>
+                    <td>بروزرسانی تنظیمات اعلان‌ها و ساعت یادآوری</td>
+                </tr>
+                <!-- Activities -->
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/kids/{id}/activities</code></td>
+                    <td>Child / Parent</td>
+                    <td>لیست وقایع ثبت‌شده کودک به همراه صفحه‌بندی</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/kids/{id}/activities</code></td>
+                    <td>Child / Parent</td>
+                    <td>ثبت گزارش فعالیت جدید (مسواک/دهان‌شویه) و کسب ستاره</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/kids/{id}/stats</code></td>
+                    <td>Child / Parent</td>
+                    <td>دریافت خلاصه آماری (روزهای متوالی، تعداد کل مسواک‌ها و...)</td>
+                </tr>
+                <!-- Photos -->
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/kids/{id}/photos</code></td>
+                    <td>Child / Parent</td>
+                    <td>دریافت آلبوم عکس‌های دندان کودک</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/kids/{id}/photos</code></td>
+                    <td>Child / Parent</td>
+                    <td>آپلود تصویر جدید از دوربین موبایل (ذخیره در سرور)</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method delete">DELETE</span></td>
+                    <td><code>/kids/{id}/photos/{photoId}</code></td>
+                    <td>Child / Parent</td>
+                    <td>حذف عکس دندان با شناسه مشخص</td>
+                </tr>
+                <!-- Goals & Rewards -->
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/kids/{id}/goals</code></td>
+                    <td>Child / Parent</td>
+                    <td>دریافت لیست اهداف جاری فرزند</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/parent/children/{id}/goals</code></td>
+                    <td>Parent</td>
+                    <td>ایجاد هدف جدید و سفارشی برای کودک توسط والد</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/kids/{id}/rewards</code></td>
+                    <td>Child / Parent</td>
+                    <td>دریافت لیست جوایز تعریف‌شده</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/parent/children/{id}/rewards</code></td>
+                    <td>Parent</td>
+                    <td>ایجاد جایزه سفارشی جدید (مثلاً اسباب‌بازی)</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/kids/{id}/rewards/claim</code></td>
+                    <td>Child / Parent</td>
+                    <td>درخواست قفل‌گشایی جایزه توسط کودک (با کسر ستاره)</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method post">POST</span></td>
+                    <td><code>/parent/rewards/claims/{claimId}/approve</code></td>
+                    <td>Parent</td>
+                    <td>تایید درخواست جایزه کودک توسط والد در دنیای واقعی</td>
+                </tr>
+                <!-- Admin & educational -->
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/videos</code></td>
+                    <td>عمومی</td>
+                    <td>دریافت لیست ویدیوهای آموزشی سلامت دهان و دندان</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/tips</code></td>
+                    <td>عمومی</td>
+                    <td>دریافت لیست نکات بهداشتی کوتاه روزانه</td>
+                </tr>
+                <tr>
+                    <td><span class="api-method get">GET</span></td>
+                    <td><code>/config</code></td>
+                    <td>عمومی</td>
+                    <td>دریافت پیام و پیکربندی‌های کلی اپلیکیشن</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="page-break"></div>
+
+        <!-- Chapter 5 -->
+        <h1>۵. راهنمای گام‌به‌گام کارکرد سامانه و سناریوهای عملیاتی</h1>
+        <p>
+            سیستم «دندون یار کوچولو» به گونه‌ای طراحی شده است که فرآیندهای بهداشتی دهان و دندان را با بازی‌وارسازی (گیمیفیکیشن) برای کودک سرگرم‌کننده و برای والدین کاملاً قابل پایش کند. در این بخش، نحوه کارکرد عملیاتی سیستم و سناریوهای اجرایی در اپلیکیشن موبایل و داشبوردهای سمت سرور به طور دقیق تشریح می‌گردد.
+        </p>
+
+        <h2>۵.۱. نحوه کارکرد و جریان داده کلی سامانه</h2>
+        <p>
+            ارتباط فرانت‌اند و بک‌اند بر بستر توکن‌های امنیتی JWT تعریف شده است. والد ابتدا وارد اپلیکیشن شده و پروفایل کودک را می‌سازد. پس از آن، تمام تعاملات کودک با برنامه (از جمله زمان‌سنج مسواک، نخ دندان، دهان‌شویه و گالری عکس) تحت شناسه اختصاصی هر کودک به سرور ارسال و در دیتابیس ثبت می‌شود. سرور با تحلیل مداوم این لاگ‌ها، آمار روزهای متوالی (Streaks)، اهداف تحقق‌یافته و نشان‌های تشویقی باز شده را به صورت بلادرنگ به کلاینت بازمی‌گرداند.
+        </p>
+
+        <h2>۵.۲. سناریوها و قابلیت‌های اپلیکیشن موبایل (سمت کلاینت)</h2>
+        
+        <div class="feature-box">
+            <h4>۱. سناریو ثبت‌نام، ورود و انتخاب کودک (پروفایل والدین)</h4>
+            <p>
+                والدین در اولین ورود به برنامه، با شماره موبایل و کلمه عبور ثبت‌نام می‌کنند. پس از ورود، اپلیکیشن به صورت خودکار توکن امنیتی را از سرور دریافت و ذخیره می‌کند. در گام بعدی، والد می‌تواند یک یا چند فرزند با نام، سن و آواتار دلخواه ایجاد کند. با انتخاب هر کودک، محیط اپلیکیشن به حالت کودک تغییر وضعیت داده و فعالیت‌های بهداشتی او لود می‌شود.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۲. سناریو مسواک‌زدن تعاملی و زمان‌سنج هوشمند (Interactive Brushing)</h4>
+            <p>
+                هنگامی که کودک دکمه «مسواک‌زدن» را لمس می‌کند، با یک راهنمای انیمیشنی مواجه می‌شود. این صفحه طبق زمان استاندارد پزشکی (۲ دقیقه)، دهان را به چند بخش مجزا (دندان‌های جلو، چپ، راست، بالا، پایین و زبان) تقسیم می‌کند. راهنمای تصویری به کودک نشان می‌دهد در هر ثانیه کدام بخش را مسواک بزند. پس از پایان زمان‌سنج و ثبت موفق لاگ، سرور امتیازهای ستاره را به حساب کودک واریز می‌کند.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۳. سناریو ثبت نخ دندان و دهان‌شویه (Complementary Care)</h4>
+            <p>
+                در این بخش، کودک با فشردن دکمه دهان‌شویه یا نخ دندان، وارد فرآیند شبیه‌ساز یا تایمر مخصوص هرکدام می‌شود. این کار با هدف ترغیب کودک به اتمام چرخه کامل بهداشت دهان انجام می‌شود. انجام این وظایف امتیازات تکمیلی (ستاره‌های بیشتر) به همراه دارد که در سرور ثبت می‌گردد.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۴. سناریو ثبت و ارسال عکس دندان‌ها (Teeth Timeline Gallery)</h4>
+            <p>
+                کودک یا والد می‌توانند با دوربین گوشی از وضعیت دندان‌ها عکس بگیرند و با وارد کردن عنوان (مثلاً «قبل از عصب‌کشی» یا «مسواک زدن هفته اول») آن را به سرور بفرستند. تصاویر آپلود شده به صورت خط زمانی (Timeline) ذخیره شده و به والدین این امکان را می‌دهد تا تغییرات فیزیکی دندان‌ها را در درازمدت پایش کنند.
+            </p>
+        </div>
+
+        <div class="feature-box">
+            <h4>۵. سناریو خرج ستاره‌ها و تقاضای پاداش (Claiming Rewards)</h4>
+            <p>
+                کودک با مراجعه به ویترین جوایز، لیست پاداش‌هایی را که والدین برای او تعریف کرده‌اند (مثلاً «خرید اسباب‌بازی»، «یک ساعت بازی با کنسول») مشاهده می‌کند. هر جایزه نیاز به تعداد مشخصی ستاره دارد. در صورت داشتن ستاره کافی، کودک درخواست اهدای جایزه را ثبت می‌کند. در این مرحله، ستاره‌ها کسر شده و وضعیت درخواست در سرور به «در انتظار تایید والد» تغییر می‌یابد.
+            </p>
+        </div>
+
+        <h2>۵.۳. سناریوها و داشبوردهای سمت سرور (سمت والد و ادمین)</h2>
+
+        <div class="feature-box">
+            <h4>۱. داشبورد و پنل نظارتی والدین (Parent Control Panel)</h4>
+            <ul>
+                <li><strong>پایش آماری کودکان:</strong> والد در پنل اختصاصی خود به نمودارهای فعالیت کودک دسترسی دارد. او می‌تواند متوجه شود فرزندش در چه روزهایی مسواک زده، آیا مسواک صبح یا شب را فراموش کرده و زنجیره استمرار او چند روزه بوده است.</li>
+                <li><strong>تعریف اهداف سفارشی (Custom Goals):</strong> والدین می‌توانند اهداف ویژه‌ای تعریف کنند. به عنوان مثال: هدف «۱۰ بار مسواک زدن متوالی در ماه جاری» با جایزه «۲۰ ستاره طلایی». سیستم به صورت خودکار پیشرفت کودک را پایش و در صورت تکمیل هدف، ستاره‌ها را واریز می‌کند.</li>
+                <li><strong>مدیریت جوایز واقعی:</strong> والدین پاداش‌های فیزیکی دنیای واقعی را متناسب با علایق کودک در پنل ثبت می‌کنند و هزینه ستاره‌ای آن را تعیین می‌نمایند.</li>
+                <li><strong>تایید فیزیکی درخواست جوایز:</strong> پس از تقاضای جایزه توسط کودک، والد اعلانی دریافت می‌کند. والد پس از تحویل دادن اسباب‌بازی یا پاداش به کودک در دنیای واقعی، دکمه «تایید و پرداخت» را در پنل کلیک می‌کند تا فرآیند نهایی شود.</li>
+            </ul>
+        </div>
+
+        <div class="feature-box">
+            <h4>۲. پنل مدیریت سراسری سیستم (Global Admin Console)</h4>
+            <ul>
+                <li><strong>مدیریت محتوای آموزشی (ویدیو و نکات علمی):</strong> مدیر ارشد سیستم می‌تواند ویدیوهای آموزشی جدید با فرمت MP4 بارگذاری کند. این ویدیوها در مسیر رسانه‌ای سرور قرار گرفته و در بخش ویدیوهای برنامه برای کودکان نمایش داده می‌شوند. همچنین، نوشتن نکات کوتاه علمی (Tips) جهت نمایش در صفحه اصلی کودکان از این پنل انجام می‌شود.</li>
+                <li><strong>پیکربندی تنظیمات سیستم (App Config):</strong> تنظیم پیام آغازین برنامه (Splash Message)، بروزرسانی لینک دانلود نسخه‌های جدید اپلیکیشن، شماره پشتیبانی و غیرفعال‌سازی موقت بخش‌ها در مواقع نگهداری سرور.</li>
+            </ul>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- Chapter 6 -->
+        <h1>۶. راهنمای کاربردی و آموزشی استفاده از سامانه (راهنمای اپراتوری)</h1>
+        <p>
+            این بخش به عنوان یک راهنمای عملیاتی و دفترچه راهنمای کاربر (User Guide) تدوین شده است تا افرادی که وظیفه کار با سیستم یا آموزش آن به کاربران نهایی را دارند، بتوانند به راحتی از تمام پتانسیل‌های نرم‌افزار استفاده نمایند.
+        </p>
+
+        <h2>۶.۱. راهنمای گام‌به‌گام کودکان در اپلیکیشن موبایل</h2>
+        <p>
+            بخش کودک با گرافیک فانتزی و ساده طراحی شده است تا تعامل با آن برای سنین پایین لذت‌بخش باشد. مراحل کار به شرح زیر است:
+        </p>
+        
+        <div class="feature-box">
+            <h4>۶.۱.۱. مسواک‌زدن تعاملی و شبیه‌ساز مسواک (زمان‌سنج مسواک)</h4>
+            <p>
+                این ماژول از ۱۲ مرحله پیاپی تشکیل شده است که کودک را از انتخاب مسواک تا آب‌کشی نهایی راهنمایی می‌کند:
+            </p>
+            <ol>
+                <li><strong>انتخاب مسواک (Choose Brush):</strong> کودک ابتدا مسواک فانتزی دلخواه خود را از میان مسواک‌های فانتزی نمایش داده شده انتخاب می‌کند.</li>
+                <li><strong>انتخاب زمان (Choose Time):</strong> مدت زمان مسواک زدن (مثلاً حالت سریع ۱ دقیقه‌ای یا حالت استاندارد ۲ دقیقه‌ای) تعیین می‌شود.</li>
+                <li><strong>شستشوی دندان‌های جلو بالا (Front Upper):</strong> کودک باید با مسواک روی دندان‌های جلویی و بالایی در صفحه حرکت <strong>دایره‌ای (Circular gestures)</strong> انجام دهد. انجام این کار باعث تولید کف مسواک (Foam bubbles) روی دندان‌ها در صفحه می‌شود.</li>
+                <li><strong>شستشوی دندان‌های جلو پایین (Front Lower):</strong> کودک باید حرکت <strong>عمودی بالا به پایین (Vertical strokes)</strong> روی دندان‌های جلویی پایین انجام دهد.</li>
+                <li><strong>شستشوی بخش‌های داخلی دندان‌های عقب بالا (Back Upper Inner):</strong> راهنمایی کودک برای حرکت مسواک روی سطوح داخلی دندان‌های پشتی.</li>
+                <li><strong>شستشوی بخش‌های خارجی دندان‌های عقب بالا (Back Upper Outer):</strong> مسواک زدن بخش‌های بیرونی دندان‌های پشتی.</li>
+                <li><strong>شستشوی سطح جونده دندان‌های عقب بالا (Back Upper Chewing):</strong> کودک باید حرکت <strong>افقی رفت و برگشتی (Horizontal Chewing strokes)</strong> روی سطح جونده دندان‌های عقب انجام دهد تا جرم‌ها پاک شوند.</li>
+                <li><strong>شستشوی دندان‌های عقب پایین (Back Lower):</strong> پاکسازی دندان‌های پشتی پایینی با تلفیقی از حرکات افقی و دایره‌ای.</li>
+                <li><strong>مسواک‌زدن زبان (Brush Tongue):</strong> کودک باید با حرکت <strong>جاروبی رو به جلو (Downward swipes)</strong> روی زبان موجود در شبیه‌ساز بکشد تا جرم‌های زبان پاک شوند.</li>
+                <li><strong>ادامه تا پایان زمان استاندارد (Continue 2 Minutes):</strong> در صورتی که کار زودتر تمام شده باشد، تایمر تا پایان زمان استاندارد به کودک انیمیشن‌های تشویقی نشان می‌دهد.</li>
+                <li><strong>تُف کردن کف‌ها (Spit Out):</strong> پس از اتمام تایمر، از کودک خواسته می‌شود روی دکمه ضربه بزند تا کف جمع شده در دهان خود را در شبیه‌ساز خالی کند (تف کند).</li>
+                <li><strong>شستشوی دهان و اتمام (Clean Mouth Done):</strong> آب‌کشی نهایی انجام شده و جشن پیروزی با افکت رقص ستاره‌ها (Confetti) لود می‌شود. کودک دکمه <strong>«ثبت فعالیت»</strong> را می‌زند تا اطلاعات بلافاصله در سرور ذخیره و ستاره‌ها واریز شوند.</li>
+            </ol>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶.۱.۲. شبیه‌ساز و بازی تعاملی نخ دندان (Flossing Game)</h4>
+            <p>
+                استفاده از نخ دندان به صورت یک بازی فکری و سرگرم‌کننده طراحی شده است:
+            </p>
+            <ol>
+                <li>از منوی اصلی دکمه مربوط به <strong>«نخ دندان»</strong> را لمس کنید.</li>
+                <li>در صفحه بازی، مدل دندان‌ها نمایش داده می‌شود که در فواصل بین آن‌ها، ذرات غذا (سبزی، گوشت، پنیر) و میکروب‌های مزاحم گیر افتاده‌اند.</li>
+                <li>کودک باید با انگشت خود نخ دندان را لمس کرده و با <strong>کشیدن انگشت (Drag Gesture)</strong>، نخ را دقیقاً به درون فاصله‌های دندانی هدایت کند.</li>
+                <li>با عبور موفق نخ دندان از هر فاصله، ذرات غذا متلاشی شده، انیمیشن ذرات و جرقه فعال می‌شود و میکروب‌ها نابود می‌گردند.</li>
+                <li>با پاکسازی هر فاصله، نوار پیشرفت تمیزی دندان‌ها (Cleanliness progress) افزایش می‌یابد. پس از پاکسازی کامل تمام فواصل (۱۰۰٪)، سیستم لاگ فعالیت <code>flossing</code> را در سرور ثبت کرده و امتیاز ستاره‌ها را به کودک اعطا می‌کند.</li>
+            </ol>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶.۱.۳. شبیه‌ساز و بازی تعاملی دهان‌شویه (Mouthwash Gargle)</h4>
+            <p>
+                این بخش به کودک یاد می‌دهد چگونه دهان خود را پس از پاکسازی اولیه ضدعفونی کند:
+            </p>
+            <ol>
+                <li>گزینه <strong>«دهان‌شویه»</strong> را در داشبورد انتخاب کنید.</li>
+                <li>یک بطری دهان‌شویه فانتزی و یک لیوان روی صفحه ظاهر می‌شود. کودک باید دکمه فشاری بطری را با انگشت خود <strong>نگه دارد (Press and Hold)</strong>.</li>
+                <li>با نگه داشتن دکمه، مایع دهان‌شویه با افکت فیزیک آب به آرامی لیوان را پر می‌کند. اگر کودک انگشت خود را بردارد، مایع داخل لیوان دوباره به آرامی تخلیه می‌شود (Drain).</li>
+                <li>کودک باید دکمه را آن‌قدر نگه دارد تا سطح مایع لیوان به ۱۰۰٪ (خط پر شدن) برسد.</li>
+                <li>سپس انیمیشن قرقره کردن ۳۰ ثانیه‌ای به صورت خودکار آغاز می‌شود. پس از پایان ضدعفونی، با نمایش یک پیام شاداب‌کننده («به‌به! عجب بوی خوبی! دهانت بوی طراوت نعناع میده! 🍃») و افکت‌های ستاره، فعالیت <code>mouthwash</code> ثبت شده و امتیاز آن واریز می‌گردد.</li>
+            </ol>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶.۱.۴. آلبوم عکس و سیر پیشرفت تغییرات دندان (Teeth Photo Timeline)</h4>
+            <p>
+                پایش بصری دندان‌ها به این صورت انجام می‌شود:
+            </p>
+            <ol>
+                <li>وارد بخش <strong>«آلبوم عکس دندان»</strong> شوید.</li>
+                <li>روی دکمه دوربین یا آپلود عکس کلیک کنید.</li>
+                <li>عنوان عکس را وارد کنید (مثلاً: افتادن اولین دندان شیری، هفته اول ارتودنسی).</li>
+                <li>با دوربین گوشی عکس واضحی از دندان کودک بگیرید. پس از تایید، عکس به سرور آپلود شده و به صورت خط زمان مرتب می‌شود.</li>
+                <li>والدین و دندانپزشکان می‌توانند با مقایسه عکس‌های تاریخی، روند رشد یا ترمیم دندان‌ها را به دقت بررسی کنند.</li>
+            </ol>
+        </div>
+
+        <h2>۶.۲. راهنمای کاربردی و تنظیمات مخصوص والدین در اپلیکیشن موبایل</h2>
+        <p>
+            والدین از طریق بخش تنظیمات اختصاصی می‌توانند نظارت کاملی بر روند بهداشت داشته باشند:
+        </p>
+
+        <div class="feature-box">
+            <h4>۶.۲.۱. تنظیم زمان یادآوری مسواک صبح و شب (Reminder Settings)</h4>
+            <p>
+                برای تنظیم هشدارها جهت یادآوری به موقع مسواک به کودک:
+            </p>
+            <ol>
+                <li>وارد صفحه <strong>تنظیمات</strong> شوید و روی گزینه <strong>«یادآوری مسواک صبح و شب»</strong> کلیک کنید.</li>
+                <li>در پنجره باز شده، تیک فعال‌سازی اعلان‌ها را فعال نمایید.</li>
+                <li>ساعت یادآوری صبح (مثلا ۰۸:۰۰) و ساعت یادآوری شب (مثلا ۲۱:۰۰) را به صورت دقیق تنظیم کنید.</li>
+                <li>دکمه ثبت را بزنید. این تنظیمات در سرور ذخیره شده و کلاینت در ساعت‌های مشخص شده به صورت نوتیفیکیشن هشدار می‌دهد.</li>
+            </ol>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶.۲.۲. مدیریت اهداف سفارشی (Goals Manager)</h4>
+            <p>
+                برای تشویق استمرار فعالیت کودک:
+            </p>
+            <ol>
+                <li>به بخش <strong>«مدیریت اهداف»</strong> در پنل والدین بروید.</li>
+                <li>گزینه <strong>«ایجاد هدف جدید»</strong> را بزنید.</li>
+                <li>عنوان (مثلاً: مسواک طلایی دو هفته‌ای)، شرح هدف و تعداد دفعات انجام (مثلاً ۱۴ بار) را مشخص کنید.</li>
+                <li>تعداد ستاره جایزه (مثلاً ۳۰ ستاره) را ثبت کنید. با استمرار فعالیت‌های کودک، نوار پیشرفت در داشبورد لود شده و پس از تکمیل، پاداش به کودک اعطا می‌شود.</li>
+            </ol>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶.۲.۳. تعریف پاداش‌های فیزیکی واقعی و تایید درخواست‌ها (Rewards Management)</h4>
+            <p>
+                والدین می‌توانند ستاره‌های مجازی کودک را به پاداش‌های واقعی در خانه پیوند بزنند:
+            </p>
+            <ol>
+                <li><strong>تعریف پاداش:</strong> در پنل والد، به بخش جوایز رفته و دکمه ایجاد پاداش را بزنید. عنوان پاداش (مانند خرید کتاب داستان، رفتن به پارک تفریحی یا نیم ساعت بازی کامپیوتری) و هزینه ستاره‌ای آن (مثلاً ۵۰ ستاره) را بنویسید و ثبت کنید.</li>
+                <li><strong>تایید درخواست:</strong> وقتی کودک در اپلیکیشن جایزه‌ای را با ستاره‌هایش خریداری می‌کند، وضعیت درخواست در سرور به حالت معلق (Pending) درمی‌آید. والد در پنل خود لیست درخواست‌های در انتظار را بررسی می‌کند. پس از تحویل پاداش واقعی به کودک، روی گزینه <strong>«تایید و اهدای پاداش»</strong> کلیک می‌کند تا امتیازات به طور قطعی کسر شده و درخواست آرشیو شود.</li>
+            </ol>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶.۲.۴. مدیریت و ویرایش پروفایل کودک (Profile Update)</h4>
+            <p>
+                برای تغییر نام، سن یا آواتار کودک فعال در برنامه:
+            </p>
+            <ol>
+                <li>در بخش تنظیمات، روی دکمه <strong>«تغییر اطلاعات پروفایل کودک»</strong> کلیک کنید.</li>
+                <li>نام جدید، سن به‌روزشده یا آدرس آواتار جدید را ثبت نمایید.</li>
+                <li>پس از ذخیره، تمامی آمار و ستاره‌های فرزند در ساختار جدید لود خواهد شد.</li>
+            </ol>
+        </div>
+
+        <h2>۶.۳. راهنمای کاربردی و مدیریت سامانه مخصوص مدیران سیستم (Admin Panel)</h2>
+        <p>
+            مدیر سیستم کنترل کاملی بر روی منابع رسانه‌ای و تنظیمات کلی اپلیکیشن کلاینت‌ها دارد:
+        </p>
+
+        <div class="feature-box">
+            <h4>۶.۳.۱. بارگذاری ویدیوهای آموزشی جدید</h4>
+            <ol>
+                <li>به بخش مدیریت ویدیوها در پنل بک‌اند مراجعه کنید.</li>
+                <li>عنوان ویدیو، توضیحات کوتاه آموزشی و مدت زمان ویدیو را وارد کنید.</li>
+                <li>فایل ویدیو (با فرمت MP4) را انتخاب کنید تا به طور خودکار در مسیر سرور (<code>wwwroot/uploads/videos</code>) بارگذاری شده و آدرس مستقیم دریافت کند.</li>
+                <li>دکمه ثبت را بزنید. ویدیو به صورت آنی در تمام اپلیکیشن‌های موبایل در بخش ویدیوهای آموزشی سلامت دهان ظاهر می‌شود.</li>
+            </ol>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶.۳.۲. مدیریت و ثبت نکات آموزشی روزانه (Tips)</h4>
+            <ol>
+                <li>به بخش مدیریت نکات بروید. عنوان نکته، متن کوتاه بهداشتی و دسته‌بندی آن (مثل مسواک زدن، نخ دندان، تغذیه) را بنویسید.</li>
+                <li>در صورت تمایل تصویر مرتبط را آپلود کنید.</li>
+                <li>با ثبت نهایی، این نکات به عنوان بنر آموزشی یا پیام روز در بالای داشبورد کلاینت‌ها برای کودکان نمایش داده می‌شود.</li>
+            </ol>
+        </div>
+
+        <div class="feature-box">
+            <h4>۶.۳.۳. تنظیمات سراسری سیستم (Global Configuration)</h4>
+            <ol>
+                <li>برای به‌روزرسانی پیغام خوش‌آمدگویی سراسری (MOTD)، تغییر حداقل نسخه مجاز اپلیکیشن جهت اجبار به آپدیت، یا تغییر شماره پشتیبانی، به بخش تنظیمات سیستم در پنل بک‌اند بروید.</li>
+                <li>مقادیر جدید را وارد و دکمه بروزرسانی را بزنید. کلاینت‌ها در اولین ارتباط با فراخوانی اندپوینت <code>/config</code>، تنظیمات جدید را اعمال خواهند کرد.</li>
+            </ol>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- Chapter 7 -->
+        <h1>۷. راهنمای نصب، راه‌اندازی و دپلویمنت</h1>
+        
+        <h2>۷.۱. نیازمندی‌های سیستم</h2>
+        <ul>
+            <li>برای فرانت‌اند: <strong>Flutter SDK v3.9+</strong> به همراه Android Studio یا Xcode جهت شبیه‌سازها.</li>
+            <li>برای بک‌اند: <strong>.NET Core SDK v8.0 یا v9.0</strong> نصب شده روی سرور یا سیستم محلی.</li>
+            <li>دیتابیس سیستم به طور پیش‌فرض SQLite است و نیاز به سرور دیتابیس جداگانه ندارد.</li>
+        </ul>
+
+        <h2>۷.۲. اجرای پروژه بک‌اند (.NET Web API)</h2>
+        <p>
+            ۱. وارد پوشه بک‌اند پروژه شوید:
+        </p>
+        <pre>cd /mnt/sda2/porjects/dotnet/HealthcareApi/HealthcareApi/</pre>
+        <p>
+            ۲. پکیج‌های پروژه را بازیابی کنید:
+        </p>
+        <pre>dotnet restore</pre>
+        <p>
+            ۳. دیتابیس و مهاجرت‌ها را اعمال کنید (پروژه به صورت خودکار در اولین اجرا دیتابیس SQLite را می‌سازد و داده‌های اولیه را تزریق می‌کند. اما در صورت نیاز دستی):
+        </p>
+        <pre>dotnet ef database update --project HealthcareApi.Application/ --startup-project HealthcareApi/</pre>
+        <p>
+            ۴. پروژه را در حالت توسعه یا تولید اجرا کنید:
+        </p>
+        <pre>dotnet run --project HealthcareApi/</pre>
+        <p>
+            بک‌اند معمولاً روی پورت <code>http://localhost:5158</code> یا پورت مشخص‌شده در <code>appsettings.json</code> لود می‌شود. برای مشاهده مستندات تعاملی Swagger به آدرس <code>http://localhost:5158/swagger</code> مراجعه کنید.
+        </p>
+
+        <h2>۷.۳. اجرای پروژه فرانت‌اند (Flutter)</h2>
+        <p>
+            ۱. ابتدا وارد پوشه پروژه فلاتر شوید:
+        </p>
+        <pre>cd /mnt/sda2/porjects/flutter/healthcare</pre>
+        <p>
+            ۲. پکیج‌های وابستگی کلاینت را دریافت کنید:
+        </p>
+        <pre>flutter pub get</pre>
+        <p>
+            ۳. مطمئن شوید که آدرس IP یا دامنه بک‌اند در فایل <code>lib/api/healthcare_api.dart</code> در خط ۲۱ یا ۲۲ به درستی تنظیم شده باشد:
+        </p>
+        <pre>static final ApiClient _defaultClient = ApiClient(baseUrl: 'https://h.ghahremansalamat.ir');
+// یا برای شبیه‌ساز محلی:
+// static final ApiClient _defaultClient = ApiClient(baseUrl: 'http://10.0.2.2:5158');</pre>
+        <p>
+            ۴. برنامه را روی شبیه‌ساز یا دستگاه متصل اجرا کنید:
+        </p>
+        <pre>flutter run</pre>
+
+        <div class="page-break"></div>
+
+        <!-- Chapter 8 -->
+        <h1>۸. جمع‌بندی نهایی و وضعیت تحویل</h1>
+        <p>
+            پروژه <strong>دندون یار کوچولو (ToothBuddy)</strong> با معماری استاندارد لایه‌ای در بک‌اند و کلاینت فلاتر بسیار روان، کلیه امکانات مورد نیاز کارفرما را پوشش داده است. 
+        </p>
+        <p>
+            بخش بک‌اند به دلیل استفاده از معماری تمیز و تزریق وابستگی‌های هوشمند (Autofac)، از قابلیت نگهداری (Maintainability) و توسعه‌پذیری بالایی برخوردار است. دیتابیس پروژه SQLite انتخاب شده که فرآیند پشتیبان‌گیری و انتقال را به یک کپی ساده فایل محدود می‌کند. بخش موبایل فلاتر نیز با استایل‌دهی فونت وزیر و زمان‌سنج تعاملی آماده بهره‌برداری کامل است.
+        </p>
+        <p>
+            این مستند به عنوان راهنمای نهایی تحویل سیستم به کارفرمای محترم تقدیم می‌گردد. تمام سورس‌کدها به همراه دیتابیس نمونه آماده دپلویمنت نهایی بر روی سرورهای ابری هستند.
+        </p>
+
+    </div>
+
+</body>
+</html>
