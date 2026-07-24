@@ -64,7 +64,7 @@ class RoleSelectDto {
 
 class ApiResult {
   final bool isSuccess;
-  final int statusCode; // e.g. ApiResultStatusCode enum/value
+  final int statusCode; 
   final String? message;
 
   ApiResult({

@@ -11,7 +11,6 @@ class AuthService {
     this.defaultVersion = ApiEndpoints.defaultVersion,
   });
 
-  /// Register parent and child
   Future<ParentRegisterResponse> registerParent(
     ParentRegisterRequest request, {
     String? version,
@@ -23,7 +22,6 @@ class AuthService {
     );
     final registerResponse = ParentRegisterResponse.fromJson(response.data as Map<String, dynamic>);
     
-    // Automatically configure the token in the ApiClient on successful registration
     if (registerResponse.token.isNotEmpty) {
       apiClient.setAuthToken(registerResponse.token);
     }
@@ -31,7 +29,6 @@ class AuthService {
     return registerResponse;
   }
 
-  /// Login parent or child
   Future<LoginResponse> loginUser(
     LoginRequest request, {
     String? version,
@@ -43,7 +40,6 @@ class AuthService {
     );
     final loginResponse = LoginResponse.fromJson(response.data as Map<String, dynamic>);
     
-    // Automatically configure the token in the ApiClient on successful login
     if (loginResponse.token.isNotEmpty) {
       apiClient.setAuthToken(loginResponse.token);
     }
@@ -51,7 +47,6 @@ class AuthService {
     return loginResponse;
   }
 
-  /// Retrieve the parent profile
   Future<ParentProfile> getParentProfile({
     String? version,
   }) async {

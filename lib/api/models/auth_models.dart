@@ -126,7 +126,7 @@ class ParentRegisterResponse {
 class LoginRequest {
   final String phone;
   final String password;
-  final String role; // 'Parent' or 'Child'
+  final String role; 
   final String? childId;
 
   LoginRequest({
@@ -214,7 +214,7 @@ class UpdateProfileRequest {
   final String? city;
   final String? postalCode;
   final String? economicCode;
-  final String? birthday; // ISO format date-time string
+  final String? birthday; 
 
   UpdateProfileRequest({
     this.firstName,

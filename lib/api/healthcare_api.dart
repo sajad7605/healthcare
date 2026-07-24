@@ -15,12 +15,12 @@ export 'services/account_service.dart';
 export 'services/children_service.dart';
 export 'services/educational_service.dart';
 export 'services/app_config_service.dart';
+export 'services/session_manager.dart';
 
 class HealthcareApi {
-  // Global singleton instance for easy app-wide access
+  
   static final ApiClient _defaultClient = ApiClient(baseUrl: 'https://h.ghahremansalamat.ir');
-  //static final ApiClient _defaultClient = ApiClient(baseUrl: 'http://127.0.0.1:5158');
-
+  
   static HealthcareApi instance = HealthcareApi(apiClient: _defaultClient);
 
   final ApiClient apiClient;
@@ -31,7 +31,6 @@ class HealthcareApi {
   late final EducationalService educational;
   late final AppConfigService config;
 
-  // Active Session Cache
   ParentProfile? currentParent;
   ChildProfile? currentChild;
   List<ChildProfile>? childrenList;

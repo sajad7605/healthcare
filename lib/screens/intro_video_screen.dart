@@ -43,7 +43,6 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
       await _controller.play();
       _controller.addListener(_videoListener);
       
-      // Auto-hide controls after 3 seconds
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted && _controller.value.isPlaying) {
           setState(() {
@@ -53,7 +52,7 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
       });
     } catch (e) {
       debugPrint("Error initializing video player: $e");
-      // If error occurs, fall back to navigating immediately
+      
       _navigateToNext();
     }
   }
@@ -64,7 +63,6 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
     final position = _controller.value.position;
     final duration = _controller.value.duration;
     
-    // Check if the video has ended (using a small threshold of 200ms or exact completion)
     if (_controller.value.isInitialized && 
         position >= duration - const Duration(milliseconds: 200) && 
         !_controller.value.isPlaying && 
@@ -77,7 +75,6 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
     if (_isNavigated) return;
     _isNavigated = true;
     
-    // Remove listener before navigating to avoid state issues
     _controller.removeListener(_videoListener);
     
     if (widget.nextRoute.isEmpty) {
@@ -103,7 +100,7 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
         _showControls = true;
       } else {
         _controller.play();
-        // Auto-hide controls again after a short delay
+        
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted && _controller.value.isPlaying) {
             setState(() {
@@ -130,7 +127,7 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
         body: SafeArea(
           child: Stack(
             children: [
-              // Video Player section
+              
               Center(
                 child: _isInitialized
                     ? GestureDetector(
@@ -145,7 +142,7 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
                             alignment: Alignment.bottomCenter,
                             children: [
                               VideoPlayer(_controller),
-                              // Bottom custom progress bar
+                              
                               VideoProgressIndicator(
                                 _controller,
                                 allowScrubbing: true,
@@ -178,7 +175,6 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
                       ),
               ),
 
-              // Title Header
               Positioned(
                 top: 16,
                 right: 16,
@@ -200,7 +196,6 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
                 ),
               ),
 
-              // "Skip" button (Left-top corner for RTL layout)
               Positioned(
                 top: 16,
                 left: 16,
@@ -247,14 +242,13 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
                 ),
               ),
 
-              // Play/Pause and Mute overlays when controls are visible
               if (_isInitialized && _showControls)
                 Positioned.fill(
                   child: Container(
                     color: Colors.black38,
                     child: Stack(
                       children: [
-                        // Central Play/Pause button
+                        
                         Center(
                           child: GestureDetector(
                             onTap: _togglePlay,
@@ -275,7 +269,6 @@ class _IntroVideoScreenState extends State<IntroVideoScreen> {
                           ),
                         ),
                         
-                        // Volume Mute/Unmute at the bottom right
                         Positioned(
                           bottom: 24,
                           right: 24,

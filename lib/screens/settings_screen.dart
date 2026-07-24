@@ -24,7 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFE0F7FA), // Light Cyan theme
+                Color(0xFFE0F7FA), 
                 Color(0xFFF5FDFD),
               ],
             ),
@@ -32,7 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: SafeArea(
             child: Column(
               children: [
-                // App Bar
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -60,7 +60,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 const SizedBox(height: 30),
 
-                // Giant Tooth Avatar
                 Center(
                   child: Container(
                     width: 110,
@@ -111,7 +110,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 const SizedBox(height: 30),
 
-                // Settings List
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -151,12 +149,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: 'خروج از حساب کاربری',
                         subtitle: 'خروج موقت و بازگشت به صفحه ورود',
                         color: const Color(0xFFFF7675),
-                        onTap: () {
-                          HealthcareApi.instance.apiClient.setAuthToken(null);
-                          HealthcareApi.instance.currentParent = null;
-                          HealthcareApi.instance.currentChild = null;
-                          HealthcareApi.instance.childrenList = null;
-                          Navigator.pushNamedAndRemoveUntil(context, '/auth', (route) => false);
+                        onTap: () async {
+                          await SessionManager.clearSession();
+                          if (context.mounted) {
+                            Navigator.pushNamedAndRemoveUntil(context, '/auth', (route) => false);
+                          }
                         },
                       ),
                     ],
@@ -177,7 +174,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
-    // Show loading
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -195,7 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
     if (!mounted) return;
-    Navigator.pop(context); // close spinner
+    Navigator.pop(context); 
 
     TimeOfDay parseTime(String timeStr) {
       final parts = timeStr.split(':');

@@ -41,7 +41,7 @@ class UpdateChildRequest {
 }
 
 class ActivityLogRequest {
-  final String activityType; // e.g. "brushing_timer", "brushing_interactive", "flossing", "mouthwash"
+  final String activityType; 
   final int durationSeconds;
   final List<String>? completedSteps;
 
@@ -131,7 +131,7 @@ class Goal {
   final int targetCount;
   final int currentProgress;
   final int starsReward;
-  final String status; // "active" or "completed"
+  final String status; 
   final DateTime? createdAt;
 
   Goal({
@@ -187,7 +187,7 @@ class Reward {
   final String title;
   final String? description;
   final int starsRequired;
-  final String status; // "available", "claimed", "redeemed"
+  final String status; 
 
   Reward({
     required this.id,
@@ -246,7 +246,7 @@ class RewardClaim {
   final String id;
   final Reward reward;
   final String childId;
-  final String status; // "pending", "approved"
+  final String status; 
   final DateTime claimedAt;
   final DateTime? approvedAt;
 
@@ -272,8 +272,8 @@ class RewardClaim {
 }
 
 class NotificationSettings {
-  final String morningReminderTime; // "HH:mm" format
-  final String nightReminderTime; // "HH:mm" format
+  final String morningReminderTime; 
+  final String nightReminderTime; 
   final bool pushNotificationsEnabled;
 
   NotificationSettings({
@@ -342,7 +342,7 @@ class TeethPhoto {
   });
 
   factory TeethPhoto.fromJson(Map<String, dynamic> json) {
-    // Backend sends 'uploadedAt', fallback to 'createdAt' for compat
+    
     final dateStr = json['uploadedAt'] as String? ?? json['createdAt'] as String?;
     return TeethPhoto(
       id: json['id'] as String,
@@ -374,7 +374,7 @@ class ChildDashboardData {
     final json = (jsonMap.containsKey('isSuccess') && jsonMap.containsKey('data') && jsonMap['data'] is Map<String, dynamic>)
         ? jsonMap['data'] as Map<String, dynamic>
         : (jsonMap.containsKey('data') && jsonMap['data'] is Map<String, dynamic> ? jsonMap['data'] as Map<String, dynamic> : jsonMap);
-    // The backend ChildDashboardDataDto uses 'childProfile' and 'reminderSettings'
+    
     final childJson = json['childProfile'] as Map<String, dynamic>? ?? 
                       json['child'] as Map<String, dynamic>? ?? {};
     final settingsJson = json['reminderSettings'] as Map<String, dynamic>? ?? 

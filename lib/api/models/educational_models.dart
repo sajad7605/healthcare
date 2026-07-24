@@ -43,7 +43,7 @@ class Tip {
   final String title;
   final String content;
   final String? author;
-  final String? publishedAt; // format: "YYYY-MM-DD" or similar
+  final String? publishedAt; 
 
   Tip({
     required this.id,

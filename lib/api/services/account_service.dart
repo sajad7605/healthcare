@@ -11,8 +11,6 @@ class AccountService {
     this.defaultVersion = ApiEndpoints.defaultVersion,
   });
 
-  // --- Account Endpoints ---
-
   Future<void> loginAccount(
     TokenRequest request, {
     String? version,
@@ -55,8 +53,6 @@ class AccountService {
       data: request.toJson(),
     );
   }
-
-  // --- Role Endpoints ---
 
   Future<List<RoleSelectDto>> getAllRoles({
     String? version,
@@ -128,8 +124,6 @@ class AccountService {
     final response = await apiClient.delete(ApiEndpoints.deleteRole(v, id));
     return ApiResult.fromJson(response.data as Map<String, dynamic>);
   }
-
-  // --- UserManager Endpoints ---
 
   Future<void> createUser(
     UserDto request, {

@@ -76,7 +76,7 @@ class _VideoScreenState extends State<VideoScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFE8EAF6), // Indigo light theme
+                Color(0xFFE8EAF6), 
                 Color(0xFFF5F5F5),
               ],
             ),
@@ -84,7 +84,7 @@ class _VideoScreenState extends State<VideoScreen> {
           child: SafeArea(
             child: Column(
               children: [
-                // App Bar
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -203,7 +203,7 @@ class _VideoScreenState extends State<VideoScreen> {
                                             onTap: () => _playVideo(video),
                                             child: Row(
                                               children: [
-                                                // Thumbnail on the right
+                                                
                                                 Container(
                                                   width: 110,
                                                   height: 110,
@@ -229,7 +229,6 @@ class _VideoScreenState extends State<VideoScreen> {
                                                         ),
                                                 ),
 
-                                                // Text details on the left
                                                 Expanded(
                                                   child: Padding(
                                                     padding: const EdgeInsets.all(16.0),
@@ -290,7 +289,6 @@ class _VideoScreenState extends State<VideoScreen> {
   }
 }
 
-// Stateful Mock video player component sheet
 class _MockVideoPlayerSheet extends StatefulWidget {
   final String title;
 
@@ -302,7 +300,7 @@ class _MockVideoPlayerSheet extends StatefulWidget {
 
 class _MockVideoPlayerSheetState extends State<_MockVideoPlayerSheet> {
   bool _isPlaying = true;
-  double _playbackProgress = 0.05; // 0.0 to 1.0
+  double _playbackProgress = 0.05; 
   Timer? _playbackTimer;
 
   @override
@@ -346,7 +344,7 @@ class _MockVideoPlayerSheetState extends State<_MockVideoPlayerSheet> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // Slide Bar drag helper
+            
             Center(
               child: Container(
                 width: 50,
@@ -356,7 +354,6 @@ class _MockVideoPlayerSheetState extends State<_MockVideoPlayerSheet> {
             ),
             const SizedBox(height: 20),
 
-            // Video Title
             Text(
               widget.title,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2C3E50)),
@@ -364,7 +361,6 @@ class _MockVideoPlayerSheetState extends State<_MockVideoPlayerSheet> {
             ),
             const SizedBox(height: 20),
 
-            // Mock player screen
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -382,7 +378,7 @@ class _MockVideoPlayerSheetState extends State<_MockVideoPlayerSheet> {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Mock cartoon art drawing
+                    
                     Opacity(
                       opacity: 0.65,
                       child: Center(
@@ -406,7 +402,6 @@ class _MockVideoPlayerSheetState extends State<_MockVideoPlayerSheet> {
 
             const SizedBox(height: 20),
 
-            // Playback controls & Progress bar
             Slider(
               value: _playbackProgress,
               activeColor: const Color(0xFF341F97),
@@ -428,7 +423,6 @@ class _MockVideoPlayerSheetState extends State<_MockVideoPlayerSheet> {
 
             const SizedBox(height: 10),
 
-            // Control buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

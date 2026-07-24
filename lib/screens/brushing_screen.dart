@@ -125,7 +125,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   void _initGerms(BrushingStage stage) {
     _germs.clear();
     if (stage == BrushingStage.frontTeethUpper) {
-      // Group 2.png - Maxilla (upper jaw) from the front
+      
       _germs = [
         _Germ(
           id: 1,
@@ -149,7 +149,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.frontTeethLower) {
-      // Group 2.png - Lower jaw from the front
+      
       _germs = [
         _Germ(
           id: 1,
@@ -173,7 +173,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperInner) {
-      // Group 2(2).png - Maxilla (upper jaw)
+      
       _germs = [
         _Germ(
           id: 1,
@@ -197,7 +197,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperOuter) {
-      // Group 2(2).png - Maxilla (upper jaw)
+      
       _germs = [
         _Germ(
           id: 1,
@@ -221,7 +221,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.backTeethUpperChewing) {
-      // Group 2(2).png - Maxilla (upper jaw chewing)
+      
       _germs = [
         _Germ(
           id: 1,
@@ -245,7 +245,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.backTeethLower) {
-      // Group 2(2).png - Lower jaw
+      
       _germs = [
         _Germ(
           id: 1,
@@ -269,7 +269,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ),
       ];
     } else if (stage == BrushingStage.brushTongue) {
-      // Group 2(2).png - Mouth/Tongue
+      
       _germs = [
         _Germ(
           id: 1,
@@ -536,10 +536,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     final double distance = math.sqrt(dx * dx + dy * dy);
 
     if (distance > 10.0) {
-      // Detect primarily vertical movement
+      
       if (dy.abs() > dx.abs() * 0.8) {
         String currentDir = dy > 0 ? 'D' : 'U';
-        // For downward stages, reward D->U->D switches; for upward, reward U->D->U
+        
         String primaryDir = expectDownward ? 'D' : 'U';
         String secondaryDir = expectDownward ? 'U' : 'D';
 
@@ -863,7 +863,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             _initCelebration();
           });
 
-          // API Connection: Log interactive brushing activity and update stars
           final activeChild = HealthcareApi.instance.currentChild;
           if (activeChild != null) {
             HealthcareApi.instance.children.logActivity(
@@ -882,7 +881,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 ],
               ),
             ).then((res) {
-              // Update local cached stars
+              
               final oldStars = HealthcareApi.instance.currentChild?.stars ?? 0;
               HealthcareApi.instance.currentChild = ChildProfile(
                 id: activeChild.id,
@@ -1582,7 +1581,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     );
   }
 
-
   Widget _buildTimerProgress() {
     final double maxSec = _isFastMode ? 15.0 : 120.0;
     final double progress = (_secondsRemaining / maxSec).clamp(0.0, 1.0);
@@ -1779,7 +1777,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                                       'این مسواک خمیردندون زیادی داره و ممکنه دهانت رو اذیت کنه. یه مسواک بهتر انتخاب کن.',
                                     );
                                   } else {
-                                    // x50vat giraffe brush — no toothpaste at all
+                                    
                                     _showWrongBrushDialog(
                                       'اوه! خمیردندون نداره! 🦒',
                                       'این مسواک هیچ خمیردندونی نداره! بدون خمیردندون دندون‌ها تمیز نمی‌شن. یه مسواک مناسب‌تر انتخاب کن.',
@@ -2175,9 +2173,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         },
         child: Stack(
           children: [
-            // (place45Degrees step removed)
-
-            // Animated direction arrow hints for brushing stages
+            
             if (_currentStage == BrushingStage.frontTeethUpper ||
                 _currentStage == BrushingStage.backTeethUpperInner ||
                 _currentStage == BrushingStage.backTeethUpperOuter ||
@@ -2337,8 +2333,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             if (_selectedBrushIndex != -1 &&
                 _currentStage != BrushingStage.spitOut)
               Positioned(
-                // Original image size: 273x149. Touch point: (33, 67)
-                // Width = 180 => dxOffset = 180 * (33/273) = 21.76, dyOffset = 180 * (67/273) = 44.18
+                
                 left: _brushPosition.dx - 21.76,
                 top: _brushPosition.dy - 44.18,
                 child: IgnorePointer(
@@ -2361,8 +2356,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                   ),
                 ),
               ),
-
-            // (place45Degrees rotation dial removed)
 
             if (_currentStage == BrushingStage.continue2Minutes) ...[
               Positioned(

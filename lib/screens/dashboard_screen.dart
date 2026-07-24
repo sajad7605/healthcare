@@ -231,7 +231,6 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                 const SizedBox(height: 10),
 
-                // Achievements & Rewards Banner
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: SquishPopButton(

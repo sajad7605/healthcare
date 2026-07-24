@@ -11,11 +11,10 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
-  bool _isLogin = true; // true = Login (2 fields), false = Register (6 fields)
+  bool _isLogin = true; 
   bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
 
-  // Text Controllers
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -65,6 +64,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               }
             } catch (_) {}
           }
+
+          await SessionManager.saveSession(
+            token: response.token,
+            parent: HealthcareApi.instance.currentParent,
+            child: HealthcareApi.instance.currentChild,
+            childrenList: HealthcareApi.instance.childrenList,
+          );
         } else {
           final response = await HealthcareApi.instance.auth.registerParent(
             ParentRegisterRequest(
@@ -79,6 +85,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
           HealthcareApi.instance.currentParent = response.parent;
           HealthcareApi.instance.currentChild = response.child;
           HealthcareApi.instance.childrenList = [response.child];
+
+          await SessionManager.saveSession(
+            token: response.token,
+            parent: response.parent,
+            child: response.child,
+            childrenList: [response.child],
+          );
         }
 
         if (mounted) {
@@ -122,7 +135,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         body: SingleChildScrollView(
           child: Column(
             children: [
-              // Playful Cloud Frame Header with Kids & Tooth illustration
+              
               SizedBox(
                 height: 260,
                 width: double.infinity,
@@ -132,7 +145,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 20),
 
-              // Title Header
               Text(
                 _isLogin ? 'ورود به حساب دندون‌یار' : 'ساخت حساب کاربری جدید',
                 style: const TextStyle(
@@ -152,7 +164,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 20),
 
-              // Input Form Container (with auto-resizing height)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Form(
@@ -181,7 +192,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 24),
 
-              // Action Button (Blue full-width)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: SquishPopButton(
@@ -226,7 +236,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 16),
 
-              // Switch Link
               TextButton(
                 onPressed: () {
                   setState(() {
@@ -250,7 +259,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     );
   }
 
-  // Login Form with 2 fields
   Widget _buildLoginForm() {
     return Column(
       key: const ValueKey('LoginFormKey'),
@@ -290,7 +298,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     );
   }
 
-  // Registration Form with 6 fields
   Widget _buildRegisterForm() {
     return Column(
       key: const ValueKey('RegisterFormKey'),
@@ -377,7 +384,6 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     );
   }
 
-  // Rounded Input Field builder helper
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,

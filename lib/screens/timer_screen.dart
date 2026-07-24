@@ -13,7 +13,7 @@ class TimerScreen extends StatefulWidget {
 }
 
 class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin {
-  int _secondsLeft = 120; // 2 minutes
+  int _secondsLeft = 120; 
   Timer? _timer;
   bool _isRunning = false;
 
@@ -25,13 +25,11 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
   void initState() {
     super.initState();
 
-    // Brushing animation controller
     _brushingController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 1),
     )..repeat();
 
-    // Bubble animation controller
     _bubbleController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
@@ -39,7 +37,6 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
         _updateBubbles();
       })..repeat();
 
-    // Initialize some bubbles
     for (int i = 0; i < 15; i++) {
       _bubbles.add(_Bubble.random());
     }
@@ -108,7 +105,7 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
   }
 
   void _showCelebrationDialog() {
-    // Log activity to API
+    
     final activeChild = HealthcareApi.instance.currentChild;
     if (activeChild != null) {
       HealthcareApi.instance.children.logActivity(
@@ -198,7 +195,7 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
               Center(
                 child: SquishPopButton(
                   onTap: () {
-                    Navigator.of(context).pop(); // Dismiss Dialog
+                    Navigator.of(context).pop(); 
                     _resetTimer();
                   },
                   child: Container(
@@ -234,15 +231,15 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFEDE7F6), // Soft light purple
-                Color(0xFFE3F2FD), // Soft sky blue
+                Color(0xFFEDE7F6), 
+                Color(0xFFE3F2FD), 
               ],
             ),
           ),
           child: SafeArea(
             child: Column(
               children: [
-                // Custom App Bar
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -263,21 +260,20 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                           color: Color(0xFF2C3E50),
                         ),
                       ),
-                      const SizedBox(width: 40), // Balanced placeholder
+                      const SizedBox(width: 40), 
                     ],
                   ),
                 ),
 
                 const Spacer(),
 
-                // Animated Tooth + Circular Progress Ring
                 SizedBox(
                   width: 280,
                   height: 280,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // Bubbles overlay
+                      
                       if (_isRunning)
                         ..._bubbles.map((bubble) {
                           return Positioned(
@@ -298,7 +294,6 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                           );
                         }),
 
-                      // Glowing background ring
                       Container(
                         width: 250,
                         height: 250,
@@ -315,7 +310,6 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                         ),
                       ),
 
-                      // Animated Tooth in center
                       SizedBox(
                         width: 150,
                         height: 150,
@@ -337,7 +331,6 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                         ),
                       ),
 
-                      // Outer circular progress indicator
                       SizedBox(
                         width: 240,
                         height: 240,
@@ -354,7 +347,6 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
 
                 const SizedBox(height: 30),
 
-                // Countdown Timer Text
                 Text(
                   _formatTime(_secondsLeft),
                   style: const TextStyle(
@@ -376,13 +368,12 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
 
                 const Spacer(),
 
-                // Bottom Action buttons
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Reset button
+                      
                       SquishPopButton(
                         onTap: _resetTimer,
                         child: Container(
@@ -397,7 +388,7 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                         ),
                       ),
                       const SizedBox(width: 24),
-                      // Play/Pause button
+                      
                       SquishPopButton(
                         onTap: _isRunning ? _pauseTimer : _startTimer,
                         child: Container(
@@ -424,7 +415,7 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
                         ),
                       ),
                       const SizedBox(width: 24),
-                      // Fast-Forward cheat button (for quick testing/checking success dialog)
+                      
                       SquishPopButton(
                         onTap: () {
                           setState(() {
@@ -454,7 +445,6 @@ class _TimerScreenState extends State<TimerScreen> with TickerProviderStateMixin
   }
 }
 
-// Simple Bubble structure for particle simulation
 class _Bubble {
   double x;
   double y;
@@ -473,7 +463,7 @@ class _Bubble {
   factory _Bubble.random() {
     final random = math.Random();
     return _Bubble(
-      x: 35.0 + random.nextDouble() * 30.0, // center it around tooth
+      x: 35.0 + random.nextDouble() * 30.0, 
       y: 40.0 + random.nextDouble() * 40.0,
       size: 5.0 + random.nextDouble() * 10.0,
       speed: 1.0 + random.nextDouble() * 1.5,

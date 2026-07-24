@@ -20,19 +20,16 @@ class MouthwashScreen extends StatefulWidget {
 class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderStateMixin {
   MouthwashStage _currentStage = MouthwashStage.gargle;
 
-  // Gargle phase controllers & state
   late AnimationController _gargleController;
   late AnimationController _cheekPuffController;
   bool _isGarglingHolding = false;
-  double _gargleProgress = 0.0; // 0.0 to 1.0
+  double _gargleProgress = 0.0; 
   Timer? _gargleTimer;
 
-  // Spit phase controllers & state
   late AnimationController _spitController;
   final List<_SplashDroplet> _spitDroplets = [];
   bool _isSpittingAnimationRunning = false;
 
-  // Background wave controller
   late AnimationController _waveController;
 
   @override
@@ -156,7 +153,7 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
       for (var droplet in _spitDroplets) {
         droplet.x += droplet.vx;
         droplet.y += droplet.vy;
-        droplet.vy += 0.8; // gravity
+        droplet.vy += 0.8; 
       }
     });
   }
@@ -261,7 +258,7 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
       child: Scaffold(
         body: Stack(
           children: [
-            // Wave background filling up slightly during gargle
+            
             Positioned.fill(
               child: AnimatedBuilder(
                 animation: _waveController,
@@ -279,7 +276,7 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
             SafeArea(
               child: Column(
                 children: [
-                  // Header Bar
+                  
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
@@ -309,7 +306,6 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
 
                   const SizedBox(height: 10),
 
-                  // Stage Guidance Card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Container(
@@ -351,14 +347,13 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
 
                   const Spacer(),
 
-                  // Interactive Kid Character Scene (Gargling or Spitting)
                   SizedBox(
                     height: 340,
                     width: size.width,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Gargle Phase Kid Character with Puffing Cheeks & Bubbles
+                        
                         if (_currentStage == MouthwashStage.gargle)
                           AnimatedBuilder(
                             animation: Listenable.merge([_cheekPuffController, _gargleController]),
@@ -369,7 +364,7 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
                               return Stack(
                                 alignment: Alignment.center,
                                 children: [
-                                  // Pulsing Aura Ring while gargling
+                                  
                                   if (_isGarglingHolding)
                                     Container(
                                       width: 240 + (math.sin(_gargleController.value * math.pi * 2) * 15),
@@ -380,7 +375,6 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
                                       ),
                                     ),
 
-                                  // Kid Character with cheek puffing animation
                                   CustomPaint(
                                     size: const Size(200, 240),
                                     painter: _GarglingKidPainter(
@@ -394,7 +388,6 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
                             },
                           ),
 
-                        // Spit Phase: Parabolic Liquid Stream Spitting from Kid mouth into Sink below
                         if (_currentStage == MouthwashStage.spit || _currentStage == MouthwashStage.celebration)
                           AnimatedBuilder(
                             animation: _spitController,
@@ -414,7 +407,6 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
 
                   const Spacer(),
 
-                  // Progress gauge for Gargle Phase
                   if (_currentStage == MouthwashStage.gargle)
                     Column(
                       children: [
@@ -444,7 +436,6 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
 
                   const SizedBox(height: 20),
 
-                  // Action Buttons (Hold to Gargle / Tap to Spit)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 40),
                     child: _currentStage == MouthwashStage.gargle
@@ -524,7 +515,6 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
   }
 }
 
-/// Helper class for splash droplets on sink impact
 class _SplashDroplet {
   double x;
   double y;
@@ -543,7 +533,6 @@ class _SplashDroplet {
   });
 }
 
-/// Painter for Super Cute Cartoon Boy character while gargling (puffed cheeks & foam liquid)
 class _GarglingKidPainter extends CustomPainter {
   final bool isGargling;
   final double puffAmount;
@@ -565,18 +554,15 @@ class _GarglingKidPainter extends CustomPainter {
 
     final paint = Paint();
 
-    // 1. Ears
     paint.color = const Color(0xFFFFD2A6);
     final double earPuff = isGargling ? puffAmount * 0.4 : 0.0;
     canvas.drawCircle(Offset(headCenter.dx - headRadius - earPuff, headCenter.dy), 14, paint);
     canvas.drawCircle(Offset(headCenter.dx + headRadius + earPuff, headCenter.dy), 14, paint);
 
-    // Inner Ears
     paint.color = const Color(0xFFFFB5C5).withValues(alpha: 0.5);
     canvas.drawCircle(Offset(headCenter.dx - headRadius - earPuff, headCenter.dy), 7, paint);
     canvas.drawCircle(Offset(headCenter.dx + headRadius + earPuff, headCenter.dy), 7, paint);
 
-    // 2. Cute Boy Shirt (Vibrant Blue with White Collar)
     paint.color = const Color(0xFF2980B9);
     final shirtPath = Path();
     shirtPath.moveTo(headCenter.dx - w * 0.36, h * 0.84);
@@ -586,7 +572,6 @@ class _GarglingKidPainter extends CustomPainter {
     shirtPath.close();
     canvas.drawPath(shirtPath, paint);
 
-    // Shirt White Collar
     paint.color = Colors.white;
     final collarPath = Path();
     collarPath.moveTo(headCenter.dx - 22, h * 0.84);
@@ -595,11 +580,9 @@ class _GarglingKidPainter extends CustomPainter {
     collarPath.close();
     canvas.drawPath(collarPath, paint);
 
-    // Cute Star Badge on Shirt
     final starPaint = Paint()..color = Colors.amber;
     canvas.drawCircle(Offset(headCenter.dx + 26, h * 0.92), 7, starPaint);
 
-    // 3. Head & Chubby Cheeks (Puffing out wide when gargling)
     paint.color = const Color(0xFFFFD2A6);
     final double puffX = isGargling ? puffAmount * 2.0 : 0.0;
     final Rect headRect = Rect.fromCenter(
@@ -612,7 +595,6 @@ class _GarglingKidPainter extends CustomPainter {
       paint,
     );
 
-    // 4. Fluffy Spiky Boy Hair (Warm Chestnut Brown)
     paint.color = const Color(0xFF5D4037);
     final hairPath = Path();
     hairPath.moveTo(headCenter.dx - headRadius * 1.0, headCenter.dy - headRadius * 0.1);
@@ -622,7 +604,6 @@ class _GarglingKidPainter extends CustomPainter {
     hairPath.quadraticBezierTo(headCenter.dx - headRadius * 0.6, headCenter.dy - headRadius * 0.6, headCenter.dx - headRadius * 1.0, headCenter.dy - headRadius * 0.1);
     canvas.drawPath(hairPath, paint);
 
-    // Cute Front Bangs & Tufts
     final tuft1 = Path();
     tuft1.moveTo(headCenter.dx - 25, headCenter.dy - headRadius * 0.65);
     tuft1.quadraticBezierTo(headCenter.dx - 10, headCenter.dy - headRadius * 1.1, headCenter.dx + 5, headCenter.dy - headRadius * 0.6);
@@ -635,7 +616,6 @@ class _GarglingKidPainter extends CustomPainter {
     tuft2.close();
     canvas.drawPath(tuft2, paint);
 
-    // 5. Big Sparkling Anime Boy Eyes
     final eyePaint = Paint()..color = const Color(0xFF2C3E50);
     final irisPaint = Paint()..color = const Color(0xFF16A085);
     final reflect1 = Paint()..color = Colors.white;
@@ -644,19 +624,16 @@ class _GarglingKidPainter extends CustomPainter {
     final Offset leftEye = Offset(headCenter.dx - headRadius * 0.36, headCenter.dy - headRadius * 0.08);
     final Offset rightEye = Offset(headCenter.dx + headRadius * 0.36, headCenter.dy - headRadius * 0.08);
 
-    // Left Eye
     canvas.drawCircle(leftEye, 10, eyePaint);
     canvas.drawCircle(leftEye, 8, irisPaint);
     canvas.drawCircle(Offset(leftEye.dx - 3, leftEye.dy - 3), 3.5, reflect1);
     canvas.drawCircle(Offset(leftEye.dx + 3, leftEye.dy + 3), 1.8, reflect2);
 
-    // Right Eye
     canvas.drawCircle(rightEye, 10, eyePaint);
     canvas.drawCircle(rightEye, 8, irisPaint);
     canvas.drawCircle(Offset(rightEye.dx - 3, rightEye.dy - 3), 3.5, reflect1);
     canvas.drawCircle(Offset(rightEye.dx + 3, rightEye.dy + 3), 1.8, reflect2);
 
-    // Cute Boy Eyebrows
     final browPaint = Paint()
       ..color = const Color(0xFF5D4037)
       ..style = PaintingStyle.stroke
@@ -666,7 +643,6 @@ class _GarglingKidPainter extends CustomPainter {
     canvas.drawLine(Offset(leftEye.dx - 10, leftEye.dy - 16), Offset(leftEye.dx + 8, leftEye.dy - 18), browPaint);
     canvas.drawLine(Offset(rightEye.dx - 8, rightEye.dy - 18), Offset(rightEye.dx + 10, rightEye.dy - 16), browPaint);
 
-    // Cute Button Nose
     final nosePaint = Paint()
       ..color = const Color(0xFFE59866)
       ..style = PaintingStyle.stroke
@@ -674,14 +650,12 @@ class _GarglingKidPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     canvas.drawArc(Rect.fromCenter(center: Offset(headCenter.dx, headCenter.dy + headRadius * 0.15), width: 8, height: 6), 0, math.pi, false, nosePaint);
 
-    // 6. Rosy Blushing Cheeks
     final blushPaint = Paint()
       ..color = const Color(0xFFFF8A80).withValues(alpha: 0.65)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawCircle(Offset(headCenter.dx - headRadius * 0.65 - (puffAmount * 0.5), headCenter.dy + 16), 18, blushPaint);
     canvas.drawCircle(Offset(headCenter.dx + headRadius * 0.65 + (puffAmount * 0.5), headCenter.dy + 16), 18, blushPaint);
 
-    // 7. Mouth: Puffed with Mint Liquid & Bubbles when gargling
     if (isGargling) {
       final liquidPaint = Paint()
         ..color = const Color(0xFF2ECC71)
@@ -694,7 +668,6 @@ class _GarglingKidPainter extends CustomPainter {
       );
       canvas.drawOval(mouthRect, liquidPaint);
 
-      // Foam bubbles in/around mouth
       final bubblePaint = Paint()..color = Colors.white.withValues(alpha: 0.92);
       final random = math.Random(101);
       for (int i = 0; i < 9; i++) {
@@ -704,7 +677,7 @@ class _GarglingKidPainter extends CustomPainter {
         canvas.drawCircle(Offset(bx, by), r, bubblePaint);
       }
     } else {
-      // Cute open smile when idle
+      
       final smilePaint = Paint()
         ..color = const Color(0xFF2C3E50)
         ..style = PaintingStyle.stroke
@@ -725,9 +698,8 @@ class _GarglingKidPainter extends CustomPainter {
   }
 }
 
-/// Painter for Spitting Cute Boy phase: Boy spitting parabolic liquid stream into sink below
 class _SpittingKidScenePainter extends CustomPainter {
-  final double spitProgress; // 0.0 to 1.0
+  final double spitProgress; 
   final List<_SplashDroplet> droplets;
 
   _SpittingKidScenePainter({
@@ -740,18 +712,15 @@ class _SpittingKidScenePainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // 1. Draw Cute Boy Character at top center
     final Offset kidHeadCenter = Offset(w * 0.5, 95);
     final double headRadius = 48;
 
     final paint = Paint();
 
-    // Boy Ears
     paint.color = const Color(0xFFFFD2A6);
     canvas.drawCircle(Offset(kidHeadCenter.dx - headRadius, kidHeadCenter.dy), 12, paint);
     canvas.drawCircle(Offset(kidHeadCenter.dx + headRadius, kidHeadCenter.dy), 12, paint);
 
-    // Boy Shirt (Vibrant Blue with Collar)
     paint.color = const Color(0xFF2980B9);
     final shirtPath = Path();
     shirtPath.moveTo(kidHeadCenter.dx - 55, kidHeadCenter.dy + 42);
@@ -761,7 +730,6 @@ class _SpittingKidScenePainter extends CustomPainter {
     shirtPath.close();
     canvas.drawPath(shirtPath, paint);
 
-    // Collar
     paint.color = Colors.white;
     final collar = Path();
     collar.moveTo(kidHeadCenter.dx - 20, kidHeadCenter.dy + 42);
@@ -770,11 +738,9 @@ class _SpittingKidScenePainter extends CustomPainter {
     collar.close();
     canvas.drawPath(collar, paint);
 
-    // Boy Head
     paint.color = const Color(0xFFFFD2A6);
     canvas.drawCircle(kidHeadCenter, headRadius, paint);
 
-    // Fluffy Boy Hair (Brown)
     paint.color = const Color(0xFF5D4037);
     final hairPath = Path();
     hairPath.moveTo(kidHeadCenter.dx - headRadius * 1.0, kidHeadCenter.dy - headRadius * 0.1);
@@ -784,14 +750,12 @@ class _SpittingKidScenePainter extends CustomPainter {
     hairPath.quadraticBezierTo(kidHeadCenter.dx - headRadius * 0.6, kidHeadCenter.dy - headRadius * 0.6, kidHeadCenter.dx - headRadius * 1.0, kidHeadCenter.dy - headRadius * 0.1);
     canvas.drawPath(hairPath, paint);
 
-    // Front Bangs
     final tuft1 = Path();
     tuft1.moveTo(kidHeadCenter.dx - 22, kidHeadCenter.dy - headRadius * 0.65);
     tuft1.quadraticBezierTo(kidHeadCenter.dx - 8, kidHeadCenter.dy - headRadius * 1.1, kidHeadCenter.dx + 8, kidHeadCenter.dy - headRadius * 0.6);
     tuft1.close();
     canvas.drawPath(tuft1, paint);
 
-    // Big Cartoon Eyes
     final eyePaint = Paint()..color = const Color(0xFF2C3E50);
     final irisPaint = Paint()..color = const Color(0xFF16A085);
     final reflect1 = Paint()..color = Colors.white;
@@ -807,14 +771,12 @@ class _SpittingKidScenePainter extends CustomPainter {
     canvas.drawCircle(rightEye, 7, irisPaint);
     canvas.drawCircle(Offset(rightEye.dx - 2.5, rightEye.dy - 2.5), 3, reflect1);
 
-    // Blushing Cheeks
     final blushPaint = Paint()
       ..color = const Color(0xFFFF8A80).withValues(alpha: 0.65)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
     canvas.drawCircle(Offset(kidHeadCenter.dx - 32, kidHeadCenter.dy + 14), 14, blushPaint);
     canvas.drawCircle(Offset(kidHeadCenter.dx + 32, kidHeadCenter.dy + 14), 14, blushPaint);
 
-    // Mouth: Open 'O' while spitting, or happy smile with clean teeth after done
     final Offset mouthPos = Offset(kidHeadCenter.dx, kidHeadCenter.dy + 24);
     if (spitProgress < 0.9) {
       final mouthPaint = Paint()..color = const Color(0xFFE74C3C);
@@ -831,7 +793,6 @@ class _SpittingKidScenePainter extends CustomPainter {
       canvas.drawPath(smilePath, smilePaint);
     }
 
-    // 2. Draw Sink at bottom
     final Paint sinkPaint = Paint()
       ..color = const Color(0xFFECF0F1)
       ..style = PaintingStyle.fill;
@@ -847,11 +808,9 @@ class _SpittingKidScenePainter extends CustomPainter {
     canvas.drawOval(sinkRect, sinkPaint);
     canvas.drawOval(sinkRect, sinkRimPaint);
 
-    // Sink Drain hole
     final Paint drainPaint = Paint()..color = const Color(0xFF7F8C8D);
     canvas.drawCircle(sinkCenter, 14, drainPaint);
 
-    // 3. Draw Parabolic Stream from Kid's mouth (mouthPos) down to Sink
     if (spitProgress > 0.05 && spitProgress < 0.95) {
       final Offset targetSink = Offset(w * 0.5, h * 0.8);
 
@@ -877,7 +836,6 @@ class _SpittingKidScenePainter extends CustomPainter {
       canvas.drawPath(streamPath, streamPaint);
     }
 
-    // 4. Draw Splash Droplets bursting on impact in the sink
     if (spitProgress > 0.25) {
       canvas.save();
       canvas.translate(sinkCenter.dx, sinkCenter.dy);
@@ -895,7 +853,6 @@ class _SpittingKidScenePainter extends CustomPainter {
   }
 }
 
-// Background Waves Painter
 class _WavePainter extends CustomPainter {
   final double waveAnimation;
   final double fillLevel;

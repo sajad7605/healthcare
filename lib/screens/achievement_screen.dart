@@ -138,7 +138,7 @@ class _AchievementScreenState extends State<AchievementScreen>
           child: SafeArea(
             child: Column(
               children: [
-                // App Bar
+                
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
@@ -164,13 +164,11 @@ class _AchievementScreenState extends State<AchievementScreen>
                   ),
                 ),
 
-                // Stars summary card
                 if (_stats != null)
                   _buildStarsSummary(),
 
                 const SizedBox(height: 12),
 
-                // Tabs
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
@@ -214,7 +212,6 @@ class _AchievementScreenState extends State<AchievementScreen>
 
                 const SizedBox(height: 12),
 
-                // Content
                 Expanded(
                   child: _isLoading
                       ? const Center(

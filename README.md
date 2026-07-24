@@ -1,16 +1,65 @@
-# healthcare
+# 🦷✨ دندون یار کوچولو (ToothBuddy)
 
-A new Flutter project.
+پلتفرم تعاملی بهداشت دهان و دندان کودکان و پنل نظارت والدین توسعه داده شده با **Flutter** و **ASP.NET Core Web API**.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🔗 لینک‌های کلیدی و آدرس‌های سیستم (Key Links & URLs)
 
-A few resources to get you started if this is your first Flutter project:
+- **داشبورد و وب سرویس سرور (Dashboard & Web API URL):**  
+  [https://h.ghahremansalamat.ir](https://h.ghahremansalamat.ir)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **مخزن گیت پروژه (Git Repository URL):**  
+  [https://github.com/sajad7605/healthcare.git](https://github.com/sajad7605/healthcare.git)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- **لینک دانلود مستقیم سورس‌کد (Direct ZIP Download):**  
+  [https://github.com/sajad7605/healthcare/archive/refs/heads/main.zip](https://github.com/sajad7605/healthcare/archive/refs/heads/main.zip)
+
+---
+
+## 📥 نحوه دانلود و راه‌اندازی (How to Download & Setup)
+
+### روش اول: کلون کردن پروژه با گیت (Git Clone)
+```bash
+git clone https://github.com/sajad7605/healthcare.git
+cd healthcare
+```
+
+### روش دوم: دانلود فایل ZIP
+فایل ZIP پروژه را از [اینجا](https://github.com/sajad7605/healthcare/archive/refs/heads/main.zip) دانلود کرده و پس از استخراج (Unzip)، وارد پوشه پروژه شوید.
+
+---
+
+## 🚀 اجرای پروژه فلاتر (Flutter Client)
+
+### پیش‌نیازها:
+- **Flutter SDK v3.9+**
+- **Dart SDK v3.0+**
+- **Android Studio / VS Code**
+
+### مراحل اجرا:
+۱. دریافت وابستگی‌های پروژه:
+```bash
+flutter pub get
+```
+
+۲. اجرای برنامه روی شبیه‌ساز یا دستگاه متصل:
+```bash
+flutter run
+```
+
+۳. ساخت نسخه انتشار (Release APK):
+```bash
+flutter build apk --release
+```
+
+---
+
+## 📄 مستندات کامل پروژه (Documentation & PDF)
+
+فایل مستند جامع پروژه به صورت HTML (`doc.html`) و PDF (`ToothBuddy_Documentation.pdf`) در ریشه پروژه قرار دارد.
+
+برای بازتولید فایل PDF مستندات:
+```bash
+python3 generate_pdf.py
+```

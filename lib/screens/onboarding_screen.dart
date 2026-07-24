@@ -15,7 +15,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
   late PageController _pageController;
   int _currentPage = 0;
 
-  // Animation controllers for various elements
   late AnimationController _cloudFloatController;
   late AnimationController _brushingController;
   late AnimationController _breathingController;
@@ -26,19 +25,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     _pageController = PageController();
     _fetchAppConfig();
 
-    // Cloud floating animation (gentle and slow)
     _cloudFloatController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
     )..repeat(reverse: true);
 
-    // Brushing movement animation (quick back & forth)
     _brushingController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
 
-    // Character breathing animation (gentle floating)
     _breathingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
@@ -86,10 +82,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       backgroundColor: const Color(0xFF00A2E8),
       body: Stack(
         children: [
-          // Background Elements (Continuous gently bobbing clouds)
+          
           _buildCloudBackground(),
 
-          // Onboarding Pages: Set to LTR text direction so page slideshow transitions run strictly Left to Right
           Directionality(
             textDirection: TextDirection.ltr,
             child: PageView(
@@ -116,7 +111,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             ),
           ),
 
-          // Top Header Bar
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             left: 20,
@@ -126,7 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Tooth Logo
+                  
                   Row(
                     children: [
                       CustomPaint(
@@ -147,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                       ),
                     ],
                   ),
-                  // Skip / Login Button
+                  
                   SquishPopButton(
                     onTap: () {
                       Navigator.pushReplacementNamed(context, '/auth');
@@ -174,7 +168,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             ),
           ),
 
-          // Bottom Navigation Area
           Positioned(
             bottom: 40,
             left: 30,
@@ -184,7 +177,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Page Indicators (Dots) in LTR order
+                  
                   Row(
                     children: List.generate(
                       3,
@@ -204,7 +197,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                     ),
                   ),
 
-                  // Next Button
                   SquishPopButton(
                     onTap: _nextPage,
                     child: Container(
@@ -237,7 +229,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     );
   }
 
-  // Beautiful floating clouds background
   Widget _buildCloudBackground() {
     return AnimatedBuilder(
       animation: _cloudFloatController,
@@ -245,7 +236,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
         final floatValue = _cloudFloatController.value;
         return Stack(
           children: [
-            // Cloud 1
+            
             Positioned(
               top: 80 + (math.sin(floatValue * math.pi * 2) * 10),
               right: -30 + (floatValue * 15),
@@ -254,7 +245,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 painter: CloudPainter(cloudColor: Colors.white.withValues(alpha: 0.2)),
               ),
             ),
-            // Cloud 2
+            
             Positioned(
               top: 140 - (math.sin(floatValue * math.pi * 2) * 8),
               left: -50 + ((1 - floatValue) * 20),
@@ -263,7 +254,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 painter: CloudPainter(cloudColor: Colors.white.withValues(alpha: 0.15)),
               ),
             ),
-            // Cloud 3
+            
             Positioned(
               top: 240 + (math.cos(floatValue * math.pi * 2) * 12),
               right: 60 - (floatValue * 20),
@@ -278,44 +269,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     );
   }
 
-  // Page 1: Three teeth, toothbrush brushing them, foam bubbles
   Widget _buildPageOne(double screenWidth) {
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 40),
-          // Animated Brushing Section
+          
           SizedBox(
             height: 250,
             width: screenWidth,
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Three teeth standing side by side
+                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Left Tooth
+                    
                     CustomPaint(
                       size: const Size(90, 110),
                       painter: ToothPainter(expression: 'happy'),
                     ),
                     const SizedBox(width: 8),
-                    // Center Tooth
+                    
                     CustomPaint(
                       size: const Size(100, 120),
                       painter: ToothPainter(expression: 'brushing'),
                     ),
                     const SizedBox(width: 8),
-                    // Right Tooth
+                    
                     CustomPaint(
                       size: const Size(90, 110),
                       painter: ToothPainter(expression: 'happy'),
                     ),
                   ],
                 ),
-                // Foam Bubbles
+                
                 AnimatedBuilder(
                   animation: _brushingController,
                   builder: (context, child) {
@@ -341,7 +331,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                     );
                   },
                 ),
-                // Floating moving Toothbrush
+                
                 AnimatedBuilder(
                   animation: _brushingController,
                   builder: (context, child) {
@@ -365,7 +355,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             ),
           ),
           const SizedBox(height: 40),
-          // Description
+          
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Column(
@@ -398,14 +388,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     );
   }
 
-  // Page 2: Standalone tooth holding toothbrush, with floss and mouthwash around
   Widget _buildPageTwo(double screenWidth) {
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 40),
-          // Animated Floating Character Scene
+          
           AnimatedBuilder(
             animation: _breathingController,
             builder: (context, child) {
@@ -416,7 +405,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Main Tooth character holding toothbrush
+                    
                     Transform.translate(
                       offset: Offset(0, floatY),
                       child: CustomPaint(
@@ -428,7 +417,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                         ),
                       ),
                     ),
-                    // Floating Floss Box (Left)
+                    
                     Positioned(
                       left: (screenWidth / 2) - 130,
                       top: 60 - floatY,
@@ -440,7 +429,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                         ),
                       ),
                     ),
-                    // Floating Mouthwash Bottle (Right)
+                    
                     Positioned(
                       right: (screenWidth / 2) - 130,
                       top: 50 + floatY,
@@ -458,7 +447,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             },
           ),
           const SizedBox(height: 40),
-          // Description
+          
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Column(
@@ -491,14 +480,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     );
   }
 
-  // Page 3: Happy tooth in front of dental office/posters
   Widget _buildPageThree(double screenWidth) {
     return SafeArea(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const SizedBox(height: 40),
-          // Office Poster Scene
+          
           AnimatedBuilder(
             animation: _breathingController,
             builder: (context, child) {
@@ -509,7 +497,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Wall Posters (Dentistry basics & generosity)
+                    
                     Positioned(
                       left: (screenWidth / 2) - 110,
                       top: 20,
@@ -521,14 +509,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                       child: _buildPoster('اصول دندان', const Color(0xFF2ECC71)),
                     ),
 
-                    // Cute Office Plant
                     Positioned(
                       right: (screenWidth / 2) - 160,
                       bottom: 20,
                       child: Icon(Icons.yard, size: 50, color: Colors.greenAccent.shade400),
                     ),
 
-                    // Tooth Character standing in front
                     Positioned(
                       bottom: 10 + floatY,
                       child: CustomPaint(
@@ -542,7 +528,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             },
           ),
           const SizedBox(height: 40),
-          // Description
+          
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 40),
             child: Column(
@@ -575,7 +561,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     );
   }
 
-  // Helper widget to construct foam bubbles
   Widget _buildBubble(double size) {
     return Container(
       width: size,
@@ -588,7 +573,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     );
   }
 
-  // Helper widget to draw dental posters
   Widget _buildPoster(String title, Color accentColor) {
     return Container(
       width: 90,
@@ -608,7 +592,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
       ),
       child: Column(
         children: [
-          // Simulated image area in poster
+          
           Expanded(
             child: Container(
               width: double.infinity,
@@ -625,7 +609,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             ),
           ),
           const SizedBox(height: 6),
-          // Poster Title text
+          
           Text(
             title,
             style: const TextStyle(
@@ -640,5 +624,3 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     );
   }
 }
-
-// Finished onboarding screen layout

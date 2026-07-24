@@ -11,7 +11,6 @@ class AppConfigService {
     this.defaultVersion = ApiEndpoints.defaultVersion,
   });
 
-  /// Retrieve general app configurations (Splash Message, MOTD, Support Phone, App Version)
   Future<AppConfig> getConfig({
     String? version,
   }) async {

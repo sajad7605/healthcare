@@ -11,7 +11,6 @@ class EducationalService {
     this.defaultVersion = ApiEndpoints.defaultVersion,
   });
 
-  /// Retrieve list of educational videos/cartoons
   Future<List<Video>> listVideos({
     String? version,
   }) async {
@@ -22,7 +21,6 @@ class EducationalService {
         .toList();
   }
 
-  /// Retrieve list of dental hygiene tips for parents
   Future<List<Tip>> listTips({
     String? version,
   }) async {

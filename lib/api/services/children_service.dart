@@ -12,8 +12,6 @@ class ChildrenService {
     this.defaultVersion = ApiEndpoints.defaultVersion,
   });
 
-  // --- Child Profile CRUD ---
-
   Future<List<ChildProfile>> listChildren({
     String? version,
   }) async {
@@ -57,8 +55,6 @@ class ChildrenService {
     await apiClient.delete(ApiEndpoints.childDetail(v, childId));
   }
 
-  // --- Dashboard ---
-
   Future<ChildDashboardData> getChildDashboard(
     String childId, {
     String? version,
@@ -67,8 +63,6 @@ class ChildrenService {
     final response = await apiClient.get(ApiEndpoints.childDashboard(v, childId));
     return ChildDashboardData.fromJson(response.data as Map<String, dynamic>);
   }
-
-  // --- Activity Logs ---
 
   Future<List<ActivityLogResponse>> getActivityLogs(
     String childId, {
@@ -111,8 +105,6 @@ class ChildrenService {
     return KidStats.fromJson(response.data as Map<String, dynamic>);
   }
 
-  // --- Settings ---
-
   Future<NotificationSettings> getReminderSettings(
     String childId, {
     String? version,
@@ -135,8 +127,6 @@ class ChildrenService {
     return NotificationSettings.fromJson(response.data as Map<String, dynamic>);
   }
 
-  // --- Badges ---
-
   Future<List<Badge>> getUnlockedBadges(
     String childId, {
     String? version,
@@ -147,8 +137,6 @@ class ChildrenService {
         .map((b) => Badge.fromJson(b as Map<String, dynamic>))
         .toList();
   }
-
-  // --- Photos ---
 
   Future<List<TeethPhoto>> getTeethPhotos(
     String childId, {
@@ -161,7 +149,6 @@ class ChildrenService {
         .toList();
   }
 
-  /// Uploads a tooth photo using multipart form-data.
   Future<TeethPhoto> uploadToothPhoto(
     String childId, {
     required File photoFile,
@@ -188,8 +175,6 @@ class ChildrenService {
     await apiClient.delete(ApiEndpoints.childPhotoDetail(v, childId, photoId));
   }
 
-  // --- Goals ---
-
   Future<List<Goal>> listChildGoals(
     String childId, {
     String? version,
@@ -213,8 +198,6 @@ class ChildrenService {
     );
     return Goal.fromJson(response.data as Map<String, dynamic>);
   }
-
-  // --- Rewards & Claims ---
 
   Future<List<Reward>> listChildRewards(
     String childId, {

@@ -20,19 +20,18 @@ class ApiException implements Exception {
 
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {
-      // Top-level 'message' field (ApiResult envelope from backend)
+      
       final rawMessage = data['message']?.toString() ?? '';
       if (rawMessage.isNotEmpty) {
         message = rawMessage;
       }
-      // Nested data map may also have message
+      
       else if (data.containsKey('data') && data['data'] is Map) {
         final nested = data['data'] as Map;
         final nestedMsg = nested['message']?.toString() ?? '';
         if (nestedMsg.isNotEmpty) message = nestedMsg;
       }
 
-      // If message is a JSON object (from exception middleware), parse it
       if (message.startsWith('{')) {
         try {
           final exMatch = RegExp(r'"Exception"\s*:\s*"((?:[^"\\]|\\.)*)"').firstMatch(message);
@@ -61,7 +60,7 @@ class ApiException implements Exception {
     } else if (data is String && data.isNotEmpty) {
       message = data;
     } else {
-      // General fallbacks based on DioExceptionType
+      
       switch (error.type) {
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:

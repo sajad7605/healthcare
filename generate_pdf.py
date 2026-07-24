@@ -18,7 +18,6 @@ def main():
         print(f"خطا: کرومیوم در مسیر {chromium_path} یافت نشد!")
         sys.exit(1)
         
-    # Command to run Chromium in headless print mode
     cmd = [
         chromium_path,
         "--headless",

@@ -24,7 +24,6 @@ class _GalleryScreenState extends State<GalleryScreen>
   bool _isLoadingBadges = true;
   bool _isUploading = false;
 
-  // Tab: 0 = photos, 1 = badges
   int _tab = 0;
 
   late AnimationController _animController;
@@ -266,7 +265,7 @@ class _GalleryScreenState extends State<GalleryScreen>
           child: SafeArea(
             child: Column(
               children: [
-                // App Bar
+                
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -310,7 +309,6 @@ class _GalleryScreenState extends State<GalleryScreen>
                   ),
                 ),
 
-                // Tabs
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Container(
@@ -348,7 +346,6 @@ class _GalleryScreenState extends State<GalleryScreen>
 
                 const SizedBox(height: 16),
 
-                // Content
                 Expanded(
                   child: _tab == 0
                       ? _buildPhotosTab()
@@ -464,7 +461,7 @@ class _GalleryScreenState extends State<GalleryScreen>
             },
           ),
         ),
-        // Indicator dots
+        
         if (_photos.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),

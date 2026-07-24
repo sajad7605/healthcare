@@ -1,12 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Cute Tooth painter with customizable emotional states and options.
 class ToothPainter extends CustomPainter {
-  final String expression; // 'happy', 'winking', 'brushing', 'dizzy'
+  final String expression; 
   final double cheekBlushOpacity;
   final bool hasToothbrush;
-  final double brushAnimationValue; // For animating brushing action
+  final double brushAnimationValue; 
 
   ToothPainter({
     this.expression = 'happy',
@@ -24,7 +23,6 @@ class ToothPainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // Draw Shadow
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.08)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
@@ -33,55 +31,46 @@ class ToothPainter extends CustomPainter {
       shadowPaint,
     );
 
-    // Main Tooth Path
     final path = Path();
     
-    // Top-left crown cusp
     path.moveTo(w * 0.2, h * 0.25);
     
-    // Top dip between cusps (crown dip)
     path.cubicTo(
-      w * 0.2, h * 0.12,  // Control 1
-      w * 0.45, h * 0.12, // Control 2
-      w * 0.5, h * 0.23,  // End
+      w * 0.2, h * 0.12,  
+      w * 0.45, h * 0.12, 
+      w * 0.5, h * 0.23,  
     );
     
-    // Top-right crown cusp
     path.cubicTo(
-      w * 0.55, h * 0.12, // Control 1
-      w * 0.8, h * 0.12,  // Control 2
-      w * 0.8, h * 0.25,  // End
+      w * 0.55, h * 0.12, 
+      w * 0.8, h * 0.12,  
+      w * 0.8, h * 0.25,  
     );
 
-    // Right cheek / side
     path.cubicTo(
       w * 0.85, h * 0.4,
       w * 0.88, h * 0.6,
       w * 0.8, h * 0.75,
     );
 
-    // Right root (bottom right)
     path.cubicTo(
       w * 0.76, h * 0.85,
       w * 0.6, h * 0.92,
-      w * 0.58, h * 0.78, // Inside root dip start
+      w * 0.58, h * 0.78, 
     );
 
-    // Central bottom dip between roots
     path.cubicTo(
       w * 0.56, h * 0.68,
       w * 0.44, h * 0.68,
-      w * 0.42, h * 0.78, // Inside root dip end
+      w * 0.42, h * 0.78, 
     );
 
-    // Left root (bottom left)
     path.cubicTo(
       w * 0.4, h * 0.92,
       w * 0.24, h * 0.85,
       w * 0.2, h * 0.75,
     );
 
-    // Left cheek / side
     path.cubicTo(
       w * 0.12, h * 0.6,
       w * 0.15, h * 0.4,
@@ -90,7 +79,6 @@ class ToothPainter extends CustomPainter {
     
     path.close();
 
-    // Draw main tooth body (gradient for soft 3D look)
     final gradient = LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
@@ -105,7 +93,6 @@ class ToothPainter extends CustomPainter {
     paint.shader = gradient.createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(path, paint);
 
-    // Draw Inner Highlight (for 3D effect)
     final highlightPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = w * 0.03
@@ -121,27 +108,23 @@ class ToothPainter extends CustomPainter {
     );
     canvas.drawPath(highlightPath, highlightPaint);
 
-    // Draw Rosy Cheeks (Blush)
     final blushPaint = Paint()
       ..style = PaintingStyle.fill
       ..color = const Color(0xFFFFB5C5).withValues(alpha: cheekBlushOpacity)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, w * 0.05);
     
-    // Left cheek
     canvas.drawOval(
       Rect.fromCenter(center: Offset(w * 0.28, h * 0.48), width: w * 0.12, height: h * 0.08),
       blushPaint,
     );
-    // Right cheek
+    
     canvas.drawOval(
       Rect.fromCenter(center: Offset(w * 0.72, h * 0.48), width: w * 0.12, height: h * 0.08),
       blushPaint,
     );
 
-    // Reset shader for details
     paint.shader = null;
 
-    // Draw Eyes
     final eyePaint = Paint()
       ..style = PaintingStyle.fill
       ..color = const Color(0xFF2C3E50);
@@ -151,7 +134,7 @@ class ToothPainter extends CustomPainter {
       ..color = Colors.white;
 
     if (expression == 'winking') {
-      // Left Eye: Happy Arch (Winking)
+      
       final eyePath = Path();
       eyePath.moveTo(w * 0.28, h * 0.43);
       eyePath.quadraticBezierTo(w * 0.34, h * 0.36, w * 0.4, h * 0.43);
@@ -163,39 +146,33 @@ class ToothPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round;
       canvas.drawPath(eyePath, winkStrokePaint);
 
-      // Right Eye: Open
       canvas.drawCircle(Offset(w * 0.66, h * 0.42), w * 0.05, eyePaint);
       canvas.drawCircle(Offset(w * 0.64, h * 0.40), w * 0.016, eyeReflectionPaint);
       canvas.drawCircle(Offset(w * 0.68, h * 0.44), w * 0.008, eyeReflectionPaint);
     } else if (expression == 'dizzy') {
-      // Dizzy eyes (crosses)
+      
       final strokePaint = Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = w * 0.035
         ..color = const Color(0xFF2C3E50)
         ..strokeCap = StrokeCap.round;
       
-      // Left cross
       canvas.drawLine(Offset(w * 0.28, h * 0.38), Offset(w * 0.38, h * 0.46), strokePaint);
       canvas.drawLine(Offset(w * 0.38, h * 0.38), Offset(w * 0.28, h * 0.46), strokePaint);
 
-      // Right cross
       canvas.drawLine(Offset(w * 0.62, h * 0.38), Offset(w * 0.72, h * 0.46), strokePaint);
       canvas.drawLine(Offset(w * 0.72, h * 0.38), Offset(w * 0.62, h * 0.46), strokePaint);
     } else {
-      // Normal Happy Eyes (Both open)
-      // Left eye
+      
       canvas.drawCircle(Offset(w * 0.34, h * 0.42), w * 0.05, eyePaint);
       canvas.drawCircle(Offset(w * 0.32, h * 0.40), w * 0.016, eyeReflectionPaint);
       canvas.drawCircle(Offset(w * 0.36, h * 0.44), w * 0.008, eyeReflectionPaint);
 
-      // Right eye
       canvas.drawCircle(Offset(w * 0.66, h * 0.42), w * 0.05, eyePaint);
       canvas.drawCircle(Offset(w * 0.64, h * 0.40), w * 0.016, eyeReflectionPaint);
       canvas.drawCircle(Offset(w * 0.68, h * 0.44), w * 0.008, eyeReflectionPaint);
     }
 
-    // Draw Eyelashes (cute details)
     final lashPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = w * 0.015
@@ -203,42 +180,39 @@ class ToothPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     
     if (expression != 'dizzy') {
-      // Left lashes
+      
       canvas.drawLine(Offset(w * 0.27, h * 0.40), Offset(w * 0.24, h * 0.37), lashPaint);
       canvas.drawLine(Offset(w * 0.29, h * 0.39), Offset(w * 0.25, h * 0.34), lashPaint);
       
-      // Right lashes
       canvas.drawLine(Offset(w * 0.73, h * 0.40), Offset(w * 0.76, h * 0.37), lashPaint);
       canvas.drawLine(Offset(w * 0.71, h * 0.39), Offset(w * 0.75, h * 0.34), lashPaint);
     }
 
-    // Draw Mouth / Smile
     final mouthPaint = Paint()
       ..color = const Color(0xFFE74C3C)
       ..style = PaintingStyle.fill;
 
     if (expression == 'brushing') {
-      // Circular "O" mouth for brushing/bubbling
+      
       paint.style = PaintingStyle.fill;
       paint.color = const Color(0xFF2C3E50);
       canvas.drawCircle(Offset(w * 0.5, h * 0.53), w * 0.045, paint);
       paint.color = const Color(0xFFFF8A8A);
       canvas.drawCircle(Offset(w * 0.5, h * 0.55), w * 0.025, paint);
     } else {
-      // Big open happy smile
+      
       final mouthPath = Path();
       mouthPath.moveTo(w * 0.42, h * 0.5);
-      // Curve down and back up
+      
       mouthPath.cubicTo(
         w * 0.44, h * 0.62,
         w * 0.56, h * 0.62,
         w * 0.58, h * 0.5,
       );
-      // Curve back up to starting corner to form lips
+      
       mouthPath.quadraticBezierTo(w * 0.5, h * 0.52, w * 0.42, h * 0.5);
       canvas.drawPath(mouthPath, mouthPaint);
 
-      // Cute tiny tooth in mouth (single buck tooth)
       final tinyToothPaint = Paint()..color = Colors.white;
       canvas.drawRect(
         Rect.fromLTWH(w * 0.48, h * 0.506, w * 0.04, h * 0.03),
@@ -246,10 +220,9 @@ class ToothPainter extends CustomPainter {
       );
     }
 
-    // Draw Toothbrush if hasToothbrush is true (for Screen 2 / 3)
     if (hasToothbrush) {
       canvas.save();
-      // Translate and rotate toothbrush in hand
+      
       canvas.translate(w * 0.85 + (math.sin(brushAnimationValue * math.pi * 2) * 5), h * 0.5);
       canvas.rotate(-math.pi / 6);
       
@@ -259,7 +232,7 @@ class ToothPainter extends CustomPainter {
   }
 
   void _drawToothbrushGraphic(Canvas canvas, double w, double h) {
-    // Toothbrush handle
+    
     final handlePaint = Paint()
       ..color = const Color(0xFF3498DB)
       ..style = PaintingStyle.fill;
@@ -272,7 +245,6 @@ class ToothPainter extends CustomPainter {
     handlePath.close();
     canvas.drawPath(handlePath, handlePaint);
 
-    // Head
     final headPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
@@ -281,7 +253,6 @@ class ToothPainter extends CustomPainter {
       headPaint,
     );
 
-    // Bristles
     final bristlePaint = Paint()
       ..color = const Color(0xFF2ECC71)
       ..style = PaintingStyle.fill;
@@ -300,7 +271,6 @@ class ToothPainter extends CustomPainter {
   }
 }
 
-/// Cartoon Toothbrush painter.
 class ToothbrushPainter extends CustomPainter {
   final Color mainColor;
 
@@ -311,13 +281,11 @@ class ToothbrushPainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // Shadow
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.06)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
     canvas.drawOval(Rect.fromLTWH(w * 0.1, h * 0.9, w * 0.8, h * 0.08), shadowPaint);
 
-    // Draw handle
     final handlePaint = Paint()
       ..color = mainColor
       ..style = PaintingStyle.fill;
@@ -332,7 +300,6 @@ class ToothbrushPainter extends CustomPainter {
     handlePath.close();
     canvas.drawPath(handlePath, handlePaint);
 
-    // Soft Grip Accent
     final gripPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
@@ -341,7 +308,6 @@ class ToothbrushPainter extends CustomPainter {
       gripPaint,
     );
 
-    // Brush head base (white plastic)
     final headPaint = Paint()
       ..color = const Color(0xFFF0F4F8)
       ..style = PaintingStyle.fill;
@@ -352,7 +318,6 @@ class ToothbrushPainter extends CustomPainter {
     );
     canvas.drawRRect(headRect, headPaint);
 
-    // Bristles (green/cyan)
     final bristlePaint = Paint()
       ..color = const Color(0xFF26D07C)
       ..style = PaintingStyle.fill;
@@ -363,9 +328,8 @@ class ToothbrushPainter extends CustomPainter {
     );
     canvas.drawRRect(bristleRect, bristlePaint);
 
-    // Paste dollop (cute toothpaste)
     final pastePaint = Paint()
-      ..color = const Color(0xFFFF7675) // Pinkish paste
+      ..color = const Color(0xFFFF7675) 
       ..style = PaintingStyle.fill;
     
     final pastePath = Path();
@@ -378,7 +342,6 @@ class ToothbrushPainter extends CustomPainter {
     pastePath.close();
     canvas.drawPath(pastePath, pastePaint);
 
-    // Swirl highlight on paste
     final pasteHighlight = Paint()
       ..color = Colors.white.withValues(alpha: 0.6)
       ..style = PaintingStyle.stroke
@@ -391,7 +354,6 @@ class ToothbrushPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Cartoon Mouthwash Bottle painter.
 class MouthwashBottlePainter extends CustomPainter {
   final Color liquidColor;
 
@@ -402,13 +364,11 @@ class MouthwashBottlePainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // Shadow
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.06)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
     canvas.drawOval(Rect.fromLTWH(w * 0.15, h * 0.9, w * 0.7, h * 0.08), shadowPaint);
 
-    // Draw Cap
     final capPaint = Paint()
       ..color = const Color(0xFF2980B9)
       ..style = PaintingStyle.fill;
@@ -417,7 +377,6 @@ class MouthwashBottlePainter extends CustomPainter {
       capPaint,
     );
 
-    // Ribbed stripes on cap
     final linePaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.25)
       ..strokeWidth = 2;
@@ -425,13 +384,11 @@ class MouthwashBottlePainter extends CustomPainter {
       canvas.drawLine(Offset(w * i, h * 0.11), Offset(w * i, h * 0.21), linePaint);
     }
 
-    // Neck of the bottle
     final neckPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTWH(w * 0.43, h * 0.22, w * 0.14, h * 0.06), neckPaint);
 
-    // Main Bottle Body (transparent glass containing colorful mouthwash liquid)
     final bottlePaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
@@ -452,17 +409,14 @@ class MouthwashBottlePainter extends CustomPainter {
     bodyPath.quadraticBezierTo(w * 0.78, h * 0.32, w * 0.6, h * 0.28);
     bodyPath.close();
 
-    // Fill with liquid first
     final liquidPaint = Paint()
       ..color = liquidColor
       ..style = PaintingStyle.fill;
     canvas.drawPath(bodyPath, liquidPaint);
 
-    // Glass overlay & outline
     canvas.drawPath(bodyPath, bottlePaint);
     canvas.drawPath(bodyPath, bottleOutline);
 
-    // White label on bottle
     final labelPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
@@ -473,19 +427,16 @@ class MouthwashBottlePainter extends CustomPainter {
     );
     canvas.drawRRect(labelRect, labelPaint);
 
-    // Cute tooth shape on label (green/blue logo)
     final toothLogoPaint = Paint()
       ..color = liquidColor.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
     
-    // Draw simple mini-tooth in center of label
     canvas.drawCircle(Offset(w * 0.45, h * 0.58), w * 0.04, toothLogoPaint);
     canvas.drawCircle(Offset(w * 0.55, h * 0.58), w * 0.04, toothLogoPaint);
     canvas.drawRect(Rect.fromLTWH(w * 0.43, h * 0.58, w * 0.14, w * 0.06), toothLogoPaint);
     canvas.drawCircle(Offset(w * 0.45, h * 0.64), w * 0.02, toothLogoPaint);
     canvas.drawCircle(Offset(w * 0.55, h * 0.64), w * 0.02, toothLogoPaint);
 
-    // Bubbles inside liquid (child-like details)
     final bubblePaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.5)
       ..style = PaintingStyle.fill;
@@ -499,7 +450,6 @@ class MouthwashBottlePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Cartoon Dental Floss box painter.
 class FlossBoxPainter extends CustomPainter {
   final Color boxColor;
 
@@ -510,13 +460,11 @@ class FlossBoxPainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // Shadow
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.06)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5);
     canvas.drawOval(Rect.fromLTWH(w * 0.15, h * 0.9, w * 0.7, h * 0.08), shadowPaint);
 
-    // Box body (rounded trapezoid/square)
     final bodyPaint = Paint()
       ..color = boxColor
       ..style = PaintingStyle.fill;
@@ -534,38 +482,32 @@ class FlossBoxPainter extends CustomPainter {
     bodyPath.close();
     canvas.drawPath(bodyPath, bodyPaint);
 
-    // Top Lid accent line
     final accentPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.1)
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
     canvas.drawLine(Offset(w * 0.15, h * 0.42), Offset(w * 0.85, h * 0.42), accentPaint);
 
-    // Inner spool circle window (glass look)
     final spoolWindowPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(w * 0.5, h * 0.65), w * 0.2, spoolWindowPaint);
 
-    // Inner white floss roll
     final rollPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(w * 0.5, h * 0.65), w * 0.13, rollPaint);
     
-    // Spool center hub
     final hubPaint = Paint()
       ..color = boxColor.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(w * 0.5, h * 0.65), w * 0.05, hubPaint);
 
-    // Silver clip on top (where floss is pulled)
     final clipPaint = Paint()
       ..color = const Color(0xFFBDC3C7)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTWH(w * 0.45, h * 0.22, w * 0.1, h * 0.07), clipPaint);
 
-    // Floss thread coming out of the box
     final threadPaint = Paint()
       ..color = Colors.white
       ..strokeWidth = 2.5
@@ -582,7 +524,6 @@ class FlossBoxPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Cartoon Cloud Painter.
 class CloudPainter extends CustomPainter {
   final Color cloudColor;
 
@@ -601,7 +542,6 @@ class CloudPainter extends CustomPainter {
       ..color = const Color(0xFFD3E7F3).withValues(alpha: 0.5)
       ..style = PaintingStyle.fill;
 
-    // Draw main cloud shadow/bottom part
     final path = Path();
     path.moveTo(w * 0.2, h * 0.7);
     path.arcToPoint(Offset(w * 0.1, h * 0.5), radius: Radius.circular(w * 0.15));
@@ -612,13 +552,11 @@ class CloudPainter extends CustomPainter {
     path.arcToPoint(Offset(w * 0.2, h * 0.7), radius: Radius.circular(w * 0.2));
     path.close();
 
-    // Draw shadow offset slightly
     canvas.save();
     canvas.translate(0, 4);
     canvas.drawPath(path, shadowPaint);
     canvas.restore();
 
-    // Draw main cloud
     canvas.drawPath(path, paint);
   }
 
@@ -626,14 +564,12 @@ class CloudPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Cloud Background Header for Auth Screen with kids and a giant tooth.
 class AuthHeaderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
 
-    // Background Gradient (Sky blue to lighter sky blue)
     final rect = Rect.fromLTWH(0, 0, w, h);
     final bgGradient = const LinearGradient(
       begin: Alignment.topCenter,
@@ -646,7 +582,6 @@ class AuthHeaderPainter extends CustomPainter {
     final bgPaint = Paint()..shader = bgGradient.createShader(rect);
     canvas.drawRect(rect, bgPaint);
 
-    // Draw cloud-like border frame at the bottom (arch layout)
     final borderPaint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
@@ -660,16 +595,13 @@ class AuthHeaderPainter extends CustomPainter {
     borderPath.close();
     canvas.drawPath(borderPath, borderPaint);
 
-    // Draw giant tooth character in the center, resting on the arch
     final toothCenter = Offset(w * 0.5, h * 0.58);
     final toothSize = size.width * 0.26;
     _drawGiantTooth(canvas, toothCenter, toothSize);
 
-    // Draw cartoon kids standing on both sides
     _drawCartoonKidLeft(canvas, Offset(w * 0.25, h * 0.72), size.width * 0.16);
     _drawCartoonKidRight(canvas, Offset(w * 0.75, h * 0.72), size.width * 0.16);
 
-    // Draw small floating clouds in sky
     _drawCloud(canvas, Offset(w * 0.15, h * 0.2), w * 0.2, h * 0.12);
     _drawCloud(canvas, Offset(w * 0.8, h * 0.25), w * 0.22, h * 0.13);
   }
@@ -685,13 +617,11 @@ class AuthHeaderPainter extends CustomPainter {
       ..color = Colors.white
       ..style = PaintingStyle.fill;
 
-    // Outer shadow for the giant tooth
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.08)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
     canvas.drawOval(Rect.fromLTWH(w * 0.1, h * 0.85, w * 0.8, h * 0.1), shadowPaint);
 
-    // Giant Tooth Path
     final path = Path();
     path.moveTo(w * 0.2, h * 0.25);
     path.cubicTo(w * 0.2, h * 0.1, w * 0.45, h * 0.1, w * 0.5, h * 0.22);
@@ -704,7 +634,6 @@ class AuthHeaderPainter extends CustomPainter {
     path.close();
     canvas.drawPath(path, toothPaint);
 
-    // Eyes
     final eyePaint = Paint()..color = const Color(0xFF2C3E50);
     final reflectPaint = Paint()..color = Colors.white;
     canvas.drawCircle(Offset(w * 0.35, h * 0.42), w * 0.06, eyePaint);
@@ -712,7 +641,6 @@ class AuthHeaderPainter extends CustomPainter {
     canvas.drawCircle(Offset(w * 0.65, h * 0.42), w * 0.06, eyePaint);
     canvas.drawCircle(Offset(w * 0.63, h * 0.4), w * 0.02, reflectPaint);
 
-    // Smile
     final mouthPaint = Paint()
       ..color = const Color(0xFFE74C3C)
       ..style = PaintingStyle.fill;
@@ -722,7 +650,6 @@ class AuthHeaderPainter extends CustomPainter {
     mouthPath.quadraticBezierTo(w * 0.5, h * 0.54, w * 0.42, h * 0.52);
     canvas.drawPath(mouthPath, mouthPaint);
 
-    // Blush
     final blushPaint = Paint()
       ..color = const Color(0xFFFFB5C5).withValues(alpha: 0.5)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, w * 0.04);
@@ -733,14 +660,12 @@ class AuthHeaderPainter extends CustomPainter {
   }
 
   void _drawCartoonKidLeft(Canvas canvas, Offset origin, double size) {
-    // Left Kid (Boy in red shirt)
+    
     final paint = Paint();
     
-    // Head / Face
     paint.color = const Color(0xFFFFD2A6);
     canvas.drawCircle(Offset(origin.dx, origin.dy - size * 0.6), size * 0.3, paint);
 
-    // Hair (Brown, messy)
     paint.color = const Color(0xFF6E473B);
     final hairPath = Path();
     hairPath.moveTo(origin.dx - size * 0.35, origin.dy - size * 0.6);
@@ -748,7 +673,6 @@ class AuthHeaderPainter extends CustomPainter {
     hairPath.quadraticBezierTo(origin.dx, origin.dy - size * 0.7, origin.dx - size * 0.35, origin.dy - size * 0.6);
     canvas.drawPath(hairPath, paint);
 
-    // Shirt (Red)
     paint.color = const Color(0xFFE74C3C);
     final shirtPath = Path();
     shirtPath.moveTo(origin.dx - size * 0.2, origin.dy - size * 0.3);
@@ -758,12 +682,10 @@ class AuthHeaderPainter extends CustomPainter {
     shirtPath.close();
     canvas.drawPath(shirtPath, paint);
 
-    // Eyes
     paint.color = const Color(0xFF2C3E50);
     canvas.drawCircle(Offset(origin.dx - size * 0.08, origin.dy - size * 0.58), 2.5, paint);
     canvas.drawCircle(Offset(origin.dx + size * 0.08, origin.dy - size * 0.58), 2.5, paint);
 
-    // Happy smile
     final smilePaint = Paint()
       ..color = const Color(0xFF2C3E50)
       ..strokeWidth = 2
@@ -778,19 +700,16 @@ class AuthHeaderPainter extends CustomPainter {
   }
 
   void _drawCartoonKidRight(Canvas canvas, Offset origin, double size) {
-    // Right Kid (Girl in yellow shirt with pigtails)
+    
     final paint = Paint();
     
-    // Pigtails (Hair buns on sides)
-    paint.color = const Color(0xFFF39C12); // Orange/Yellow hair
+    paint.color = const Color(0xFFF39C12); 
     canvas.drawCircle(Offset(origin.dx - size * 0.32, origin.dy - size * 0.72), size * 0.12, paint);
     canvas.drawCircle(Offset(origin.dx + size * 0.32, origin.dy - size * 0.72), size * 0.12, paint);
 
-    // Head / Face
     paint.color = const Color(0xFFFFD2A6);
     canvas.drawCircle(Offset(origin.dx, origin.dy - size * 0.6), size * 0.3, paint);
 
-    // Hair Front
     paint.color = const Color(0xFFF39C12);
     final hairPath = Path();
     hairPath.moveTo(origin.dx - size * 0.32, origin.dy - size * 0.62);
@@ -798,7 +717,6 @@ class AuthHeaderPainter extends CustomPainter {
     hairPath.quadraticBezierTo(origin.dx, origin.dy - size * 0.72, origin.dx - size * 0.32, origin.dy - size * 0.62);
     canvas.drawPath(hairPath, paint);
 
-    // Shirt (Teal/Green)
     paint.color = const Color(0xFF1ABC9C);
     final shirtPath = Path();
     shirtPath.moveTo(origin.dx - size * 0.2, origin.dy - size * 0.3);
@@ -808,12 +726,10 @@ class AuthHeaderPainter extends CustomPainter {
     shirtPath.close();
     canvas.drawPath(shirtPath, paint);
 
-    // Eyes
     paint.color = const Color(0xFF2C3E50);
     canvas.drawCircle(Offset(origin.dx - size * 0.08, origin.dy - size * 0.58), 2.5, paint);
     canvas.drawCircle(Offset(origin.dx + size * 0.08, origin.dy - size * 0.58), 2.5, paint);
 
-    // Smile
     final smilePaint = Paint()
       ..color = const Color(0xFF2C3E50)
       ..strokeWidth = 2

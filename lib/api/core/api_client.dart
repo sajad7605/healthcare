@@ -10,7 +10,7 @@ class ApiClient {
 
   ApiClient({
     String baseUrl = 'https://h.ghahremansalamat.ir',
-    //String baseUrl = 'http://127.0.0.1:5158',
+    
     String? token,
   })  : _baseUrl = baseUrl,
         _authToken = token {
@@ -28,7 +28,7 @@ class ApiClient {
     if (_dio.httpClientAdapter is IOHttpClientAdapter) {
       (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
         final client = HttpClient();
-        // Allow self-signed or development SSL certificates on native devices
+        
         client.badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
         return client;
@@ -53,7 +53,6 @@ class ApiClient {
     );
   }
 
-  /// Helper to unwrap ApiResult envelope from ASP.NET Core BaseController responses.
   static dynamic unwrapResponse(dynamic data) {
     if (data is Map<String, dynamic> || data is Map) {
       final map = data as Map;
@@ -67,7 +66,6 @@ class ApiClient {
     return data;
   }
 
-  /// Update the base URL of the client dynamically.
   void setBaseUrl(String newUrl) {
     _baseUrl = newUrl;
     _dio.options.baseUrl = newUrl;
@@ -75,14 +73,12 @@ class ApiClient {
 
   String get baseUrl => _baseUrl;
 
-  /// Update the authentication token dynamically.
   void setAuthToken(String? token) {
     _authToken = token;
   }
 
   String? get authToken => _authToken;
 
-  /// HTTP GET wrapper
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -99,7 +95,6 @@ class ApiClient {
     }
   }
 
-  /// HTTP POST wrapper
   Future<Response<T>> post<T>(
     String path, {
     dynamic data,
@@ -118,7 +113,6 @@ class ApiClient {
     }
   }
 
-  /// HTTP PUT wrapper
   Future<Response<T>> put<T>(
     String path, {
     dynamic data,
@@ -137,7 +131,6 @@ class ApiClient {
     }
   }
 
-  /// HTTP DELETE wrapper
   Future<Response<T>> delete<T>(
     String path, {
     dynamic data,
@@ -156,7 +149,6 @@ class ApiClient {
     }
   }
 
-  /// HTTP POST Multipart wrapper (for files)
   Future<Response<T>> postMultipart<T>(
     String path, {
     required Map<String, dynamic> data,

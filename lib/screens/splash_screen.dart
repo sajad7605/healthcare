@@ -17,6 +17,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
+  bool _isAutoLoggedIn = false;
+  bool _isLoadingSession = true;
+
   @override
   void initState() {
     super.initState();
@@ -26,7 +29,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       duration: const Duration(milliseconds: 2200),
     );
 
-    // Initial splash motion goes strictly FROM LEFT TO RIGHT
     _leftToRightProgress = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _splashController,
@@ -50,10 +52,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _splashController.forward();
 
-    // Navigate to next screen after splash animation completes
     _splashController.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        _navigateToNextScreen();
+        _checkAndNavigate();
       }
     });
 
@@ -62,14 +63,45 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   Future<void> _preloadData() async {
     try {
+      final hasSession = await SessionManager.loadSession();
+      if (hasSession && HealthcareApi.instance.apiClient.authToken != null) {
+        _isAutoLoggedIn = true;
+        
+        try {
+          final parent = await HealthcareApi.instance.auth.getParentProfile();
+          HealthcareApi.instance.currentParent = parent;
+          final kids = await HealthcareApi.instance.children.listChildren();
+          HealthcareApi.instance.childrenList = kids;
+          if (kids.isNotEmpty) {
+            HealthcareApi.instance.currentChild = kids.first;
+          }
+          await SessionManager.saveSession(
+            token: HealthcareApi.instance.apiClient.authToken!,
+            parent: parent,
+            child: HealthcareApi.instance.currentChild,
+            childrenList: kids,
+          );
+        } catch (_) {}
+      }
+
       final config = await HealthcareApi.instance.config.getConfig();
       HealthcareApi.instance.activeConfig = config;
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingSession = false;
+        });
+        if (_splashController.isCompleted) {
+          _checkAndNavigate();
+        }
+      }
+    }
   }
 
-  void _navigateToNextScreen() {
-    if (!mounted) return;
-    if (HealthcareApi.instance.currentChild != null || HealthcareApi.instance.apiClient.authToken != null) {
+  void _checkAndNavigate() {
+    if (!mounted || _isLoadingSession) return;
+    if (_isAutoLoggedIn || HealthcareApi.instance.apiClient.authToken != null) {
       Navigator.pushReplacementNamed(context, '/dashboard');
     } else {
       Navigator.pushReplacementNamed(context, '/onboarding');
@@ -90,7 +122,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       backgroundColor: const Color(0xFF00A2E8),
       body: Stack(
         children: [
-          // Left-to-Right Animated Liquid Splash Background Wave
+          
           AnimatedBuilder(
             animation: _leftToRightProgress,
             builder: (context, child) {
@@ -103,12 +135,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             },
           ),
 
-          // Main Hero Graphic & Title sliding from Left to Right
           AnimatedBuilder(
             animation: _splashController,
             builder: (context, child) {
               final double ltrValue = _leftToRightProgress.value;
-              // Motion sweeps horizontally from left (-size.width * 0.8) to center (0)
               final double xTranslate = -size.width * (1.0 - ltrValue);
 
               return Transform.translate(
@@ -117,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Tooth Hero Graphic with bouncing scale effect
+                      
                       ScaleTransition(
                         scale: _scaleAnimation,
                         child: Container(
@@ -146,7 +176,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
                       const SizedBox(height: 30),
 
-                      // App Title & Tagline fading in
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: Column(
@@ -182,6 +211,30 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 24),
+                            
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  _isAutoLoggedIn ? 'در حال ورود قهرمان... 🚀' : 'در حال بارگذاری اطلاعات... ✨',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -197,9 +250,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 }
 
-/// Custom painter for liquid splash motion strictly advancing from Left to Right.
 class _LeftToRightSplashPainter extends CustomPainter {
-  final double progress; // 0.0 to 1.0
+  final double progress; 
 
   _LeftToRightSplashPainter({required this.progress});
 
@@ -208,7 +260,6 @@ class _LeftToRightSplashPainter extends CustomPainter {
     final double w = size.width;
     final double h = size.height;
 
-    // Splash wave leading edge moves from left to right
     final double leadingX = w * 1.5 * progress - (w * 0.2);
 
     final Paint wavePaint = Paint()
@@ -219,7 +270,6 @@ class _LeftToRightSplashPainter extends CustomPainter {
       ..color = const Color(0xFF2ECC71).withValues(alpha: 0.35)
       ..style = PaintingStyle.fill;
 
-    // Secondary Accent Wave moving left to right
     final pathAccent = Path();
     pathAccent.moveTo(-w * 0.2, 0);
     pathAccent.lineTo(leadingX * 0.8, 0);
@@ -231,7 +281,6 @@ class _LeftToRightSplashPainter extends CustomPainter {
     pathAccent.close();
     canvas.drawPath(pathAccent, accentWavePaint);
 
-    // Primary Main Splash Wave moving left to right
     final pathMain = Path();
     pathMain.moveTo(-w * 0.2, 0);
     pathMain.lineTo(leadingX, 0);
@@ -243,7 +292,6 @@ class _LeftToRightSplashPainter extends CustomPainter {
     pathMain.close();
     canvas.drawPath(pathMain, wavePaint);
 
-    // Flying Splash Droplets moving from left towards right
     final dropletPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
