@@ -98,6 +98,7 @@ class KidStats {
   final int mouthwashCount;
   final bool morningBrushingCompletedToday;
   final bool nightBrushingCompletedToday;
+  final int totalUsageSeconds;
 
   KidStats({
     required this.childId,
@@ -108,6 +109,7 @@ class KidStats {
     required this.mouthwashCount,
     required this.morningBrushingCompletedToday,
     required this.nightBrushingCompletedToday,
+    this.totalUsageSeconds = 0,
   });
 
   factory KidStats.fromJson(Map<String, dynamic> json) {
@@ -120,6 +122,7 @@ class KidStats {
       mouthwashCount: json['mouthwashCount'] as int? ?? 0,
       morningBrushingCompletedToday: json['morningBrushingCompletedToday'] as bool? ?? false,
       nightBrushingCompletedToday: json['nightBrushingCompletedToday'] as bool? ?? false,
+      totalUsageSeconds: int.tryParse((json['totalUsageSeconds'] ?? json['TotalUsageSeconds'] ?? 0).toString()) ?? 0,
     );
   }
 }

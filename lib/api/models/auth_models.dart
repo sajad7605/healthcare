@@ -64,6 +64,7 @@ class ChildProfile {
   final int childAge;
   final String? avatarUrl;
   final int stars;
+  final int totalUsageSeconds;
   final DateTime createdAt;
 
   ChildProfile({
@@ -72,6 +73,7 @@ class ChildProfile {
     required this.childAge,
     this.avatarUrl,
     required this.stars,
+    this.totalUsageSeconds = 0,
     required this.createdAt,
   });
 
@@ -82,6 +84,7 @@ class ChildProfile {
       childAge: int.tryParse((json['childAge'] ?? json['age'] ?? json['ChildAge'] ?? 7).toString()) ?? 7,
       avatarUrl: (json['avatarUrl'] ?? json['AvatarUrl'])?.toString(),
       stars: int.tryParse((json['stars'] ?? json['Stars'] ?? 0).toString()) ?? 0,
+      totalUsageSeconds: int.tryParse((json['totalUsageSeconds'] ?? json['TotalUsageSeconds'] ?? 0).toString()) ?? 0,
       createdAt: json['createdAt'] != null && json['createdAt'].toString().isNotEmpty
           ? (DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now())
           : DateTime.now(),
@@ -95,8 +98,29 @@ class ChildProfile {
       'childAge': childAge,
       'avatarUrl': avatarUrl,
       'stars': stars,
+      'totalUsageSeconds': totalUsageSeconds,
       'createdAt': createdAt.toIso8601String(),
     };
+  }
+
+  ChildProfile copyWith({
+    String? id,
+    String? childName,
+    int? childAge,
+    String? avatarUrl,
+    int? stars,
+    int? totalUsageSeconds,
+    DateTime? createdAt,
+  }) {
+    return ChildProfile(
+      id: id ?? this.id,
+      childName: childName ?? this.childName,
+      childAge: childAge ?? this.childAge,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      stars: stars ?? this.stars,
+      totalUsageSeconds: totalUsageSeconds ?? this.totalUsageSeconds,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }
 

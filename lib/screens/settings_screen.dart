@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/custom_painters.dart';
 import '../widgets/squish_pop.dart';
 import '../api/healthcare_api.dart';
+import '../services/app_usage_tracker.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -11,6 +12,15 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final activeChild = HealthcareApi.instance.currentChild;
+    if (activeChild != null) {
+      AppUsageTracker.instance.syncWithChildProfile(activeChild.totalUsageSeconds);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeChild = HealthcareApi.instance.currentChild;
@@ -121,6 +131,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         subtitle: 'تنظیم ساعت‌های هشدار روزانه',
                         color: const Color(0xFF00D2D3),
                         onTap: _showReminderDialog,
+                      ),
+                      ValueListenableBuilder<int>(
+                        valueListenable: AppUsageTracker.instance.totalUsageNotifier,
+                        builder: (context, totalSecs, _) {
+                          final formatted = AppUsageTracker.formatDuration(totalSecs);
+                          return _buildSettingsTile(
+                            icon: Icons.timer_outlined,
+                            title: 'مدت زمان استفاده از برنامه',
+                            subtitle: 'مجموع استفاده: $formatted',
+                            color: const Color(0xFF6C5CE7),
+                            onTap: () => _showUsageDetailDialog(context, totalSecs),
+                          );
+                        },
                       ),
                       _buildSettingsTile(
                         icon: Icons.bar_chart_outlined,
@@ -471,6 +494,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 4),
           Text(answer, style: const TextStyle(fontSize: 13, color: Color(0xFF57606F), height: 1.4)),
         ],
+      ),
+    );
+  }
+
+  void _showUsageDetailDialog(BuildContext context, int totalSecs) {
+    final formatted = AppUsageTracker.formatDuration(totalSecs);
+    showDialog(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Row(
+            children: [
+              Icon(Icons.timer, color: Color(0xFF6C5CE7)),
+              SizedBox(width: 8),
+              Text('مدت زمان استفاده از برنامه', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6C5CE7).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'مجموع زمان کل استفاده:',
+                      style: TextStyle(fontSize: 14, color: Color(0xFF2C3E50)),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      formatted,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6C5CE7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'این زمان مجموع استفاده کودک در تمامی بخش‌های برنامه در کل روزها می‌باشد.',
+                style: TextStyle(fontSize: 12.5, color: Colors.grey, height: 1.4),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('بستن', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6C5CE7))),
+            ),
+          ],
+        ),
       ),
     );
   }

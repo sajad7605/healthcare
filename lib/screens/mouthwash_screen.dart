@@ -170,13 +170,8 @@ class _MouthwashScreenState extends State<MouthwashScreen> with TickerProviderSt
         ),
       ).then((res) {
         final oldStars = HealthcareApi.instance.currentChild?.stars ?? 0;
-        HealthcareApi.instance.currentChild = ChildProfile(
-          id: activeChild.id,
-          childName: activeChild.childName,
-          childAge: activeChild.childAge,
-          avatarUrl: activeChild.avatarUrl,
+        HealthcareApi.instance.currentChild = activeChild.copyWith(
           stars: oldStars + res.starsEarned,
-          createdAt: activeChild.createdAt,
         );
       }).catchError((err) {
         if (mounted) {

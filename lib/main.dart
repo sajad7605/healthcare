@@ -13,11 +13,13 @@ import 'screens/settings_screen.dart';
 import 'screens/brushing_screen.dart';
 import 'screens/intro_video_screen.dart';
 import 'screens/achievement_screen.dart';
+import 'services/app_usage_tracker.dart';
 import 'package:fvp/fvp.dart' as fvp;
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   fvp.registerWith();
+  AppUsageTracker.instance.initialize();
   runApp(const HealthcareApp());
 }
 

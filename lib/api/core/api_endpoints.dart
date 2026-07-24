@@ -18,6 +18,7 @@ class ApiEndpoints {
 
   static String childActivities(String version, String childId) => '/api/v$version/kids/$childId/activities';
   static String childStats(String version, String childId) => '/api/v$version/kids/$childId/stats';
+  static String childUsage(String version, String childId) => '/api/v$version/kids/$childId/usage';
 
   static String childPhotos(String version, String childId) => '/api/v$version/kids/$childId/photos';
   static String childPhotoDetail(String version, String childId, String photoId) => '/api/v$version/kids/$childId/photos/$photoId';

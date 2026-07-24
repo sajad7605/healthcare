@@ -244,4 +244,18 @@ class ChildrenService {
     final response = await apiClient.post(ApiEndpoints.approveRewardClaim(v, claimId));
     return RewardClaim.fromJson(response.data as Map<String, dynamic>);
   }
+
+  Future<int> recordAppUsage(
+    String childId,
+    int additionalSeconds, {
+    String? version,
+  }) async {
+    final v = version ?? defaultVersion;
+    final response = await apiClient.post(
+      ApiEndpoints.childUsage(v, childId),
+      data: {'additionalSeconds': additionalSeconds},
+    );
+    final data = response.data as Map<String, dynamic>? ?? {};
+    return int.tryParse((data['totalUsageSeconds'] ?? 0).toString()) ?? 0;
+  }
 }
