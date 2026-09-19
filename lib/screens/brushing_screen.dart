@@ -1481,7 +1481,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       case BrushingStage.upperFrontOutward:
         return '۲. فک بالا – دندان‌های رو به بیرون را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
       case BrushingStage.upperChewing:
-        return '۳. سطح جونده (کاکیله) فک بالا را با حرکت عقب-جلو تمیز کن! ↔️ (حرکت: $_strokeCount)';
+        return '۳. سطح جونده فک بالا را با حرکت عقب-جلو تمیز کن! ↔️ (حرکت: $_strokeCount)';
       case BrushingStage.lowerFrontOutward:
         return '۴. فک پایین – دندان‌های جلو را از پایین به بالا بکش! ⬆️ (حرکت: $_circleCount)';
       case BrushingStage.lowerChewing:
