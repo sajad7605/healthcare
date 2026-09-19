@@ -8,12 +8,14 @@ import '../api/healthcare_api.dart';
 enum BrushingStage {
   chooseBrush,
   chooseTime,
-  frontTeethUpper,
-  frontTeethLower,
-  backTeethUpperInner,
-  backTeethUpperOuter,
-  backTeethUpperChewing,
-  backTeethLower,
+  openMouth,
+  upperFrontOutward,
+  upperChewing,
+  lowerFrontOutward,
+  lowerChewing,
+  goToBack,
+  upperBackInner,
+  lowerBackInner,
   brushTongue,
   continue2Minutes,
   spitOut,
@@ -54,14 +56,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   Offset? _lastStrokePoint;
   String? _lastStrokeDirection;
   int _strokeDirectionSwitches = 0;
-
-  Offset? _tongueDragStart;
-  bool _isValidTongueDrag = false;
-
+  bool _isStageTransitioning = false;
   double _linearDistanceInCircleStage = 0.0;
   Offset? _lastCircleCheckPoint;
   double _distanceInChewingStage = 0.0;
   Offset? _lastChewingCheckPoint;
+  double _currentStrokeDistance = 0.0;
 
   final List<_FoamBubble> _bubbles = [];
   final List<_Sparkle> _sparkles = [];
@@ -124,168 +124,60 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
   void _initGerms(BrushingStage stage) {
     _germs.clear();
-    if (stage == BrushingStage.frontTeethUpper) {
-      
+    if (stage == BrushingStage.upperFrontOutward) {
+      // Step 2: Upper jaw front outward teeth - top to bottom
       _germs = [
-        _Germ(
-          id: 1,
-          position: _pixelPos(280, 1544),
-          color: Colors.lightGreenAccent.shade700,
-        ),
-        _Germ(
-          id: 2,
-          position: _pixelPos(520, 1132),
-          color: Colors.redAccent.shade400,
-        ),
-        _Germ(
-          id: 3,
-          position: _pixelPos(1164, 1182),
-          color: Colors.amber.shade700,
-        ),
-        _Germ(
-          id: 4,
-          position: _pixelPos(1332, 1536),
-          color: Colors.deepOrange.shade600,
-        ),
+        _Germ(id: 1, position: _pixelPos(1060, 1124), color: Colors.lightGreenAccent.shade700),
+        _Germ(id: 2, position: _pixelPos(864, 1080), color: Colors.redAccent.shade400),
+        _Germ(id: 3, position: _pixelPos(676, 1064), color: Colors.amber.shade700),
+        _Germ(id: 4, position: _pixelPos(528, 1088), color: Colors.deepOrange.shade600),
       ];
-    } else if (stage == BrushingStage.frontTeethLower) {
-      
+    } else if (stage == BrushingStage.upperChewing) {
+      // Step 3: Upper jaw chewing surface - back and forth
       _germs = [
-        _Germ(
-          id: 1,
-          position: _pixelPos(268, 1904),
-          color: Colors.teal.shade600,
-        ),
-        _Germ(
-          id: 2,
-          position: _pixelPos(552, 2192),
-          color: Colors.orangeAccent.shade700,
-        ),
-        _Germ(
-          id: 3,
-          position: _pixelPos(1000, 2204),
-          color: Colors.pinkAccent.shade400,
-        ),
-        _Germ(
-          id: 4,
-          position: _pixelPos(1256, 1840),
-          color: Colors.purple.shade500,
-        ),
+        _Germ(id: 1, position: _pixelPos(1320, 1572), color: Colors.teal.shade600),
+        _Germ(id: 2, position: _pixelPos(1212, 1372), color: Colors.orangeAccent.shade700),
+        _Germ(id: 3, position: _pixelPos(268, 1552), color: Colors.pinkAccent.shade400),
+        _Germ(id: 4, position: _pixelPos(288, 1320), color: Colors.purple.shade500),
       ];
-    } else if (stage == BrushingStage.backTeethUpperInner) {
-      
+    } else if (stage == BrushingStage.lowerFrontOutward) {
+      // Step 4: Lower jaw front teeth - bottom to top
       _germs = [
-        _Germ(
-          id: 1,
-          position: _pixelPos(300, 1450),
-          color: Colors.deepOrange.shade600,
-        ),
-        _Germ(
-          id: 2,
-          position: _pixelPos(602, 1410),
-          color: Colors.indigo.shade500,
-        ),
-        _Germ(
-          id: 3,
-          position: _pixelPos(937, 1438),
-          color: Colors.lightGreenAccent.shade700,
-        ),
-        _Germ(
-          id: 4,
-          position: _pixelPos(1300, 1434),
-          color: Colors.cyan.shade700,
-        ),
+        _Germ(id: 1, position: _pixelPos(956, 2144), color: Colors.deepOrange.shade600),
+        _Germ(id: 2, position: _pixelPos(848, 2184), color: Colors.indigo.shade500),
+        _Germ(id: 3, position: _pixelPos(720, 2192), color: Colors.lightGreenAccent.shade700),
+        _Germ(id: 4, position: _pixelPos(584, 2169), color: Colors.cyan.shade700),
       ];
-    } else if (stage == BrushingStage.backTeethUpperOuter) {
-      
+    } else if (stage == BrushingStage.lowerChewing) {
+      // Step 5: Lower jaw chewing surface - back and forth
       _germs = [
-        _Germ(
-          id: 1,
-          position: _pixelPos(300, 1450),
-          color: Colors.cyan.shade700,
-        ),
-        _Germ(
-          id: 2,
-          position: _pixelPos(602, 1410),
-          color: Colors.redAccent.shade400,
-        ),
-        _Germ(
-          id: 3,
-          position: _pixelPos(937, 1438),
-          color: Colors.amber.shade600,
-        ),
-        _Germ(
-          id: 4,
-          position: _pixelPos(1300, 1434),
-          color: Colors.pink.shade700,
-        ),
+        _Germ(id: 1, position: _pixelPos(308, 1868), color: Colors.cyan.shade700),
+        _Germ(id: 2, position: _pixelPos(380, 2012), color: Colors.redAccent.shade400),
+        _Germ(id: 3, position: _pixelPos(1144, 2036), color: Colors.amber.shade600),
+        _Germ(id: 4, position: _pixelPos(1228, 1869), color: Colors.pink.shade700),
       ];
-    } else if (stage == BrushingStage.backTeethUpperChewing) {
-      
+    } else if (stage == BrushingStage.upperBackInner) {
+      // Step 7: Behind upper teeth - top to bottom
       _germs = [
-        _Germ(
-          id: 1,
-          position: _pixelPos(300, 1450),
-          color: Colors.green.shade600,
-        ),
-        _Germ(
-          id: 2,
-          position: _pixelPos(602, 1410),
-          color: Colors.orange.shade700,
-        ),
-        _Germ(
-          id: 3,
-          position: _pixelPos(937, 1438),
-          color: Colors.red.shade600,
-        ),
-        _Germ(
-          id: 4,
-          position: _pixelPos(1300, 1434),
-          color: Colors.purple.shade600,
-        ),
+        _Germ(id: 1, position: _pixelPos(1289, 1434), color: Colors.green.shade600),
+        _Germ(id: 2, position: _pixelPos(961, 1413), color: Colors.orange.shade700),
+        _Germ(id: 3, position: _pixelPos(562, 1422), color: Colors.red.shade600),
+        _Germ(id: 4, position: _pixelPos(300, 1429), color: Colors.purple.shade600),
       ];
-    } else if (stage == BrushingStage.backTeethLower) {
-      
+    } else if (stage == BrushingStage.lowerBackInner) {
+      // Step 8: Behind lower teeth - bottom to top
       _germs = [
-        _Germ(
-          id: 1,
-          position: _pixelPos(413, 1865),
-          color: Colors.purple.shade500,
-        ),
-        _Germ(
-          id: 2,
-          position: _pixelPos(701, 1762),
-          color: Colors.blue.shade600,
-        ),
-        _Germ(
-          id: 3,
-          position: _pixelPos(973, 1820),
-          color: Colors.teal.shade600,
-        ),
-        _Germ(
-          id: 4,
-          position: _pixelPos(1256, 1877),
-          color: Colors.deepOrange.shade600,
-        ),
+        _Germ(id: 1, position: _pixelPos(1219, 1907), color: Colors.purple.shade500),
+        _Germ(id: 2, position: _pixelPos(986, 1792), color: Colors.blue.shade600),
+        _Germ(id: 3, position: _pixelPos(580, 1786), color: Colors.teal.shade600),
+        _Germ(id: 4, position: _pixelPos(335, 1877), color: Colors.deepOrange.shade600),
       ];
     } else if (stage == BrushingStage.brushTongue) {
-      
+      // Step 9: Tongue cleaning - back and forth vertical
       _germs = [
-        _Germ(
-          id: 1,
-          position: _pixelPos(800, 1857),
-          color: Colors.deepPurple.shade400,
-        ),
-        _Germ(
-          id: 2,
-          position: _pixelPos(770, 2081),
-          color: Colors.purple.shade600,
-        ),
-        _Germ(
-          id: 3,
-          position: _pixelPos(785, 1969),
-          color: Colors.blue.shade600,
-        ),
+        _Germ(id: 1, position: _pixelPos(773, 1864), color: Colors.deepPurple.shade400),
+        _Germ(id: 2, position: _pixelPos(774, 1940), color: Colors.purple.shade600),
+        _Germ(id: 3, position: _pixelPos(779, 2025), color: Colors.blue.shade600),
       ];
     }
     _totalGerms = _germs.length;
@@ -410,15 +302,17 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     double targetY = touchY;
 
     final bool isVerticalStage =
-        _currentStage == BrushingStage.frontTeethUpper ||
-        _currentStage == BrushingStage.frontTeethLower ||
-        _currentStage == BrushingStage.backTeethUpperInner ||
-        _currentStage == BrushingStage.backTeethUpperOuter ||
-        _currentStage == BrushingStage.backTeethLower ||
-        _currentStage == BrushingStage.brushTongue;
+        _currentStage == BrushingStage.upperFrontOutward ||
+        _currentStage == BrushingStage.lowerFrontOutward ||
+        _currentStage == BrushingStage.upperBackInner ||
+        _currentStage == BrushingStage.lowerBackInner;
 
     final bool isHorizontalStage =
-        _currentStage == BrushingStage.backTeethUpperChewing;
+        _currentStage == BrushingStage.upperChewing ||
+        _currentStage == BrushingStage.lowerChewing;
+
+    final bool isTongueStage =
+        _currentStage == BrushingStage.brushTongue;
 
     if (isVerticalStage) {
       double minDx = double.infinity;
@@ -440,10 +334,19 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       targetX = bestGermX;
       targetY = touchY;
     } else if (isHorizontalStage) {
-      final double surfaceY =
-          _cachedBounds.top + (1434.0 / 3408.0) * _cachedBounds.height;
-      targetY = surfaceY;
+      // Calculate average Y of germs for the surface line
+      final activeGerms = _germs.where((g) => g.health > 0).toList();
+      final germsToCheck = activeGerms.isNotEmpty ? activeGerms : _germs;
+      double avgY = 0;
+      for (var germ in germsToCheck) {
+        avgY += _cachedBounds.top + germ.position.dy * _cachedBounds.height;
+      }
+      avgY /= germsToCheck.length;
+      targetY = avgY;
       targetX = touchX;
+    } else if (isTongueStage) {
+      targetX = touchX;
+      targetY = touchY;
     }
 
     setState(() {
@@ -478,33 +381,32 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _cachedBounds = _getImageBounds(constraints);
 
     switch (_currentStage) {
-      case BrushingStage.frontTeethUpper:
+      case BrushingStage.upperFrontOutward:
         _checkVerticalMotion(localPos, expectDownward: true);
         _detectVerticalBrushingWarning(localPos, message: 'دندان‌های جلو بالا را از بالا به پایین بکش! ⬇️');
         break;
-      case BrushingStage.frontTeethLower:
+      case BrushingStage.lowerFrontOutward:
         _checkVerticalMotion(localPos, expectDownward: false);
         _detectVerticalBrushingWarning(localPos, message: 'دندان‌های جلو پایین را از پایین به بالا بکش! ⬆️');
         break;
-      case BrushingStage.backTeethUpperInner:
-        _checkVerticalMotion(localPos, expectDownward: true);
-        _detectVerticalBrushingWarning(localPos, message: 'سطح داخلی دندان‌های عقب بالا را از بالا به پایین بکش! ⬇️');
-        break;
-      case BrushingStage.backTeethUpperOuter:
-        _checkVerticalMotion(localPos, expectDownward: true);
-        _detectVerticalBrushingWarning(localPos, message: 'سطح خارجی دندان‌های عقب بالا را از بالا به پایین بکش! ⬇️');
-        break;
-      case BrushingStage.backTeethUpperChewing:
+      case BrushingStage.upperChewing:
         _checkBackAndForthMotion(localPos);
         _detectChewingWarning(localPos);
         break;
-      case BrushingStage.backTeethLower:
+      case BrushingStage.lowerChewing:
+        _checkBackAndForthMotion(localPos);
+        _detectChewingWarning(localPos);
+        break;
+      case BrushingStage.upperBackInner:
         _checkVerticalMotion(localPos, expectDownward: true);
-        _detectVerticalBrushingWarning(localPos, message: 'دندان‌های عقب پایین را مسواک بزن! ↕️');
+        _detectVerticalBrushingWarning(localPos, message: 'پشت دندان‌های بالا را از بالا به پایین بکش! ⬇️');
+        break;
+      case BrushingStage.lowerBackInner:
+        _checkVerticalMotion(localPos, expectDownward: false);
+        _detectVerticalBrushingWarning(localPos, message: 'پشت دندان‌های پایین را از پایین به بالا بکش! ⬆️');
         break;
       case BrushingStage.brushTongue:
-        _updateTongueDrag(localPos, constraints);
-        _detectTongueWarning(localPos, constraints);
+        _checkTongueMotion(localPos);
         break;
       case BrushingStage.continue2Minutes:
         if (math.Random().nextDouble() < 0.2) {
@@ -528,80 +430,87 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   void _checkVerticalMotion(Offset currentPos, {bool expectDownward = true}) {
     if (_lastCircleCheckPoint == null) {
       _lastCircleCheckPoint = currentPos;
+      _lastStrokeDirection = null;
+      _currentStrokeDistance = 0.0;
       return;
     }
 
-    final double dx = currentPos.dx - _lastCircleCheckPoint!.dx;
     final double dy = currentPos.dy - _lastCircleCheckPoint!.dy;
-    final double distance = math.sqrt(dx * dx + dy * dy);
+    final double dx = currentPos.dx - _lastCircleCheckPoint!.dx;
 
-    if (distance > 10.0) {
-      
-      if (dy.abs() > dx.abs() * 0.8) {
-        String currentDir = dy > 0 ? 'D' : 'U';
-        
-        String primaryDir = expectDownward ? 'D' : 'U';
-        String secondaryDir = expectDownward ? 'U' : 'D';
+    // Check if motion is mostly vertical
+    if (dy.abs() > dx.abs() * 0.5 && dy.abs() > 3.0) {
+      String currentDir = dy > 0 ? 'D' : 'U';
 
-        if (_lastStrokeDirection != null && _lastStrokeDirection != currentDir) {
-          bool isVerticalSwitch =
-              (_lastStrokeDirection == secondaryDir && currentDir == primaryDir) ||
-              (_lastStrokeDirection == primaryDir && currentDir == secondaryDir);
+      if (_lastStrokeDirection == null) {
+        _lastStrokeDirection = currentDir;
+        _currentStrokeDistance = dy.abs();
+      } else if (_lastStrokeDirection == currentDir) {
+        // Same direction - accumulate distance
+        _currentStrokeDistance += dy.abs();
+      } else {
+        // Direction changed - check if previous stroke was long enough
+        if (_currentStrokeDistance >= 35.0) {
+          _strokeDirectionSwitches++;
+          HapticFeedback.lightImpact();
+          _damageGermsInRadius(60.0, damage: 0.20);
 
-          if (isVerticalSwitch && distance < 150.0) {
-            _strokeDirectionSwitches++;
-            HapticFeedback.lightImpact();
-            _damageGermsInRadius(50.0, damage: 0.22);
-
-            if (_strokeDirectionSwitches >= 2) {
-              _strokeDirectionSwitches = 0;
-              _linearDistanceInCircleStage = 0.0;
-              _onVerticalStrokeDetected();
-            }
+          if (_strokeDirectionSwitches >= 2) {
+            _strokeDirectionSwitches = 0;
+            _linearDistanceInCircleStage = 0.0;
+            _onVerticalStrokeDetected();
           }
         }
-
         _lastStrokeDirection = currentDir;
+        _currentStrokeDistance = dy.abs();
       }
-      _lastCircleCheckPoint = currentPos;
     }
+
+    _lastCircleCheckPoint = currentPos;
   }
 
   void _onVerticalStrokeDetected() {
     _linearDistanceInCircleStage = 0.0;
     setState(() {
       _circleCount++;
+      if (_currentStage == BrushingStage.brushTongue) {
+        _tongueSwipeCount++;
+      }
     });
     HapticFeedback.lightImpact();
-    _damageGermsInRadius(50.0, damage: 0.22);
+    if (_currentStage == BrushingStage.brushTongue) {
+      _damageGermsInRadius(70.0, damage: 0.40);
+    } else {
+      _damageGermsInRadius(60.0, damage: 0.22);
+    }
   }
 
   void _checkBackAndForthMotion(Offset currentPos) {
     if (_lastStrokePoint == null) {
       _lastStrokePoint = currentPos;
+      _lastStrokeDirection = null;
+      _currentStrokeDistance = 0.0;
       return;
     }
 
     final double dx = currentPos.dx - _lastStrokePoint!.dx;
     final double dy = currentPos.dy - _lastStrokePoint!.dy;
-    final double distance = math.sqrt(dx * dx + dy * dy);
 
-    if (distance > 10.0) {
-      String currentDir = dx.abs() > dy.abs()
-          ? (dx > 0 ? 'R' : 'L')
-          : (dy > 0 ? 'D' : 'U');
+    // Check if motion is mostly horizontal
+    if (dx.abs() > dy.abs() * 0.5 && dx.abs() > 3.0) {
+      String currentDir = dx > 0 ? 'R' : 'L';
 
-      if (_lastStrokeDirection != null && _lastStrokeDirection != currentDir) {
-        bool isOpposite =
-            (_lastStrokeDirection == 'L' && currentDir == 'R') ||
-            (_lastStrokeDirection == 'R' && currentDir == 'L') ||
-            (_lastStrokeDirection == 'U' && currentDir == 'D') ||
-            (_lastStrokeDirection == 'D' && currentDir == 'U');
-
-        if (isOpposite && distance < 150.0) {
+      if (_lastStrokeDirection == null) {
+        _lastStrokeDirection = currentDir;
+        _currentStrokeDistance = dx.abs();
+      } else if (_lastStrokeDirection == currentDir) {
+        _currentStrokeDistance += dx.abs();
+      } else {
+        // Direction changed - check if previous stroke was long enough
+        if (_currentStrokeDistance >= 35.0) {
           _strokeDirectionSwitches++;
           HapticFeedback.lightImpact();
-          _damageGermsInRadius(50.0, damage: 0.18);
+          _damageGermsInRadius(60.0, damage: 0.18);
 
           if (_strokeDirectionSwitches >= 2) {
             _strokeDirectionSwitches = 0;
@@ -611,65 +520,72 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             });
           }
         }
+        _lastStrokeDirection = currentDir;
+        _currentStrokeDistance = dx.abs();
       }
+    }
 
-      _lastStrokeDirection = currentDir;
+    _lastStrokePoint = currentPos;
+  }
+
+  void _checkTongueMotion(Offset currentPos) {
+    if (_lastStrokePoint == null) {
       _lastStrokePoint = currentPos;
+      _lastStrokeDirection = null;
+      _currentStrokeDistance = 0.0;
+      return;
     }
-  }
 
-  void _startTongueDrag(Offset localPos, BoxConstraints constraints) {
-    if (_cachedBounds == Rect.zero) return;
-    final double rx = (localPos.dx - _cachedBounds.left) / _cachedBounds.width;
-    final double ry = (localPos.dy - _cachedBounds.top) / _cachedBounds.height;
+    final double dy = currentPos.dy - _lastStrokePoint!.dy;
+    final double dx = currentPos.dx - _lastStrokePoint!.dx;
+    final double dist = math.sqrt(dx * dx + dy * dy);
 
-    if (rx > 0.25 && rx < 0.75 && ry > 0.40 && ry < 0.70) {
-      _tongueDragStart = localPos;
-      _isValidTongueDrag = true;
-    } else {
-      _isValidTongueDrag = false;
-    }
-  }
+    if (dist > 3.0) {
+      String currentDir;
+      double primaryDist;
+      if (dy.abs() >= dx.abs()) {
+        currentDir = dy > 0 ? 'D' : 'U';
+        primaryDist = dy.abs();
+      } else {
+        currentDir = dx > 0 ? 'R' : 'L';
+        primaryDist = dx.abs();
+      }
 
-  void _updateTongueDrag(Offset localPos, BoxConstraints constraints) {
-    if (!_isValidTongueDrag || _tongueDragStart == null) return;
+      if (_lastStrokeDirection == null) {
+        _lastStrokeDirection = currentDir;
+        _currentStrokeDistance = primaryDist;
+      } else if (_lastStrokeDirection == currentDir) {
+        _currentStrokeDistance += primaryDist;
+      } else {
+        if (_currentStrokeDistance >= 20.0) {
+          _strokeDirectionSwitches++;
+          HapticFeedback.lightImpact();
+          _damageGermsInRadius(75.0, damage: 0.35);
 
-    final double dy = localPos.dy - _tongueDragStart!.dy;
-    final double dx = localPos.dx - _tongueDragStart!.dx;
-
-    if (dy > 40.0) {
-      if (dy > dx.abs() * 1.2) {
-        _isValidTongueDrag = false;
-        _tongueDragStart = null;
-
-        setState(() {
-          _tongueSwipeCount++;
-          final random = math.Random();
-          for (int i = 0; i < 8; i++) {
-            _sparkles.add(
-              _Sparkle(
-                position:
-                    localPos +
-                    Offset(
-                      random.nextDouble() * 30 - 15,
-                      random.nextDouble() * 30 - 15,
-                    ),
-                vx: random.nextDouble() * 2 - 1,
-                vy: random.nextDouble() * -2 - 1,
-                size: random.nextDouble() * 10 + 5,
-                color: Colors.pinkAccent.shade100,
-              ),
-            );
+          if (_strokeDirectionSwitches >= 2) {
+            _strokeDirectionSwitches = 0;
+            _onTongueStrokeDetected();
           }
-        });
-        HapticFeedback.mediumImpact();
-        _damageGermsInRadius(70.0, damage: 0.45);
+        }
+        _lastStrokeDirection = currentDir;
+        _currentStrokeDistance = primaryDist;
       }
     }
+
+    _lastStrokePoint = currentPos;
+  }
+
+  void _onTongueStrokeDetected() {
+    setState(() {
+      _circleCount++;
+      _tongueSwipeCount++;
+    });
+    HapticFeedback.lightImpact();
+    _damageGermsInRadius(80.0, damage: 0.50);
   }
 
   void _damageGermsInRadius(double radius, {double damage = 0.08}) {
-    if (_cachedBounds == Rect.zero) return;
+    if (_cachedBounds == Rect.zero || _isStageTransitioning) return;
     final Offset brushTip = _brushPosition;
     final random = math.Random();
 
@@ -756,20 +672,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     if (_distanceInChewingStage > 250.0) {
       _showTooltip("مسواک را به جلو و عقب بکش! ↔️");
       _distanceInChewingStage = 0.0;
-    }
-  }
-
-  void _detectTongueWarning(Offset currentPos, BoxConstraints constraints) {
-    if (_tongueDragStart == null) return;
-    final double dx = currentPos.dx - _tongueDragStart!.dx;
-    final double dy = currentPos.dy - _tongueDragStart!.dy;
-
-    if (dx.abs() > 40.0 && dy.abs() < dx.abs()) {
-      _showTooltip("مسواک را فقط از عقب به سمت جلو بکش! ⬇️");
-      _tongueDragStart = null;
-    } else if (dy < -40.0) {
-      _showTooltip("مسواک را فقط از عقب به سمت جلو بکش! ⬇️");
-      _tongueDragStart = null;
     }
   }
 
@@ -872,9 +774,13 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 durationSeconds: _isFastMode ? 15 : 120,
                 completedSteps: const [
                   'chooseBrush',
-                  'place45Degrees',
-                  'circularBrushing',
-                  'chewingSurfaces',
+                  'openMouth',
+                  'upperFrontOutward',
+                  'upperChewing',
+                  'lowerFrontOutward',
+                  'lowerChewing',
+                  'upperBackInner',
+                  'lowerBackInner',
                   'brushTongue',
                   'spitOut',
                   'cleanMouthDone'
@@ -910,6 +816,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   }
 
   void _checkStageProgress() {
+    if (_isStageTransitioning) return;
     final activeGermsCount = _germs.where((g) => g.health > 0).length;
     setState(() {
       _cleanlinessProgress = _totalGerms > 0
@@ -918,7 +825,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     });
 
     if (activeGermsCount == 0) {
-      Future.delayed(const Duration(milliseconds: 800), () {
+      _isStageTransitioning = true;
+      Future.delayed(const Duration(milliseconds: 700), () {
         if (!mounted) return;
         _transitionToNextStage();
       });
@@ -926,57 +834,102 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   }
 
   void _transitionToNextStage() {
+    _isStageTransitioning = false;
     _bubbles.clear();
     _sparkles.clear();
     _dragHistory.clear();
     _lastStrokePoint = null;
     _lastStrokeDirection = null;
-    _tongueDragStart = null;
     _lastCircleCheckPoint = null;
     _strokeDirectionSwitches = 0;
+    _currentStrokeDistance = 0.0;
     _circleCount = 0;
     _strokeCount = 0;
+    _tongueSwipeCount = 0;
 
-    if (_currentStage == BrushingStage.frontTeethUpper) {
+    // Step 2 → Step 3
+    if (_currentStage == BrushingStage.upperFrontOutward) {
       setState(() {
-        _currentStage = BrushingStage.frontTeethLower;
-        _initGerms(BrushingStage.frontTeethLower);
+        _currentStage = BrushingStage.upperChewing;
+        _initGerms(BrushingStage.upperChewing);
         _brushPosition = const Offset(200, 500);
       });
-    } else if (_currentStage == BrushingStage.frontTeethLower) {
+    // Step 3 → Step 4
+    } else if (_currentStage == BrushingStage.upperChewing) {
       setState(() {
-        _currentStage = BrushingStage.backTeethUpperInner;
-        _initGerms(BrushingStage.backTeethUpperInner);
+        _currentStage = BrushingStage.lowerFrontOutward;
+        _initGerms(BrushingStage.lowerFrontOutward);
         _brushPosition = const Offset(200, 500);
       });
-    } else if (_currentStage == BrushingStage.backTeethUpperInner) {
+    // Step 4 → Step 5
+    } else if (_currentStage == BrushingStage.lowerFrontOutward) {
       setState(() {
-        _currentStage = BrushingStage.backTeethUpperOuter;
-        _initGerms(BrushingStage.backTeethUpperOuter);
+        _currentStage = BrushingStage.lowerChewing;
+        _initGerms(BrushingStage.lowerChewing);
         _brushPosition = const Offset(200, 500);
       });
-    } else if (_currentStage == BrushingStage.backTeethUpperOuter) {
+    // Step 5 → Step 6 (transition to back teeth)
+    } else if (_currentStage == BrushingStage.lowerChewing) {
       setState(() {
-        _currentStage = BrushingStage.backTeethUpperChewing;
-        _initGerms(BrushingStage.backTeethUpperChewing);
+        _currentStage = BrushingStage.goToBack;
+      });
+      // Auto-advance after 2 seconds
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && _currentStage == BrushingStage.goToBack) {
+          _transitionFromAutoStage();
+        }
+      });
+    // Step 7 → Step 8
+    } else if (_currentStage == BrushingStage.upperBackInner) {
+      setState(() {
+        _currentStage = BrushingStage.lowerBackInner;
+        _initGerms(BrushingStage.lowerBackInner);
         _brushPosition = const Offset(200, 500);
       });
-    } else if (_currentStage == BrushingStage.backTeethUpperChewing) {
-      setState(() {
-        _currentStage = BrushingStage.backTeethLower;
-        _initGerms(BrushingStage.backTeethLower);
-        _brushPosition = const Offset(200, 500);
-      });
-    } else if (_currentStage == BrushingStage.backTeethLower) {
+    // Step 8 → Step 9
+    } else if (_currentStage == BrushingStage.lowerBackInner) {
       setState(() {
         _currentStage = BrushingStage.brushTongue;
         _initGerms(BrushingStage.brushTongue);
         _brushPosition = const Offset(200, 500);
       });
+    // Step 9 → Spit Out
     } else if (_currentStage == BrushingStage.brushTongue) {
       setState(() {
-        _currentStage = BrushingStage.continue2Minutes;
-        _startTimer();
+        _currentStage = BrushingStage.spitOut;
+      });
+    }
+  }
+
+  void _transitionFromAutoStage() {
+    if (_currentStage != BrushingStage.openMouth &&
+        _currentStage != BrushingStage.goToBack) {
+      return;
+    }
+    _isStageTransitioning = false;
+    _bubbles.clear();
+    _sparkles.clear();
+    _dragHistory.clear();
+    _lastStrokePoint = null;
+    _lastStrokeDirection = null;
+    _lastCircleCheckPoint = null;
+    _strokeDirectionSwitches = 0;
+    _currentStrokeDistance = 0.0;
+    _circleCount = 0;
+    _strokeCount = 0;
+    _tongueSwipeCount = 0;
+
+    if (_currentStage == BrushingStage.openMouth) {
+      setState(() {
+        _currentStage = BrushingStage.upperFrontOutward;
+        _initGerms(BrushingStage.upperFrontOutward);
+        _brushPosition = const Offset(200, 500);
+      });
+    } else if (_currentStage == BrushingStage.goToBack) {
+      setState(() {
+        _currentStage = BrushingStage.upperBackInner;
+        _initGerms(BrushingStage.upperBackInner);
+        _brushPosition = const Offset(200, 500);
       });
     }
   }
@@ -1291,8 +1244,14 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
                 if (_currentStage != BrushingStage.chooseBrush &&
                     _currentStage != BrushingStage.chooseTime &&
+                    _currentStage != BrushingStage.openMouth &&
+                    _currentStage != BrushingStage.goToBack &&
                     _currentStage != BrushingStage.cleanMouthDone)
                   _buildBrushingStage(constraints),
+
+                if (_currentStage == BrushingStage.openMouth ||
+                    _currentStage == BrushingStage.goToBack)
+                  _buildTransitionStage(constraints),
 
                 Positioned.fill(
                   child: IgnorePointer(
@@ -1399,13 +1358,15 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       case BrushingStage.chooseBrush:
       case BrushingStage.chooseTime:
         return '';
-      case BrushingStage.frontTeethUpper:
-      case BrushingStage.frontTeethLower:
+      case BrushingStage.openMouth:
+      case BrushingStage.upperFrontOutward:
+      case BrushingStage.upperChewing:
+      case BrushingStage.lowerFrontOutward:
+      case BrushingStage.lowerChewing:
         return 'assets/Group 2.png';
-      case BrushingStage.backTeethUpperInner:
-      case BrushingStage.backTeethUpperOuter:
-      case BrushingStage.backTeethUpperChewing:
-      case BrushingStage.backTeethLower:
+      case BrushingStage.goToBack:
+      case BrushingStage.upperBackInner:
+      case BrushingStage.lowerBackInner:
       case BrushingStage.brushTongue:
       case BrushingStage.continue2Minutes:
       case BrushingStage.spitOut:
@@ -1452,12 +1413,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
             const SizedBox(height: 12),
           ],
 
-          if (_currentStage == BrushingStage.frontTeethUpper ||
-              _currentStage == BrushingStage.frontTeethLower ||
-              _currentStage == BrushingStage.backTeethUpperInner ||
-              _currentStage == BrushingStage.backTeethUpperOuter ||
-              _currentStage == BrushingStage.backTeethUpperChewing ||
-              _currentStage == BrushingStage.backTeethLower ||
+          if (_currentStage == BrushingStage.upperFrontOutward ||
+              _currentStage == BrushingStage.lowerFrontOutward ||
+              _currentStage == BrushingStage.upperChewing ||
+              _currentStage == BrushingStage.lowerChewing ||
+              _currentStage == BrushingStage.upperBackInner ||
+              _currentStage == BrushingStage.lowerBackInner ||
               _currentStage == BrushingStage.brushTongue)
             Row(
               children: [
@@ -1515,24 +1476,28 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         return 'یک مسواک قشنگ انتخاب کن! 🪥';
       case BrushingStage.chooseTime:
         return 'زمان مناسب مسواک زدن را انتخاب کن! ⏱️';
-      case BrushingStage.frontTeethUpper:
-        return '۱. دندان‌های جلو – فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
-      case BrushingStage.frontTeethLower:
-        return '۲. دندان‌های جلو – فک پایین را از پایین به بالا بکش! ⬆️ (حرکت: $_circleCount)';
-      case BrushingStage.backTeethUpperInner:
-        return '۳. دندان‌های عقب دارای ۳ سطح هستند\nسطح داخلی فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
-      case BrushingStage.backTeethUpperOuter:
-        return '۴. سطح خارجی دندان‌های عقب فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
-      case BrushingStage.backTeethUpperChewing:
-        return '۵. سطح جویدنی دندان‌های عقب فک بالا را با حرکت جلو-عقب تمیز کن! ↔️ (حرکت: $_strokeCount)';
-      case BrushingStage.backTeethLower:
-        return '۶. حالا به بخش عقبی فک پایین بروید و آن را مسواک بزنید! ↕️ (حرکت: $_circleCount)';
+      case BrushingStage.openMouth:
+        return '۱. دهانت رو باز کن! 😃 آماده باش!';
+      case BrushingStage.upperFrontOutward:
+        return '۲. فک بالا – دندان‌های رو به بیرون را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
+      case BrushingStage.upperChewing:
+        return '۳. سطح جونده (کاکیله) فک بالا را با حرکت عقب-جلو تمیز کن! ↔️ (حرکت: $_strokeCount)';
+      case BrushingStage.lowerFrontOutward:
+        return '۴. فک پایین – دندان‌های جلو را از پایین به بالا بکش! ⬆️ (حرکت: $_circleCount)';
+      case BrushingStage.lowerChewing:
+        return '۵. سطح جونده فک پایین را با حرکت رفت و برگشتی عقب-جلو تمیز کن! ↔️ (حرکت: $_strokeCount)';
+      case BrushingStage.goToBack:
+        return '۶. الان باید بریم به پشت دندان‌ها! 🦷✨';
+      case BrushingStage.upperBackInner:
+        return '۷. پشت دندان‌های فک بالا را از بالا به پایین بکش! ⬇️ (حرکت: $_circleCount)';
+      case BrushingStage.lowerBackInner:
+        return '۸. پشت دندان‌های فک پایین را از پایین به بالا بکش! ⬆️ (حرکت: $_circleCount)';
       case BrushingStage.brushTongue:
-        return '۷. زبان را به آرامی از عقب به جلو مسواک بکش! ⬇️ ($_tongueSwipeCount/۳)';
+        return '۹. تمیز کردن زبان با حرکت رفت و برگشتی! ↕️ (حرکت: $_tongueSwipeCount)';
       case BrushingStage.continue2Minutes:
-        return '۸. مسواک زدن را ادامه بده تا زمان تمام شود! ⏳';
+        return 'مسواک زدن را ادامه بده تا زمان تمام شود! ⏳';
       case BrushingStage.spitOut:
-        return '۹. حالا آب و خمیردندان را تف کن! 💦';
+        return 'حالا آب و خمیردندان را تف کن! 💦';
       case BrushingStage.cleanMouthDone:
         return 'دندون‌هات از تمیزی دارن برق می‌زنن! 😍⭐';
     }
@@ -1954,8 +1919,13 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                                   if (mounted) {
                                     setState(() {
                                       _currentStage =
-                                          BrushingStage.frontTeethUpper;
-                                      _initGerms(BrushingStage.frontTeethUpper);
+                                          BrushingStage.openMouth;
+                                    });
+                                    // Auto-advance after 2 seconds
+                                    Future.delayed(const Duration(seconds: 2), () {
+                                      if (mounted && _currentStage == BrushingStage.openMouth) {
+                                        _transitionFromAutoStage();
+                                      }
                                     });
                                   }
                                 },
@@ -2147,14 +2117,113 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     );
   }
 
+  Widget _buildTransitionStage(BoxConstraints constraints) {
+    final bool isOpenMouth = _currentStage == BrushingStage.openMouth;
+    final String emoji = isOpenMouth ? '😃' : '🦷';
+    final String stepLabel = isOpenMouth ? 'مرحله ۱ از ۹' : 'مرحله ۶ از ۹';
+    final String message = isOpenMouth
+        ? 'دهانت رو باز کن!\nآماده مسواک زدن شو!'
+        : 'آفرین!\nحالا باید بریم به پشت دندان‌ها!';
+
+    return Positioned.fill(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          _transitionFromAutoStage();
+        },
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.25),
+          child: Center(
+            child: AnimatedBuilder(
+              animation: _floatingController,
+              builder: (context, child) {
+                final double scale = 1.0 + 0.06 * math.sin(_floatingController.value * math.pi * 2);
+                return Transform.scale(
+                  scale: scale,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 28),
+                    padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 28),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF9B59B6).withValues(alpha: 0.3),
+                          blurRadius: 24,
+                          spreadRadius: 4,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 64),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF9B59B6).withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            stepLabel,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF8E44AD),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF2ECC71), Color(0xFF27AE60)],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'بزن بریم ➔',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBrushingStage(BoxConstraints constraints) {
     return Positioned.fill(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onPanStart: (details) {
-          if (_currentStage == BrushingStage.brushTongue) {
-            _startTongueDrag(details.localPosition, constraints);
-          }
           _handleBrushing(details.localPosition, constraints);
         },
         onPanUpdate: (details) =>
@@ -2162,27 +2231,25 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         onPanEnd: (_) {
           setState(() {
             _isDragging = false;
-            _tongueDragStart = null;
-            _isValidTongueDrag = false;
           });
         },
         child: Stack(
           children: [
             
-            if (_currentStage == BrushingStage.frontTeethUpper ||
-                _currentStage == BrushingStage.backTeethUpperInner ||
-                _currentStage == BrushingStage.backTeethUpperOuter ||
-                _currentStage == BrushingStage.backTeethLower)
+            // Down arrow for upperFrontOutward and upperBackInner
+            if (_currentStage == BrushingStage.upperFrontOutward ||
+                _currentStage == BrushingStage.upperBackInner)
               Positioned(
-                left: _cachedBounds.left + 0.42 * _cachedBounds.width,
-                top: _cachedBounds.top + 0.32 * _cachedBounds.height,
+                left: _cachedBounds.left + 0.50 * _cachedBounds.width - 30,
+                top: _cachedBounds.top +
+                    (0.28 + _floatingController.value * 0.10) * _cachedBounds.height,
                 child: IgnorePointer(
                   child: AnimatedBuilder(
                     animation: _floatingController,
                     builder: (context, child) {
                       return Opacity(
                         opacity:
-                            0.3 +
+                            0.4 +
                             0.3 *
                                 math.sin(
                                   _floatingController.value * math.pi * 2,
@@ -2198,17 +2265,20 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 ),
               ),
 
-            if (_currentStage == BrushingStage.frontTeethLower)
+            // Up arrow for lowerFrontOutward and lowerBackInner
+            if (_currentStage == BrushingStage.lowerFrontOutward ||
+                _currentStage == BrushingStage.lowerBackInner)
               Positioned(
-                left: _cachedBounds.left + 0.42 * _cachedBounds.width,
-                top: _cachedBounds.top + 0.48 * _cachedBounds.height,
+                left: _cachedBounds.left + 0.50 * _cachedBounds.width - 30,
+                top: _cachedBounds.top +
+                    (0.60 - _floatingController.value * 0.10) * _cachedBounds.height,
                 child: IgnorePointer(
                   child: AnimatedBuilder(
                     animation: _floatingController,
                     builder: (context, child) {
                       return Opacity(
                         opacity:
-                            0.3 +
+                            0.4 +
                             0.3 *
                                 math.sin(
                                   _floatingController.value * math.pi * 2,
@@ -2224,9 +2294,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 ),
               ),
 
-            if (_currentStage == BrushingStage.backTeethUpperChewing)
+            // Left-right arrow for upperChewing and lowerChewing
+            if (_currentStage == BrushingStage.upperChewing ||
+                _currentStage == BrushingStage.lowerChewing)
               Positioned(
-                left: _cachedBounds.left + 0.35 * _cachedBounds.width,
+                left: _cachedBounds.left +
+                    (0.25 + _floatingController.value * 0.30) * _cachedBounds.width,
                 top: _cachedBounds.top + 0.42 * _cachedBounds.height,
                 child: IgnorePointer(
                   child: AnimatedBuilder(
@@ -2249,23 +2322,27 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 ),
               ),
 
+            // Up-down arrow for brushTongue
             if (_currentStage == BrushingStage.brushTongue)
               Positioned(
-                left: _cachedBounds.left + 0.42 * _cachedBounds.width,
-                top: _cachedBounds.top + 0.46 * _cachedBounds.height,
+                left: _cachedBounds.left + 0.50 * _cachedBounds.width - 30,
+                top: _cachedBounds.top +
+                    (0.50 + _floatingController.value * 0.08) * _cachedBounds.height,
                 child: IgnorePointer(
                   child: AnimatedBuilder(
                     animation: _floatingController,
                     builder: (context, child) {
+                      final t = _floatingController.value;
+                      final direction = (t * 2).floor() % 2 == 0
+                          ? Icons.arrow_downward
+                          : Icons.arrow_upward;
                       return Opacity(
                         opacity:
                             0.3 +
                             0.2 *
-                                math.sin(
-                                  _floatingController.value * math.pi * 2,
-                                ),
-                        child: const Icon(
-                          Icons.arrow_downward,
+                                math.sin(t * math.pi * 2),
+                        child: Icon(
+                          direction,
                           size: 60,
                           color: Colors.pinkAccent,
                         ),
