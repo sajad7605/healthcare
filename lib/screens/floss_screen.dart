@@ -16,22 +16,32 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
   Offset _touchPos = const Offset(200, 300);
   bool _isDragging = false;
   bool _isSuccess = false;
+  bool _showTrashAnimation = false;
 
   List<_StuckItem> _items = [];
   final List<_Sparkle> _sparkles = [];
-  final List<_Confetti> _confetti = [];
+  final List<_FlyingMicrobe> _flyingMicrobes = [];
 
   double _cleanlinessProgress = 0.0;
-  int _totalItems = 8;
+  int _totalItems = 10;
   String _tooltipText = '';
   Timer? _tooltipTimer;
 
   late AnimationController _floatingController;
   late AnimationController _wiggleController;
   late AnimationController _celebrationController;
+  late AnimationController _trashLidController;
+  late AnimationController _microbesFlyController;
+  late AnimationController _brightenController;
+  late Animation<double> _brightenAnimation;
+  late Animation<double> _gleamAnimation;
   Timer? _updateTimer;
 
   double _distanceWithoutHit = 0.0;
+
+  // Track which gap the floss is currently in (for deep cleaning mechanic)
+  int _currentFlossGap = -1;
+  double _flossDepthInGap = 0.0; // 0.0 = top, 1.0 = deep bottom
 
   @override
   void initState() {
@@ -52,6 +62,35 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
       duration: const Duration(seconds: 1),
     );
 
+    _trashLidController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _microbesFlyController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    );
+
+    _brightenController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    );
+
+    _brightenAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _brightenController,
+        curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
+      ),
+    );
+
+    _gleamAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _brightenController,
+        curve: const Interval(0.12, 0.88, curve: Curves.easeInOutCubic),
+      ),
+    );
+
     _initGame();
 
     _updateTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
@@ -66,129 +105,235 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
     _floatingController.dispose();
     _wiggleController.dispose();
     _celebrationController.dispose();
+    _trashLidController.dispose();
+    _microbesFlyController.dispose();
+    _brightenController.dispose();
     _updateTimer?.cancel();
     _tooltipTimer?.cancel();
     super.dispose();
   }
 
   void _initGame() {
+    // Exact image resolution of natural_teeth.jpg: 1376 x 768
+    // User requested germs at exact pixel coordinates (px):
+    // 1) 229, 367
+    // 2) 425, 374
+    // 3) 701, 385
+    // 4) 960, 379
+    // 5) 1149, 370
+    // Food particles are placed deep in the gaps and require reaching depth to clean.
     _items = [
-      
+      // --- Gap 1 (px: 229) ---
       _StuckItem(
         id: 1,
         gapIndex: 1,
-        normalizedY: 0.38,
-        type: 'food',
-        foodType: 'leaf',
-        color: const Color(0xFF2ECC71),
-        label: 'اسفناج',
+        normalizedX: 229.0 / 1376.0,
+        normalizedY: 367.0 / 768.0,
+        type: 'germ',
+        color: const Color(0xFF9B59B6),
+        label: 'میکروب ۱',
+        depthRequired: 0.40,
       ),
       _StuckItem(
         id: 2,
         gapIndex: 1,
-        normalizedY: 0.68,
-        type: 'germ',
-        color: const Color(0xFF9B59B6),
-        label: 'میکروب بنفش',
+        normalizedX: 229.0 / 1376.0,
+        normalizedY: 455.0 / 768.0,
+        type: 'food',
+        foodType: 'leaf',
+        color: const Color(0xFF27AE60),
+        label: 'اسفناج در عمق دندان',
+        depthRequired: 0.65,
       ),
 
+      // --- Gap 2 (px: 425) ---
       _StuckItem(
         id: 3,
         gapIndex: 2,
-        normalizedY: 0.35,
-        type: 'food',
-        foodType: 'cheese',
-        color: const Color(0xFFF1C40F),
-        label: 'پنیر',
+        normalizedX: 425.0 / 1376.0,
+        normalizedY: 374.0 / 768.0,
+        type: 'germ',
+        color: const Color(0xFFE74C3C),
+        label: 'میکروب ۲',
+        depthRequired: 0.42,
       ),
       _StuckItem(
         id: 4,
         gapIndex: 2,
-        normalizedY: 0.70,
-        type: 'germ',
-        color: const Color(0xFFE74C3C),
-        label: 'میکروب قرمز',
+        normalizedX: 425.0 / 1376.0,
+        normalizedY: 465.0 / 768.0,
+        type: 'food',
+        foodType: 'cheese',
+        color: const Color(0xFFF1C40F),
+        label: 'پنیر در عمق دندان',
+        depthRequired: 0.68,
       ),
 
+      // --- Gap 3 (px: 701) ---
       _StuckItem(
         id: 5,
         gapIndex: 3,
-        normalizedY: 0.40,
-        type: 'food',
-        foodType: 'meat',
-        color: const Color(0xFFE67E22),
-        label: 'گوشت',
+        normalizedX: 701.0 / 1376.0,
+        normalizedY: 385.0 / 768.0,
+        type: 'germ',
+        color: const Color(0xFF2ECC71),
+        label: 'میکروب ۳',
+        depthRequired: 0.45,
       ),
       _StuckItem(
         id: 6,
         gapIndex: 3,
-        normalizedY: 0.65,
-        type: 'germ',
-        color: const Color(0xFF1ABC9C),
-        label: 'میکروب فیروزه‌ای',
+        normalizedX: 701.0 / 1376.0,
+        normalizedY: 475.0 / 768.0,
+        type: 'food',
+        foodType: 'meat',
+        color: const Color(0xFFE67E22),
+        label: 'گوشت در عمق دندان',
+        depthRequired: 0.70,
       ),
 
+      // --- Gap 4 (px: 960) ---
       _StuckItem(
         id: 7,
         gapIndex: 4,
-        normalizedY: 0.42,
-        type: 'food',
-        foodType: 'seed',
-        color: const Color(0xFFD35400),
-        label: 'تخمه',
+        normalizedX: 960.0 / 1376.0,
+        normalizedY: 379.0 / 768.0,
+        type: 'germ',
+        color: const Color(0xFF1ABC9C),
+        label: 'میکروب ۴',
+        depthRequired: 0.42,
       ),
       _StuckItem(
         id: 8,
         gapIndex: 4,
-        normalizedY: 0.72,
+        normalizedX: 960.0 / 1376.0,
+        normalizedY: 465.0 / 768.0,
+        type: 'food',
+        foodType: 'seed',
+        color: const Color(0xFFD35400),
+        label: 'تخمه در عمق دندان',
+        depthRequired: 0.68,
+      ),
+
+      // --- Gap 5 (px: 1149) ---
+      _StuckItem(
+        id: 9,
+        gapIndex: 5,
+        normalizedX: 1149.0 / 1376.0,
+        normalizedY: 370.0 / 768.0,
         type: 'germ',
         color: const Color(0xFFFD79A8),
-        label: 'میکروب صورتی',
+        label: 'میکروب ۵',
+        depthRequired: 0.40,
+      ),
+      _StuckItem(
+        id: 10,
+        gapIndex: 5,
+        normalizedX: 1149.0 / 1376.0,
+        normalizedY: 455.0 / 768.0,
+        type: 'food',
+        foodType: 'apple',
+        color: const Color(0xFFE74C3C),
+        label: 'سیب در عمق دندان',
+        depthRequired: 0.65,
       ),
     ];
 
     _totalItems = _items.length;
     _cleanlinessProgress = 0.0;
     _isSuccess = false;
+    _showTrashAnimation = false;
     _sparkles.clear();
-    _confetti.clear();
+    _flyingMicrobes.clear();
     _celebrationController.stop();
+    _trashLidController.reset();
+    _microbesFlyController.reset();
+    _brightenController.reset();
+    _currentFlossGap = -1;
+    _flossDepthInGap = 0.0;
   }
 
-  void _initCelebration() {
-    _confetti.clear();
-    final random = math.Random();
-    final colors = [
-      Colors.pinkAccent,
-      Colors.blueAccent,
-      Colors.yellowAccent,
-      Colors.greenAccent,
-      Colors.purpleAccent,
-      Colors.orangeAccent,
+  void _startTrashAnimation() {
+    _flyingMicrobes.clear();
+
+    final screenSize = MediaQuery.of(context).size;
+    const double imageAspect = 1376.0 / 768.0;
+    final double maxAvailableWidth = screenSize.width - 24;
+    final double maxAvailableHeight = (screenSize.height * 0.52).clamp(240.0, 440.0);
+
+    double boardWidth = maxAvailableWidth;
+    double boardHeight = boardWidth / imageAspect;
+    if (boardHeight > maxAvailableHeight) {
+      boardHeight = maxAvailableHeight;
+      boardWidth = boardHeight * imageAspect;
+    }
+
+    final double boardLeft = (screenSize.width - boardWidth) / 2;
+    final double boardTop = (screenSize.height - boardHeight) / 2 - 20;
+
+    // 5 exact germ positions on natural_teeth.jpg (1376 x 768)
+    final germCoords = [
+      const Offset(229.0 / 1376.0, 367.0 / 768.0),
+      const Offset(425.0 / 1376.0, 374.0 / 768.0),
+      const Offset(701.0 / 1376.0, 385.0 / 768.0),
+      const Offset(960.0 / 1376.0, 379.0 / 768.0),
+      const Offset(1149.0 / 1376.0, 370.0 / 768.0),
     ];
 
-    for (int i = 0; i < 75; i++) {
-      _confetti.add(
-        _Confetti(
-          position: Offset(
-            random.nextDouble() * 400 - 50,
-            random.nextDouble() * -400 - 50,
-          ),
-          vx: random.nextDouble() * 3 - 1.5,
-          vy: random.nextDouble() * 4 + 2,
-          size: random.nextDouble() * 10 + 6,
-          color: colors[random.nextInt(colors.length)],
-          rotation: random.nextDouble() * math.pi,
-          rotationSpeed: random.nextDouble() * 0.1 - 0.05,
+    final microbeImages = [
+      'microbe_green',
+      'microbe_purple',
+      'microbe_green',
+      'microbe_purple',
+      'microbe_green',
+    ];
+    final microbeColors = [
+      const Color(0xFF9B59B6),
+      const Color(0xFFE74C3C),
+      const Color(0xFF2ECC71),
+      const Color(0xFF1ABC9C),
+      const Color(0xFFFD79A8),
+    ];
+
+    for (int i = 0; i < 5; i++) {
+      final startX = boardLeft + germCoords[i].dx * boardWidth;
+      final startY = boardTop + germCoords[i].dy * boardHeight;
+
+      _flyingMicrobes.add(
+        _FlyingMicrobe(
+          startX: startX,
+          startY: startY,
+          color: microbeColors[i],
+          imageType: microbeImages[i],
+          delay: i * 0.12,
+          size: 42,
         ),
       );
     }
-    _celebrationController.repeat(reverse: true);
+
+    setState(() {
+      _showTrashAnimation = true;
+    });
+
+    _microbesFlyController.forward(from: 0.0);
+
+    // After microbes land in trash, close the lid
+    Future.delayed(const Duration(milliseconds: 2200), () {
+      if (mounted) {
+        _trashLidController.forward(from: 0.0);
+      }
+    });
+
+    // Show victory dialog after full animation
+    Future.delayed(const Duration(milliseconds: 3600), () {
+      if (mounted) {
+        _showVictoryDialog();
+      }
+    });
   }
 
   void _updateGameLoop() {
     setState(() {
-      
       for (int i = _sparkles.length - 1; i >= 0; i--) {
         if (i >= _sparkles.length) continue;
         final sparkle = _sparkles[i];
@@ -196,34 +341,6 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
         sparkle.position += Offset(sparkle.vx, sparkle.vy);
         if (sparkle.progress >= 1.0) {
           _sparkles.removeAt(i);
-        }
-      }
-
-      if (_isSuccess) {
-        for (var conf in _confetti) {
-          conf.position += Offset(conf.vx, conf.vy);
-          conf.rotation += conf.rotationSpeed;
-
-          if (conf.position.dy > 800) {
-            conf.position = Offset(math.Random().nextDouble() * 400 - 50, -50);
-            conf.vy = math.Random().nextDouble() * 4 + 2;
-          }
-        }
-
-        if (math.Random().nextDouble() < 0.15 && _sparkles.length < 25) {
-          _sparkles.add(
-            _Sparkle(
-              position: Offset(
-                math.Random().nextDouble() * 380,
-                150 + math.Random().nextDouble() * 350,
-              ),
-              vx: 0,
-              vy: 0,
-              size: math.Random().nextDouble() * 18 + 8,
-              color: Colors.white,
-              isStar: true,
-            ),
-          );
         }
       }
     });
@@ -235,6 +352,7 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
       _isDragging = true;
       _touchPos = details.localPosition;
     });
+    _updateFlossDepth(boardSize);
     _checkFlossHit(boardSize);
   }
 
@@ -246,6 +364,7 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
       final double dist = math.sqrt(dx * dx + dy * dy);
 
       _touchPos = details.localPosition;
+      _updateFlossDepth(boardSize);
       _checkFlossHit(boardSize, dragDistance: dist);
     });
   }
@@ -253,10 +372,48 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
   void _onPanEnd(DragEndDetails details) {
     setState(() {
       _isDragging = false;
+      _currentFlossGap = -1;
+      _flossDepthInGap = 0.0;
       for (var item in _items) {
         item.isShaking = false;
       }
     });
+  }
+
+  void _updateFlossDepth(Size boardSize) {
+    final double w = boardSize.width;
+    final double h = boardSize.height;
+
+    final gapXPositions = [
+      w * (229.0 / 1376.0),
+      w * (425.0 / 1376.0),
+      w * (701.0 / 1376.0),
+      w * (960.0 / 1376.0),
+      w * (1149.0 / 1376.0),
+    ];
+
+    // Determine which gap the floss is in
+    int closestGap = -1;
+    double closestDist = double.infinity;
+
+    for (int i = 0; i < gapXPositions.length; i++) {
+      final dist = (_touchPos.dx - gapXPositions[i]).abs();
+      if (dist < w * 0.09 && dist < closestDist) {
+        closestDist = dist;
+        closestGap = i + 1;
+      }
+    }
+
+    _currentFlossGap = closestGap;
+
+    if (closestGap > 0) {
+      // Calculate depth based on Y position (gum top = 0.20, bottom edge = 0.75)
+      final double teethTop = h * 0.20;
+      final double teethBottom = h * 0.75;
+      _flossDepthInGap = ((_touchPos.dy - teethTop) / (teethBottom - teethTop)).clamp(0.0, 1.0);
+    } else {
+      _flossDepthInGap = 0.0;
+    }
   }
 
   void _checkFlossHit(Size boardSize, {double dragDistance = 0.0}) {
@@ -265,30 +422,27 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
     final double w = boardSize.width;
     final double h = boardSize.height;
 
-    final gapXPositions = [
-      w * 0.22, 
-      w * 0.40, 
-      w * 0.60, 
-      w * 0.78, 
-    ];
-
     bool hitAny = false;
     final random = math.Random();
 
     for (var item in _items) {
       if (item.health <= 0.0) continue;
 
-      final double itemX = gapXPositions[(item.gapIndex - 1).clamp(0, 3)];
-      final double itemY = h * item.normalizedY;
+      final double itemX = item.normalizedX * w;
+      final double itemY = item.normalizedY * h;
       final Offset itemPos = Offset(itemX, itemY);
 
       final double distance = (_touchPos - itemPos).distance;
 
-      if (distance < 48.0) {
+      // Only damage items if floss has reached deep enough in this gap
+      final bool isInCorrectGap = _currentFlossGap == item.gapIndex;
+      final bool isDeepEnough = isInCorrectGap && _flossDepthInGap >= item.depthRequired;
+
+      if (distance < 50.0 && isDeepEnough) {
         hitAny = true;
         setState(() {
           item.isShaking = true;
-          double damage = 0.045 + (dragDistance * 0.015);
+          double damage = 0.055 + (dragDistance * 0.018);
           item.health = (item.health - damage).clamp(0.0, 1.0);
         });
 
@@ -324,6 +478,14 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
           }
           _checkProgress();
         }
+      } else if (distance < 50.0 && !isDeepEnough && isInCorrectGap) {
+        // Near the item but not deep enough — shake to hint
+        setState(() {
+          item.isShaking = true;
+        });
+        if (_tooltipText.isEmpty) {
+          _showTooltip("نخ دندان رو بیشتر به عمق فاصله دندان‌ها بکش! ⬇️");
+        }
       } else {
         setState(() {
           item.isShaking = false;
@@ -351,14 +513,40 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
     if (activeCount == 0 && !_isSuccess) {
       setState(() {
         _isSuccess = true;
-        _initCelebration();
       });
       HapticFeedback.vibrate();
-      Future.delayed(const Duration(milliseconds: 1000), () {
+
+      // 1) Immediately brighten teeth with gleaming white shine and sparkles
+      _brightenController.forward(from: 0.0);
+      _spawnTeethSparkles();
+
+      // 2) Microbes cry and fly into the trash can after teeth shine
+      Future.delayed(const Duration(milliseconds: 1300), () {
         if (mounted) {
-          _showVictoryDialog();
+          _startTrashAnimation();
         }
       });
+    }
+  }
+
+  void _spawnTeethSparkles() {
+    final random = math.Random();
+    for (int i = 0; i < 22; i++) {
+      final angle = random.nextDouble() * 2 * math.pi;
+      final speed = random.nextDouble() * 5 + 2;
+      _sparkles.add(
+        _Sparkle(
+          position: Offset(
+            _touchPos.dx + (random.nextDouble() * 140 - 70),
+            _touchPos.dy + (random.nextDouble() * 80 - 40),
+          ),
+          vx: math.cos(angle) * speed,
+          vy: math.sin(angle) * speed,
+          size: random.nextDouble() * 16 + 8,
+          color: Colors.amber.shade200,
+          isStar: true,
+        ),
+      );
     }
   }
 
@@ -426,8 +614,18 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Show the closed trash can image in dialog
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      'assets/floss/trash_closed.jpg',
+                      height: 100,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   const Text(
-                    'تمام میکروب‌ها و باقی‌مانده‌های غذا رو از بین دندان‌ها پاک کردی! دندون‌هات مثل مروارید می‌درخشن! 😁✨',
+                    'تمام میکروب‌ها گریه‌کنان به سطل آشغال رفتن و درب سطل بسته شد! 😁🗑️\nدندون‌هات حالا پاک و سالمه!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,
@@ -456,7 +654,7 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
               actions: [
                 SquishPopButton(
                   onTap: () {
-                    Navigator.of(context).pop(); 
+                    Navigator.of(context).pop();
                     setState(() {
                       _initGame();
                     });
@@ -487,9 +685,9 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
                 const SizedBox(width: 10),
                 SquishPopButton(
                   onTap: () {
-                    Navigator.of(context).pop(); 
+                    Navigator.of(context).pop();
                     if (Navigator.canPop(context)) {
-                      Navigator.of(context).pop(); 
+                      Navigator.of(context).pop();
                     }
                   },
                   child: Container(
@@ -568,13 +766,10 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
                       ),
                     ),
 
-                    if (_isSuccess)
+                    // Trash animation overlay
+                    if (_showTrashAnimation)
                       Positioned.fill(
-                        child: IgnorePointer(
-                          child: CustomPaint(
-                            painter: _FlossConfettiPainter(confetti: List.of(_confetti)),
-                          ),
-                        ),
+                        child: _buildTrashAnimationOverlay(),
                       ),
                   ],
                 );
@@ -582,6 +777,181 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTrashAnimationOverlay() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_microbesFlyController, _trashLidController]),
+      builder: (context, child) {
+        final flyProgress = _microbesFlyController.value;
+        final lidProgress = _trashLidController.value;
+
+        return Container(
+          color: Colors.black.withValues(alpha: 0.3 * flyProgress.clamp(0.0, 1.0)),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Trash can at the bottom center
+              Positioned(
+                bottom: 80,
+                child: SizedBox(
+                  width: 120,
+                  height: 140,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Trash body (open initially, closed after lid animation)
+                      Image.asset(
+                        lidProgress > 0.8
+                            ? 'assets/floss/trash_closed.jpg'
+                            : 'assets/floss/trash_open.jpg',
+                        width: 120,
+                        height: 140,
+                        fit: BoxFit.contain,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Flying crying microbes
+              ..._flyingMicrobes.map((microbe) {
+                final adjustedProgress = ((flyProgress - microbe.delay) / (1.0 - microbe.delay)).clamp(0.0, 1.0);
+                final curvedProgress = Curves.easeInQuad.transform(adjustedProgress);
+
+                // Calculate screen center bottom for trash can target
+                final screenSize = MediaQuery.of(context).size;
+                final targetX = screenSize.width / 2;
+                final targetY = screenSize.height - 160;
+
+                final currentX = microbe.startX + (targetX - microbe.startX) * curvedProgress;
+                final currentY = microbe.startY + (targetY - microbe.startY) * curvedProgress;
+
+                final opacity = adjustedProgress < 0.9 ? 1.0 : (1.0 - (adjustedProgress - 0.9) * 10).clamp(0.0, 1.0);
+                final rotation = curvedProgress * math.pi * 2;
+                final scale = 1.0 - (curvedProgress * 0.5);
+
+                if (adjustedProgress <= 0.0) return const SizedBox.shrink();
+
+                return Positioned(
+                  left: currentX - microbe.size / 2,
+                  top: currentY - microbe.size / 2,
+                  child: Opacity(
+                    opacity: opacity,
+                    child: Transform.rotate(
+                      angle: rotation,
+                      child: Transform.scale(
+                        scale: scale,
+                        child: _buildCryingMicrobeWidget(microbe),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+
+              // "Microbes going to trash!" text
+              if (flyProgress > 0.1 && flyProgress < 0.85)
+                Positioned(
+                  top: 120,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Text(
+                      '😭 میکروب‌ها گریه‌کنان به سطل آشغال می‌رن! 🗑️',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E50),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Lid closing text
+              if (lidProgress > 0.3)
+                Positioned(
+                  bottom: 230,
+                  child: AnimatedOpacity(
+                    opacity: lidProgress > 0.3 ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 300),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2ECC71).withValues(alpha: 0.95),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.15),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        '🔒 درب سطل آشغال بسته شد!',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCryingMicrobeWidget(_FlyingMicrobe microbe) {
+    return SizedBox(
+      width: microbe.size,
+      height: microbe.size,
+      child: Stack(
+        children: [
+          // Use microbe image
+          ClipOval(
+            child: Image.asset(
+              'assets/floss/${microbe.imageType}.jpg',
+              width: microbe.size,
+              height: microbe.size,
+              fit: BoxFit.cover,
+            ),
+          ),
+          // Tear drops
+          Positioned(
+            left: microbe.size * 0.2,
+            top: microbe.size * 0.5,
+            child: Icon(
+              Icons.water_drop,
+              color: Colors.blue.shade200,
+              size: microbe.size * 0.25,
+            ),
+          ),
+          Positioned(
+            right: microbe.size * 0.2,
+            top: microbe.size * 0.45,
+            child: Icon(
+              Icons.water_drop,
+              color: Colors.blue.shade300,
+              size: microbe.size * 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -654,8 +1024,8 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
         children: [
           Text(
             _isSuccess
-                ? 'دندان‌ها از تمیزی دارن برق می‌زنن! 😍✨'
-                : 'نخ دندان را بین فاصله‌های دندان‌ها بالا و پایین بکش! 🦷',
+                ? 'میکروب‌ها گریه‌کنان به سطل آشغال رفتن! 😭🗑️'
+                : 'نخ دندان را به عمق فاصله دندان‌ها بکش تا خرده‌ها پاک بشن! 🦷',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -712,6 +1082,38 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
               ),
             ),
           ],
+          // Depth indicator
+          if (_isDragging && _currentFlossGap > 0) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.arrow_downward, size: 14, color: Color(0xFFFFA801)),
+                const SizedBox(width: 4),
+                Text(
+                  'عمق نخ دندان: ${(_flossDepthInGap * 100).toInt()}%',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFFA801),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: _flossDepthInGap,
+                      minHeight: 8,
+                      backgroundColor: Colors.grey.shade200,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        _flossDepthInGap > 0.7 ? const Color(0xFF2ECC71) : const Color(0xFFFFA801),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -757,8 +1159,29 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
   }
 
   Widget _buildInteractiveBoard(BoxConstraints constraints) {
-    final double boardWidth = constraints.maxWidth - 24;
-    final double boardHeight = 380.0;
+    const double imageAspect = 1376.0 / 768.0;
+    final double maxAvailableWidth = constraints.maxWidth - 24;
+    final double maxAvailableHeight = (constraints.maxHeight * 0.52).clamp(240.0, 440.0);
+
+    double boardWidth = maxAvailableWidth;
+    double boardHeight = boardWidth / imageAspect;
+
+    if (boardHeight > maxAvailableHeight) {
+      boardHeight = maxAvailableHeight;
+      boardWidth = boardHeight * imageAspect;
+    }
+
+    final Size boardSize = Size(boardWidth, boardHeight);
+    final double w = boardWidth;
+    final double h = boardHeight;
+
+    final gapXPositions = [
+      w * (229.0 / 1376.0),
+      w * (425.0 / 1376.0),
+      w * (701.0 / 1376.0),
+      w * (960.0 / 1376.0),
+      w * (1149.0 / 1376.0),
+    ];
 
     return Center(
       child: Container(
@@ -766,107 +1189,138 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
         height: boardHeight,
         margin: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF5D1224), 
-          borderRadius: BorderRadius.circular(36),
+          borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF3B0B17).withValues(alpha: 0.4),
+              color: const Color(0xFF3B0B17).withValues(alpha: 0.35),
               blurRadius: 16,
               spreadRadius: 2,
               offset: const Offset(0, 8),
             ),
           ],
-          border: Border.all(color: const Color(0xFFFF8A8A), width: 3),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(33),
-          child: LayoutBuilder(
-            builder: (context, boardConstraints) {
-              final Size boardSize = Size(boardConstraints.maxWidth, boardConstraints.maxHeight);
-              final double w = boardSize.width;
-              final double h = boardSize.height;
-
-              final gapXPositions = [
-                w * 0.22,
-                w * 0.40,
-                w * 0.60,
-                w * 0.78,
-              ];
-
-              return GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onPanStart: (d) => _onPanStart(d, boardSize),
-                onPanUpdate: (d) => _onPanUpdate(d, boardSize),
-                onPanEnd: _onPanEnd,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: _RealisticMouthPainter(isSuccess: _isSuccess),
+          borderRadius: BorderRadius.circular(32),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanStart: (d) => _onPanStart(d, boardSize),
+            onPanUpdate: (d) => _onPanUpdate(d, boardSize),
+            onPanEnd: _onPanEnd,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // Realistic teeth photo with brightening ColorFilter
+                AnimatedBuilder(
+                  animation: _brightenController,
+                  builder: (context, child) {
+                    final double brightVal = _brightenAnimation.value;
+                    return ColorFiltered(
+                      colorFilter: ColorFilter.matrix([
+                        1.0 + 0.35 * brightVal, 0, 0, 0, 45 * brightVal,
+                        0, 1.0 + 0.35 * brightVal, 0, 0, 45 * brightVal,
+                        0, 0, 1.0 + 0.45 * brightVal, 0, 58 * brightVal,
+                        0, 0, 0, 1.0, 0,
+                      ]),
+                      child: Image.asset(
+                        'assets/floss/natural_teeth.jpg',
+                        fit: BoxFit.fill,
+                        width: w,
+                        height: h,
                       ),
+                    );
+                  },
+                ),
+
+                // Luminous sheen, sweeping gleam beam, and sparkling stars
+                AnimatedBuilder(
+                  animation: _brightenController,
+                  builder: (context, child) {
+                    return _buildBrighteningTeethOverlay(w, h);
+                  },
+                ),
+
+                // Semi-transparent overlay for gaps visibility
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _GapHighlightPainter(
+                      gapPositions: gapXPositions,
+                      boardWidth: w,
+                      boardHeight: h,
+                      currentFlossGap: _currentFlossGap,
+                      flossDepth: _flossDepthInGap,
+                      isDragging: _isDragging,
                     ),
+                  ),
+                ),
 
-                    ..._items.map((item) {
-                      if (item.health <= 0.0) return const SizedBox.shrink();
+                // Stuck items (food & germs) deep between teeth
+                ..._items.map((item) {
+                  if (item.health <= 0.0) return const SizedBox.shrink();
 
-                      final double itemX = gapXPositions[(item.gapIndex - 1).clamp(0, 3)];
-                      final double itemY = h * item.normalizedY;
+                  final double itemX = item.normalizedX * w;
+                  final double itemY = item.normalizedY * h;
 
-                      return AnimatedBuilder(
-                        animation: _wiggleController,
-                        builder: (context, child) {
-                          double shakeX = 0.0;
-                          double shakeY = 0.0;
-                          if (item.isShaking) {
-                            shakeX = (math.Random().nextDouble() * 8 - 4);
-                            shakeY = (math.Random().nextDouble() * 8 - 4);
-                          } else {
-                            shakeY = math.sin(_wiggleController.value * math.pi * 2 + item.id) * 3.0;
-                          }
+                  return AnimatedBuilder(
+                    animation: _wiggleController,
+                    builder: (context, child) {
+                      double shakeX = 0.0;
+                      double shakeY = 0.0;
+                      if (item.isShaking) {
+                        shakeX = (math.Random().nextDouble() * 8 - 4);
+                        shakeY = (math.Random().nextDouble() * 8 - 4);
+                      } else {
+                        shakeY = math.sin(_wiggleController.value * math.pi * 2 + item.id) * 3.0;
+                      }
 
-                          return Positioned(
-                            left: itemX - 22 + shakeX,
-                            top: itemY - 22 + shakeY,
-                            child: Transform.scale(
-                              scale: 0.65 + (0.35 * item.health),
-                              child: SizedBox(
-                                width: 44,
-                                height: 44,
-                                child: CustomPaint(
-                                  painter: _StuckItemPainter(item: item),
-                                ),
-                              ),
+                      final double itemSize = item.type == 'germ' ? 36.0 : 30.0;
+
+                      return Positioned(
+                        left: itemX - (itemSize / 2) + shakeX,
+                        top: itemY - (itemSize / 2) + shakeY,
+                        child: Transform.scale(
+                          scale: 0.65 + (0.35 * item.health),
+                          child: SizedBox(
+                            width: itemSize,
+                            height: itemSize,
+                            child: CustomPaint(
+                              painter: _StuckItemPainter(item: item),
                             ),
-                          );
-                        },
-                      );
-                    }),
-
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        child: CustomPaint(
-                          painter: _FlossStringPainter(
-                            touchPos: _touchPos,
-                            isDragging: _isDragging,
-                            isSuccess: _isSuccess,
                           ),
                         ),
+                      );
+                    },
+                  );
+                }),
+
+                // Floss string
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: _FlossStringPainter(
+                        touchPos: _touchPos,
+                        isDragging: _isDragging,
+                        isSuccess: _isSuccess,
+                        currentGap: _currentFlossGap,
+                        flossDepth: _flossDepthInGap,
                       ),
                     ),
+                  ),
+                ),
 
-                    if (!_isDragging && !_isSuccess && _cleanlinessProgress == 0.0)
-                      Positioned(
-                        left: gapXPositions[0] - 25,
-                        top: h * 0.48,
-                        child: AnimatedBuilder(
-                          animation: _floatingController,
-                          builder: (context, child) {
-                            final offset = math.sin(_floatingController.value * math.pi * 2) * 16.0;
-                            return Transform.translate(
-                              offset: Offset(0, offset),
-                              child: Container(
+                // Touch hint indicator
+                if (!_isDragging && !_isSuccess && _cleanlinessProgress == 0.0)
+                  Positioned(
+                    left: gapXPositions[0] - 25,
+                    top: h * 0.45,
+                    child: AnimatedBuilder(
+                      animation: _floatingController,
+                      builder: (context, child) {
+                        final offset = math.sin(_floatingController.value * math.pi * 2) * 14.0;
+                        return Transform.translate(
+                          offset: Offset(0, offset),
+                          child: Column(
+                            children: [
+                              Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: Colors.orange.withValues(alpha: 0.95),
@@ -882,21 +1336,140 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
                                 child: const Icon(
                                   Icons.touch_app,
                                   color: Colors.white,
-                                  size: 28,
+                                  size: 26,
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'به عمق بکش!',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildBrighteningTeethOverlay(double w, double h) {
+    final double brightVal = _brightenAnimation.value;
+    final double gleamVal = _gleamAnimation.value;
+
+    return Stack(
+      children: [
+        // Luminous radiant aura over teeth
+        if (brightVal > 0.01)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: (brightVal * 0.42).clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: const Alignment(0.0, 0.15),
+                      radius: 0.85,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.70),
+                        Colors.lightBlue.shade100.withValues(alpha: 0.25),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.55, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // Diagonal gleam beam shining across teeth
+        if (_brightenController.isAnimating || _isSuccess)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: (math.sin(gleamVal * math.pi) * 0.88).clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment(-2.4 + 4.8 * gleamVal, -1.0),
+                      end: Alignment(-1.4 + 4.8 * gleamVal, 1.0),
+                      colors: [
+                        Colors.transparent,
+                        Colors.white.withValues(alpha: 0.2),
+                        Colors.white.withValues(alpha: 0.95),
+                        Colors.white.withValues(alpha: 0.2),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.42, 0.50, 0.58, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        // Glint sparkle stars at tooth highlight locations
+        if (brightVal > 0.15)
+          ..._buildToothSparkleStars(w, h, brightVal),
+      ],
+    );
+  }
+
+  List<Widget> _buildToothSparkleStars(double w, double h, double brightVal) {
+    // 4 major enamel highlight reflection points
+    final glintPoints = [
+      Offset(w * (340.0 / 1376.0), h * (460.0 / 768.0)),
+      Offset(w * (580.0 / 1376.0), h * (475.0 / 768.0)),
+      Offset(w * (780.0 / 1376.0), h * (475.0 / 768.0)),
+      Offset(w * (1030.0 / 1376.0), h * (460.0 / 768.0)),
+    ];
+
+    return List.generate(glintPoints.length, (idx) {
+      final pt = glintPoints[idx];
+      final delay = idx * 0.12;
+      final glintProgress = ((brightVal - delay) / 0.55).clamp(0.0, 1.0);
+      final double scale = math.sin(glintProgress * math.pi) * 1.35;
+      final double rot = glintProgress * math.pi;
+
+      if (glintProgress <= 0.0 || scale <= 0.0) return const SizedBox.shrink();
+
+      return Positioned(
+        left: pt.dx - 18,
+        top: pt.dy - 18,
+        child: IgnorePointer(
+          child: Transform.rotate(
+            angle: rot,
+            child: Transform.scale(
+              scale: scale,
+              child: SizedBox(
+                width: 36,
+                height: 36,
+                child: CustomPaint(
+                  painter: _GlintStarPainter(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildResetButton() {
@@ -944,250 +1517,130 @@ class _FlossScreenState extends State<FlossScreen> with TickerProviderStateMixin
   }
 }
 
-class _RealisticMouthPainter extends CustomPainter {
-  final bool isSuccess;
+// Painter to highlight the gaps between teeth where floss should go
+class _GapHighlightPainter extends CustomPainter {
+  final List<double> gapPositions;
+  final double boardWidth;
+  final double boardHeight;
+  final int currentFlossGap;
+  final double flossDepth;
+  final bool isDragging;
 
-  _RealisticMouthPainter({required this.isSuccess});
+  _GapHighlightPainter({
+    required this.gapPositions,
+    required this.boardWidth,
+    required this.boardHeight,
+    required this.currentFlossGap,
+    required this.flossDepth,
+    required this.isDragging,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
+    if (!isDragging) return;
 
-    final Paint bgPaint = Paint()
-      ..shader = const RadialGradient(
-        center: Alignment(0, 0),
-        radius: 0.85,
-        colors: [
-          Color(0xFF4A0E1C),
-          Color(0xFF2E0811),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h));
-    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), bgPaint);
+    // Highlight the active gap
+    for (int i = 0; i < gapPositions.length; i++) {
+      final isActive = (i + 1) == currentFlossGap;
+      if (!isActive) continue;
 
-    final Path tonguePath = Path();
-    tonguePath.moveTo(w * 0.1, h * 0.82);
-    tonguePath.quadraticBezierTo(w * 0.5, h * 0.65, w * 0.9, h * 0.82);
-    tonguePath.quadraticBezierTo(w * 0.5, h * 1.05, w * 0.1, h * 0.82);
-    tonguePath.close();
+      final Paint glowPaint = Paint()
+        ..color = const Color(0xFFFFA801).withValues(alpha: 0.15 + (flossDepth * 0.2))
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
-    final Paint tonguePaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFFFF7675),
-          Color(0xFFD63031),
-        ],
-      ).createShader(Rect.fromLTWH(0, h * 0.65, w, h * 0.35));
-    canvas.drawPath(tonguePath, tonguePaint);
+      final double gapWidth = boardWidth * 0.06;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+            center: Offset(gapPositions[i], boardHeight * 0.5),
+            width: gapWidth,
+            height: boardHeight * 0.7,
+          ),
+          const Radius.circular(12),
+        ),
+        glowPaint,
+      );
 
-    final Paint tongueLinePaint = Paint()
-      ..color = const Color(0xFFB22222).withValues(alpha: 0.4)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-    canvas.drawLine(Offset(w * 0.5, h * 0.72), Offset(w * 0.5, h * 0.88), tongueLinePaint);
+      // Depth indicator line
+      final depthY = boardHeight * 0.20 + (boardHeight * 0.55 * flossDepth);
+      final Paint depthLinePaint = Paint()
+        ..color = flossDepth > 0.7
+            ? const Color(0xFF2ECC71).withValues(alpha: 0.8)
+            : const Color(0xFFFFA801).withValues(alpha: 0.8)
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke;
 
-    final Path upperGums = Path();
-    upperGums.moveTo(0, 0);
-    upperGums.lineTo(w, 0);
-    upperGums.lineTo(w, h * 0.22);
-    upperGums.quadraticBezierTo(w * 0.5, h * 0.36, 0, h * 0.22);
-    upperGums.close();
-
-    final Paint upperGumsPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Color(0xFFFF7675),
-          Color(0xFFFF8A8A),
-          Color(0xFFFFB5C5),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, w, h * 0.36));
-    canvas.drawPath(upperGums, upperGumsPaint);
-
-    final Paint gumsShadow = Paint()
-      ..color = Colors.black.withValues(alpha: 0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-    canvas.drawPath(upperGums, gumsShadow);
-
-    final double toothHeight = h * 0.52;
-
-    final toothPositions = [
-      w * 0.13, 
-      w * 0.31, 
-      w * 0.50, 
-      w * 0.69, 
-      w * 0.87, 
-    ];
-
-    final toothWidths = [
-      w * 0.15,
-      w * 0.17,
-      w * 0.18,
-      w * 0.17,
-      w * 0.15,
-    ];
-
-    for (int i = 0; i < 5; i++) {
-      _drawRealisticTooth(
-        canvas,
-        Offset(toothPositions[i], h * 0.16),
-        Size(toothWidths[i], toothHeight),
-        isMolar: i == 0 || i == 4,
-        isCenter: i == 2,
+      canvas.drawLine(
+        Offset(gapPositions[i] - gapWidth / 2, depthY),
+        Offset(gapPositions[i] + gapWidth / 2, depthY),
+        depthLinePaint,
       );
     }
-
-    if (isSuccess) {
-      final Paint starPaint = Paint()..color = Colors.white;
-      for (int i = 0; i < 5; i++) {
-        _drawShineStar(canvas, Offset(toothPositions[i], h * 0.32), 12, starPaint);
-      }
-    }
-  }
-
-  void _drawRealisticTooth(Canvas canvas, Offset center, Size size, {bool isMolar = false, bool isCenter = false}) {
-    final double w = size.width;
-    final double h = size.height;
-    final Rect toothRect = Rect.fromCenter(center: center, width: w, height: h);
-
-    final Paint shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.25)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(toothRect.shift(const Offset(0, 4)), const Radius.circular(16)),
-      shadowPaint,
-    );
-
-    final Path toothPath = Path();
-    toothPath.moveTo(center.dx - w * 0.45, center.dy - h * 0.42);
-
-    toothPath.quadraticBezierTo(
-      center.dx, center.dy - h * 0.48,
-      center.dx + w * 0.45, center.dy - h * 0.42,
-    );
-
-    toothPath.quadraticBezierTo(
-      center.dx + w * 0.52, center.dy,
-      center.dx + w * 0.42, center.dy + h * 0.45,
-    );
-
-    if (isMolar) {
-      toothPath.cubicTo(
-        center.dx + w * 0.2, center.dy + h * 0.52,
-        center.dx - w * 0.2, center.dy + h * 0.52,
-        center.dx - w * 0.42, center.dy + h * 0.45,
-      );
-    } else {
-      toothPath.quadraticBezierTo(
-        center.dx, center.dy + h * 0.49,
-        center.dx - w * 0.42, center.dy + h * 0.45,
-      );
-    }
-
-    toothPath.quadraticBezierTo(
-      center.dx - w * 0.52, center.dy,
-      center.dx - w * 0.45, center.dy - h * 0.42,
-    );
-
-    toothPath.close();
-
-    final Paint enamelPaint = Paint()
-      ..shader = const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          Colors.white,
-          Color(0xFFFAFDFF),
-          Color(0xFFE3F2FD),
-          Color(0xFFBBDEFB),
-        ],
-        stops: [0.0, 0.4, 0.85, 1.0],
-      ).createShader(toothRect);
-
-    canvas.drawPath(toothPath, enamelPaint);
-
-    final Paint glossPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.85)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(center.dx - w * 0.18, center.dy - h * 0.15),
-        width: w * 0.28,
-        height: h * 0.35,
-      ),
-      glossPaint,
-    );
-
-    final Paint borderPaint = Paint()
-      ..color = const Color(0xFF90CAF9).withValues(alpha: 0.5)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(toothPath, borderPaint);
-
-    final Paint eyePaint = Paint()..color = const Color(0xFF2C3E50);
-    final double eyeY = center.dy - h * 0.05;
-    canvas.drawCircle(Offset(center.dx - w * 0.2, eyeY), 3.0, eyePaint);
-    canvas.drawCircle(Offset(center.dx + w * 0.2, eyeY), 3.0, eyePaint);
-
-    final Path smilePath = Path();
-    smilePath.moveTo(center.dx - w * 0.18, center.dy + h * 0.12);
-    smilePath.quadraticBezierTo(center.dx, center.dy + h * 0.25, center.dx + w * 0.18, center.dy + h * 0.12);
-    
-    final Paint smilePaint = Paint()
-      ..color = const Color(0xFF2C3E50)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(smilePath, smilePaint);
-
-    final Paint blushPaint = Paint()
-      ..color = const Color(0xFFFF8A8A).withValues(alpha: 0.5);
-    canvas.drawCircle(Offset(center.dx - w * 0.32, center.dy + h * 0.08), 3.5, blushPaint);
-    canvas.drawCircle(Offset(center.dx + w * 0.32, center.dy + h * 0.08), 3.5, blushPaint);
-  }
-
-  void _drawShineStar(Canvas canvas, Offset center, double size, Paint paint) {
-    final Path path = Path();
-    final double half = size / 2;
-    path.moveTo(center.dx, center.dy - half);
-    path.quadraticBezierTo(center.dx, center.dy, center.dx + half, center.dy);
-    path.quadraticBezierTo(center.dx, center.dy, center.dx, center.dy + half);
-    path.quadraticBezierTo(center.dx, center.dy, center.dx - half, center.dy);
-    path.quadraticBezierTo(center.dx, center.dy, center.dx, center.dy - half);
-    path.close();
-    canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant _RealisticMouthPainter oldDelegate) {
-    return oldDelegate.isSuccess != isSuccess;
+  bool shouldRepaint(covariant _GapHighlightPainter oldDelegate) => true;
+}
+
+class _GlintStarPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double cx = size.width / 2;
+    final double cy = size.height / 2;
+
+    // Glowing halo
+    final Paint glowPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.65)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(Offset(cx, cy), 7, glowPaint);
+
+    final Paint starPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    // 4-pointed diamond star
+    final Path path = Path();
+    path.moveTo(cx, 0);
+    path.quadraticBezierTo(cx, cy, size.width, cy);
+    path.quadraticBezierTo(cx, cy, cx, size.height);
+    path.quadraticBezierTo(cx, cy, 0, cy);
+    path.quadraticBezierTo(cx, cy, cx, 0);
+    path.close();
+
+    canvas.drawPath(path, starPaint);
+
+    // Center bright core
+    final Paint corePaint = Paint()..color = const Color(0xFFFFF9C4);
+    canvas.drawCircle(Offset(cx, cy), 2.5, corePaint);
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _StuckItem {
   final int id;
   final int gapIndex;
+  final double normalizedX;
   final double normalizedY;
-  final String type; 
-  final String foodType; 
+  final String type;
+  final String foodType;
   final Color color;
   final String label;
+  final double depthRequired; // How deep the floss needs to go (0-1)
   double health = 1.0;
   bool isShaking = false;
 
   _StuckItem({
     required this.id,
     required this.gapIndex,
+    required this.normalizedX,
     required this.normalizedY,
     required this.type,
     this.foodType = '',
     required this.color,
     required this.label,
+    this.depthRequired = 0.5,
   });
 }
 
@@ -1210,23 +1663,21 @@ class _Sparkle {
   });
 }
 
-class _Confetti {
-  Offset position;
-  double vx;
-  double vy;
-  final double size;
+class _FlyingMicrobe {
+  final double startX;
+  final double startY;
   final Color color;
-  double rotation;
-  final double rotationSpeed;
+  final String imageType;
+  final double delay;
+  final double size;
 
-  _Confetti({
-    required this.position,
-    required this.vx,
-    required this.vy,
-    required this.size,
+  _FlyingMicrobe({
+    required this.startX,
+    required this.startY,
     required this.color,
-    required this.rotation,
-    required this.rotationSpeed,
+    required this.imageType,
+    required this.delay,
+    required this.size,
   });
 }
 
@@ -1246,7 +1697,7 @@ class _StuckItemPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     if (item.type == 'germ') {
-      
+      // Germ with angry/evil face
       final Path path = Path();
       path.addOval(Rect.fromCenter(center: center, width: w * 0.85, height: h * 0.8));
       canvas.drawPath(path, bodyPaint);
@@ -1278,9 +1729,8 @@ class _StuckItemPainter extends CustomPainter {
       mouthPath.quadraticBezierTo(w * 0.5, h * 0.55, w * 0.65, h * 0.65);
       canvas.drawPath(mouthPath, browPaint);
     } else {
-      
+      // Food particles — more realistic looking
       if (item.foodType == 'leaf') {
-        
         final Path leafPath = Path();
         leafPath.moveTo(w * 0.1, h * 0.5);
         leafPath.quadraticBezierTo(w * 0.5, h * 0.05, w * 0.9, h * 0.5);
@@ -1294,7 +1744,6 @@ class _StuckItemPainter extends CustomPainter {
           ..style = PaintingStyle.stroke;
         canvas.drawLine(Offset(w * 0.2, h * 0.5), Offset(w * 0.8, h * 0.5), veinPaint);
       } else if (item.foodType == 'cheese') {
-        
         final Path triPath = Path();
         triPath.moveTo(w * 0.5, h * 0.1);
         triPath.lineTo(w * 0.9, h * 0.85);
@@ -1306,7 +1755,6 @@ class _StuckItemPainter extends CustomPainter {
         canvas.drawCircle(Offset(w * 0.5, h * 0.55), 4, holePaint);
         canvas.drawCircle(Offset(w * 0.35, h * 0.7), 3, holePaint);
       } else if (item.foodType == 'meat') {
-        
         canvas.drawRRect(
           RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.15, h * 0.15, w * 0.7, h * 0.7), const Radius.circular(10)),
           bodyPaint,
@@ -1314,7 +1762,6 @@ class _StuckItemPainter extends CustomPainter {
         final Paint detailPaint = Paint()..color = Colors.white.withValues(alpha: 0.7);
         canvas.drawCircle(Offset(w * 0.35, h * 0.35), 4, detailPaint);
       } else {
-        
         canvas.drawOval(Rect.fromLTWH(w * 0.2, h * 0.2, w * 0.6, h * 0.6), bodyPaint);
       }
     }
@@ -1330,11 +1777,15 @@ class _FlossStringPainter extends CustomPainter {
   final Offset touchPos;
   final bool isDragging;
   final bool isSuccess;
+  final int currentGap;
+  final double flossDepth;
 
   _FlossStringPainter({
     required this.touchPos,
     required this.isDragging,
     required this.isSuccess,
+    this.currentGap = -1,
+    this.flossDepth = 0.0,
   });
 
   @override
@@ -1370,8 +1821,13 @@ class _FlossStringPainter extends CustomPainter {
 
     canvas.drawPath(stringPath, shadowPaint);
 
+    // Floss string color changes based on depth
+    final Color stringColor = flossDepth > 0.7
+        ? const Color(0xFF2ECC71) // green = deep enough
+        : Colors.white;
+
     final Paint stringPaint = Paint()
-      ..color = Colors.white
+      ..color = stringColor
       ..strokeWidth = 4.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -1413,7 +1869,9 @@ class _FlossStringPainter extends CustomPainter {
   bool shouldRepaint(covariant _FlossStringPainter oldDelegate) {
     return oldDelegate.touchPos != touchPos ||
         oldDelegate.isDragging != isDragging ||
-        oldDelegate.isSuccess != isSuccess;
+        oldDelegate.isSuccess != isSuccess ||
+        oldDelegate.currentGap != currentGap ||
+        oldDelegate.flossDepth != flossDepth;
   }
 }
 
@@ -1452,36 +1910,4 @@ class _FlossParticlesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FlossParticlesPainter oldDelegate) => true;
-}
-
-class _FlossConfettiPainter extends CustomPainter {
-  final List<_Confetti> confetti;
-
-  _FlossConfettiPainter({required this.confetti});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (var conf in confetti) {
-      final paint = Paint()
-        ..color = conf.color
-        ..style = PaintingStyle.fill;
-
-      canvas.save();
-      canvas.translate(conf.position.dx, conf.position.dy);
-      canvas.rotate(conf.rotation);
-
-      if (conf.size.toInt() % 2 == 0) {
-        canvas.drawRect(
-          Rect.fromLTWH(-conf.size / 2, -conf.size / 4, conf.size, conf.size / 2),
-          paint,
-        );
-      } else {
-        canvas.drawCircle(Offset.zero, conf.size / 2, paint);
-      }
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _FlossConfettiPainter oldDelegate) => true;
 }

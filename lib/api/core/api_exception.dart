@@ -58,17 +58,30 @@ class ApiException implements Exception {
         );
       }
     } else if (data is String && data.isNotEmpty) {
-      message = data;
+      if (data.contains('Request body too large') || data.contains('Multipart body length limit') || statusCode == 413) {
+        message = 'حجم فایل انتخاب شده بیشتر از سقف مجاز برای آپلود است.';
+      } else {
+        message = data;
+      }
     } else {
-      
       switch (error.type) {
         case DioExceptionType.connectionTimeout:
+          message = 'مهلت اتصال به سرور به پایان رسید. لطفاً اینترنت خود را بررسی کنید.';
+          break;
         case DioExceptionType.sendTimeout:
+          message = 'زمان بارگذاری و ارسال فایل به پایان رسید. لطفاً اتصال اینترنت خود را بررسی کنید.';
+          break;
         case DioExceptionType.receiveTimeout:
-          message = 'اتصال به سرور برقرار نشد. لطفاً اینترنت خود را بررسی کنید.';
+          message = 'پاسخی از سرور در مهلت مقرر دریافت نشد. لطفاً دوباره تلاش کنید.';
           break;
         case DioExceptionType.badResponse:
-          message = 'پاسخ نامعتبر از سرور دریافت شد (کد خطای $statusCode).';
+          if (statusCode == 413) {
+            message = 'حجم فایل ارسالی بیشتر از حد مجاز است (کد خطای ۴۱۳).';
+          } else if (statusCode == 408) {
+            message = 'زمان درخواست به پایان رسید (کد خطای ۴۰۸).';
+          } else {
+            message = 'پاسخ نامعتبر از سرور دریافت شد (کد خطای $statusCode).';
+          }
           break;
         case DioExceptionType.cancel:
           message = 'درخواست توسط کاربر لغو شد.';

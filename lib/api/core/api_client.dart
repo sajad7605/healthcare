@@ -17,8 +17,9 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: _baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
+        connectTimeout: const Duration(seconds: 45),
+        receiveTimeout: const Duration(seconds: 45),
+        sendTimeout: const Duration(seconds: 45),
         headers: {
           'Accept': 'application/json',
         },
@@ -154,6 +155,10 @@ class ApiClient {
     required Map<String, dynamic> data,
     Map<String, dynamic>? queryParameters,
     Options? options,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+    Duration? sendTimeout,
+    Duration? receiveTimeout,
   }) async {
     try {
       final formDataMap = <String, dynamic>{};
@@ -185,12 +190,17 @@ class ApiClient {
 
       final requestOptions = options ?? Options();
       requestOptions.contentType = 'multipart/form-data';
+      // Extended timeouts (10 minutes) for large volume uploads on mobile connections
+      requestOptions.sendTimeout ??= sendTimeout ?? const Duration(minutes: 10);
+      requestOptions.receiveTimeout ??= receiveTimeout ?? const Duration(minutes: 10);
 
       return await _dio.post<T>(
         path,
         data: formData,
         queryParameters: queryParameters,
         options: requestOptions,
+        onSendProgress: onSendProgress,
+        onReceiveProgress: onReceiveProgress,
       );
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);

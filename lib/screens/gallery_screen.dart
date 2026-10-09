@@ -23,6 +23,7 @@ class _GalleryScreenState extends State<GalleryScreen>
   bool _isLoadingPhotos = true;
   bool _isLoadingBadges = true;
   bool _isUploading = false;
+  double? _uploadProgress;
 
   int _tab = 0;
 
@@ -109,6 +110,7 @@ class _GalleryScreenState extends State<GalleryScreen>
 
     setState(() {
       _isUploading = true;
+      _uploadProgress = 0.0;
     });
 
     try {
@@ -116,10 +118,18 @@ class _GalleryScreenState extends State<GalleryScreen>
         child.id,
         photoFile: File(pickedFile.path),
         title: 'عکس دندون ${DateTime.now().day}/${DateTime.now().month}',
+        onSendProgress: (sent, total) {
+          if (total > 0 && mounted) {
+            setState(() {
+              _uploadProgress = sent / total;
+            });
+          }
+        },
       );
       setState(() {
         _photos.insert(0, photo);
         _isUploading = false;
+        _uploadProgress = null;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -132,6 +142,7 @@ class _GalleryScreenState extends State<GalleryScreen>
     } catch (e) {
       setState(() {
         _isUploading = false;
+        _uploadProgress = null;
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -293,11 +304,14 @@ class _GalleryScreenState extends State<GalleryScreen>
                         child: CircleAvatar(
                           backgroundColor: const Color(0xFFF368E0),
                           child: _isUploading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
+                              ? SizedBox(
+                                  width: 22,
+                                  height: 22,
                                   child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                                    value: (_uploadProgress != null && _uploadProgress! > 0)
+                                        ? _uploadProgress
+                                        : null,
+                                    strokeWidth: 2.5,
                                     color: Colors.white,
                                   ),
                                 )
@@ -394,7 +408,7 @@ class _GalleryScreenState extends State<GalleryScreen>
             ),
             const SizedBox(height: 24),
             SquishPopButton(
-              onTap: _pickAndUploadPhoto,
+              onTap: _isUploading ? null : _pickAndUploadPhoto,
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -411,20 +425,42 @@ class _GalleryScreenState extends State<GalleryScreen>
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.add_a_photo_rounded,
-                        color: Colors.white, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'اولین عکسم رو بگیر!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    if (_isUploading) ...[
+                      const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _uploadProgress != null
+                            ? 'در حال آپلود (${(_uploadProgress! * 100).toInt()}٪)...'
+                            : 'در حال آپلود...',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ] else ...[
+                      const Icon(Icons.add_a_photo_rounded,
+                          color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'اولین عکسم رو بگیر!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

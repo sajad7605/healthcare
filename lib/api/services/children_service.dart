@@ -154,6 +154,9 @@ class ChildrenService {
     required File photoFile,
     String? title,
     String? version,
+    void Function(int count, int total)? onSendProgress,
+    Duration? sendTimeout,
+    Duration? receiveTimeout,
   }) async {
     final v = version ?? defaultVersion;
     final response = await apiClient.postMultipart(
@@ -162,6 +165,9 @@ class ChildrenService {
         'Photo': photoFile,
         if (title != null) 'Title': title,
       },
+      onSendProgress: onSendProgress,
+      sendTimeout: sendTimeout,
+      receiveTimeout: receiveTimeout,
     );
     return TeethPhoto.fromJson(response.data as Map<String, dynamic>);
   }
