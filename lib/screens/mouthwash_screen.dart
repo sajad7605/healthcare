@@ -808,27 +808,48 @@ class _SpittingKidScenePainter extends CustomPainter {
 
     if (spitProgress > 0.05 && spitProgress < 0.95) {
       final Offset targetSink = Offset(w * 0.5, h * 0.8);
-
-      final Path streamPath = Path();
-      streamPath.moveTo(mouthPos.dx, mouthPos.dy);
-
-      final Offset controlPoint = Offset(w * 0.65, (mouthPos.dy + targetSink.dy) / 2);
-
       final double streamLen = spitProgress.clamp(0.0, 1.0);
-      final Offset currentEnd = Offset(
-        mouthPos.dx + (targetSink.dx - mouthPos.dx) * streamLen + (math.sin(streamLen * math.pi) * 35),
-        mouthPos.dy + (targetSink.dy - mouthPos.dy) * streamLen,
-      );
+      final Offset controlPoint = Offset(w * 0.62, (mouthPos.dy + targetSink.dy) / 2);
 
-      streamPath.quadraticBezierTo(controlPoint.dx, controlPoint.dy, currentEnd.dx, currentEnd.dy);
+      final dropPaint = Paint()..color = const Color(0xFF2ECC71).withValues(alpha: 0.90);
+      final highlightPaint = Paint()..color = Colors.white.withValues(alpha: 0.80);
+      final mistPaint = Paint()..color = const Color(0xFF58D68D).withValues(alpha: 0.60);
 
-      final Paint streamPaint = Paint()
-        ..color = const Color(0xFF2ECC71).withValues(alpha: 0.85)
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = 14 * (1.0 - streamLen * 0.3);
+      // Natural parabolic spray composed of individual elongated droplets & mist (not a rigid stroked line)
+      final int numDrops = (streamLen * 28).toInt();
+      for (int i = 0; i < numDrops; i++) {
+        final double t = i / 28.0;
+        if (t > streamLen) break;
 
-      canvas.drawPath(streamPath, streamPaint);
+        final double omt = 1.0 - t;
+        final double bx = omt * omt * mouthPos.dx + 2 * omt * t * controlPoint.dx + t * t * targetSink.dx;
+        final double by = omt * omt * mouthPos.dy + 2 * omt * t * controlPoint.dy + t * t * targetSink.dy + (math.sin(t * math.pi) * 8.0);
+
+        final double dropR = (1.0 - t * 0.45) * 6.5 + math.sin(i * 1.5) * 1.8;
+        if (dropR <= 0.5) continue;
+
+        final double dx = 2 * omt * (controlPoint.dx - mouthPos.dx) + 2 * t * (targetSink.dx - controlPoint.dx);
+        final double dy = 2 * omt * (controlPoint.dy - mouthPos.dy) + 2 * t * (targetSink.dy - controlPoint.dy);
+        final double angle = math.atan2(dy, dx);
+
+        canvas.save();
+        canvas.translate(bx, by);
+        canvas.rotate(angle);
+        final Rect dropRect = Rect.fromCenter(
+          center: Offset.zero,
+          width: dropR * 2.2,
+          height: dropR * 1.2,
+        );
+        canvas.drawOval(dropRect, dropPaint);
+        canvas.drawCircle(Offset(-dropR * 0.35, -dropR * 0.2), dropR * 0.35, highlightPaint);
+        canvas.restore();
+
+        if (i % 2 == 0) {
+          final double sprayOffX = math.sin(i * 2.3) * (dropR * 1.4);
+          final double sprayOffY = math.cos(i * 1.9) * (dropR * 1.4);
+          canvas.drawCircle(Offset(bx + sprayOffX, by + sprayOffY), 1.5 + (i % 3), mistPaint);
+        }
+      }
     }
 
     if (spitProgress > 0.25) {
