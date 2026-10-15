@@ -68,7 +68,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   BrushingStage _currentStage = BrushingStage.chooseBrush;
   int _selectedBrushIndex = -1;
   int _selectedTimeIndex = -1;
-  bool _is3DModelMode = true;
+  final bool _is3DModelMode = true;
 
   Offset _brushPosition = const Offset(200, 500);
   bool _isDragging = false;
@@ -222,7 +222,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         _currentStage == BrushingStage.spitOut;
   }
 
-  bool get _shouldShow3DModel => _is3DModelMode && !_isInnerStage;
+  bool get _shouldShow3DModel =>
+      _is3DModelMode &&
+      !_isInnerStage &&
+      _currentStage != BrushingStage.cleanMouthDone;
 
   Offset _getItemRenderPosition(Offset baseNormPos) {
     return Offset(
@@ -2141,8 +2144,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       case BrushingStage.lowerLeftChewing:
       case BrushingStage.lowerRightOuter:
       case BrushingStage.lowerRightChewing:
-      case BrushingStage.cleanMouthDone:
         return 'assets/brush/clean_mouth_front_1572x3408.png';
+
+      case BrushingStage.cleanMouthDone:
+        return 'assets/Group 3.png';
 
       // Inner surfaces (back of teeth) and tongue/gargle/spit use inner mouth image
       case BrushingStage.upperFrontInner:
@@ -3446,7 +3451,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     final teethRect = _cachedBounds == Rect.zero
         ? Rect.fromLTWH(0, constraints.maxHeight * 0.3, constraints.maxWidth, constraints.maxHeight * 0.4)
         : _cachedBounds;
-    final teethCenter = Offset(teethRect.center.dx, teethRect.top + teethRect.height * 0.52);
+    final teethCenter = Offset(teethRect.center.dx, teethRect.top + teethRect.height * 0.525);
 
     return AnimatedBuilder(
       animation: _celebrationController,
@@ -3459,10 +3464,10 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
           children: [
             // 1. Radiant luminous glow directly on clean teeth
             Positioned(
-              left: teethCenter.dx - 180,
-              top: teethCenter.dy - 110,
-              width: 360,
-              height: 220,
+              left: teethCenter.dx - 140,
+              top: teethCenter.dy - 65,
+              width: 280,
+              height: 130,
               child: Opacity(
                 opacity: (0.35 + 0.45 * pulse).clamp(0.0, 1.0),
                 child: Container(
@@ -3484,12 +3489,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
             // 2. Sweeping diagonal gleam light beam across teeth
             Positioned(
-              left: teethRect.left,
-              top: teethRect.top + teethRect.height * 0.32,
-              width: teethRect.width,
-              height: teethRect.height * 0.42,
+              left: teethCenter.dx - 130,
+              top: teethCenter.dy - 35,
+              width: 260,
+              height: 70,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
+                borderRadius: BorderRadius.circular(20),
                 child: Opacity(
                   opacity: (0.25 + 0.65 * pulse).clamp(0.0, 1.0),
                   child: Container(
@@ -3517,7 +3522,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -3542,18 +3546,53 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
                 // 3D Transformed Mouth World
                 if (_currentStage != BrushingStage.chooseBrush &&
-                    _currentStage != BrushingStage.chooseTime)
+                    _currentStage != BrushingStage.chooseTime &&
+                    _currentStage != BrushingStage.cleanMouthDone)
                   Positioned.fill(
                     child: _buildBrushingWorld(constraints),
                   ),
 
-                // Sparkling teeth brightening celebration effect on clean mouth
-                if (_currentStage == BrushingStage.cleanMouthDone)
+                // Last step: Picture of that boy with teeth brightening!
+                if (_currentStage == BrushingStage.cleanMouthDone) ...[
+                  Positioned.fill(
+                    child: Center(
+                      child: Image.asset(
+                        'assets/Group 3.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: AnimatedBuilder(
+                          animation: _celebrationController,
+                          builder: (context, child) {
+                            return Opacity(
+                              opacity: (0.45 +
+                                      0.55 *
+                                          math.sin(
+                                            _celebrationController.value *
+                                                math.pi *
+                                                2,
+                                          ))
+                                  .clamp(0.0, 1.0),
+                              child: Image.asset(
+                                'assets/Gemini_Generated_Image_gv7eufgv7eufgv7e 1.png',
+                                fit: BoxFit.contain,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                   Positioned.fill(
                     child: IgnorePointer(
                       child: _buildTeethBrighteningEffect(constraints),
                     ),
                   ),
+                ],
 
                 // Gesture detector covering active brushing stages
                 if (_currentStage != BrushingStage.chooseBrush &&
@@ -3900,106 +3939,45 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                   ),
                 ),
 
-                // 3D Mouth Inspection & 3D Mode Controls
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 10,
-                  left: 16,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Simple Timer Shortcut (on choose stage)
-                      if (_currentStage == BrushingStage.chooseBrush ||
-                          _currentStage == BrushingStage.chooseTime)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: SquishPopButton(
-                            onTap: () => Navigator.pushNamed(context, '/timer'),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 6,
-                                    offset: Offset(0, 3),
-                                  ),
-                                ],
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.timer_outlined, color: Color(0xFF9B59B6), size: 16),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'تایمر ساده',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF9B59B6),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                // Simple Timer Shortcut (on choose stage)
+                if (_currentStage == BrushingStage.chooseBrush ||
+                    _currentStage == BrushingStage.chooseTime)
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 10,
+                    left: 16,
+                    child: SquishPopButton(
+                      onTap: () => Navigator.pushNamed(context, '/timer'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 6,
+                              offset: Offset(0, 3),
                             ),
-                          ),
+                          ],
                         ),
-
-
-
-                      // 3D Model Toggle Button
-                      SquishPopButton(
-                        onTap: () {
-                          setState(() {
-                            _is3DModelMode = !_is3DModelMode;
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                _is3DModelMode
-                                    ? 'حالت مدل سه‌بعدی دهان فعال شد ✨'
-                                    : 'حالت تصویر شفاف فعال شد 🎨',
-                                textDirection: TextDirection.rtl,
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.timer_outlined, color: Color(0xFF9B59B6), size: 16),
+                            SizedBox(width: 4),
+                            Text(
+                              'تایمر ساده',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9B59B6),
                               ),
-                              duration: const Duration(seconds: 1),
-                              behavior: SnackBarBehavior.floating,
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: _is3DModelMode ? const Color(0xFF00A2E8) : Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.view_in_ar,
-                                size: 16,
-                                color: _is3DModelMode ? Colors.white : Colors.grey.shade700,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                _is3DModelMode ? 'مدل 3D 🟢' : 'مدل 3D ⚪',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: _is3DModelMode ? Colors.white : const Color(0xFF2C3E50),
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
               ],
             );
           },
