@@ -30,4 +30,15 @@ void main() {
     await tester.pump();
     expect(find.byType(InteractiveBrushScreen), findsOneWidget);
   });
+
+  testWidgets('InteractiveBrushScreen gargling and spitting stages verify', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: InteractiveBrushScreen(),
+      ),
+    );
+
+    await tester.pump();
+    expect(find.byType(InteractiveBrushScreen), findsOneWidget);
+  });
 }

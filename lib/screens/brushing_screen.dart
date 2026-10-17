@@ -42,6 +42,15 @@ enum BrushingStage {
   cleanMouthDone, // 23. Sparkling clean mouth celebration!
 }
 
+enum BrushingDirectionRequirement {
+  downward,        // Upper teeth: strictly from gums down towards tooth edge
+  upward,          // Lower teeth: strictly from gums up towards tooth edge
+  horizontal,      // Front incisal edges: horizontal back and forth
+  verticalChewing, // Side molars biting surfaces: back and forth along tooth line
+  free,            // Any motion allowed (overview, 2-minute timer)
+  none,            // Non-brushing stages
+}
+
 class _CameraTarget {
   final double zoom;
   final Offset target; // Normalized (0..1) relative to mouth bounds
@@ -88,13 +97,12 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   Timer? _countdownTimer;
   bool _isCelebrationShown = false;
 
-  Offset? _lastStrokePoint;
-  String? _lastStrokeDirection;
-  int _strokeDirectionSwitches = 0;
   bool _isStageTransitioning = false;
   double _currentStrokeDistance = 0.0;
-  Offset? _lastCircleCheckPoint;
   Offset? _previousBrushPositionLocal;
+  Offset? _lastScreenBrushPos;
+  final List<Offset> _recentBrushPositions = [];
+  double _wrongMotionAccumulator = 0.0;
 
   final List<_FoamBubble> _bubbles = [];
   final List<_FoamBubble> _surfaceFoam = [];
@@ -118,18 +126,17 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   double _dragTiltY = 0.0;
   double _dragTiltX = 0.0;
 
-  // Gargle state
+  // Kid Gargle & Spit state (natural animated scene with boy, puffing cheeks, sink & foam fluid stream)
   double _gargleProgress = 0.0;
   bool _isGarglingHolding = false;
   Timer? _gargleTimer;
-  double _gargleWavePhase = 0.0;
-  final List<_GargleWaterBubble> _gargleBubbles = [];
-
-  // Natural spit state (non-linear realistic fluid stream)
+  late AnimationController _cheekPuffController;
+  late AnimationController _gargleBubbleController;
+  late AnimationController _waveController;
+  late AnimationController _spitController;
+  final List<_SplashDroplet> _spitDroplets = [];
   bool _isSpittingAnimationRunning = false;
-  final List<_NaturalSpitDrop> _naturalSpitDrops = [];
-  final List<_SplashRipple> _splashRipples = [];
-  Timer? _spitStreamEmissionTimer;
+  bool _isActivityLogged = false;
 
   // Items to clean in the current stage
   List<_Germ> _germs = [];
@@ -186,6 +193,41 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       duration: const Duration(seconds: 1),
     );
 
+    _cheekPuffController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..repeat(reverse: true);
+
+    _gargleBubbleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+
+    _spitController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    _spitController.addListener(() {
+      if (_spitController.value > 0.25) {
+        _updateSpitDroplets();
+      }
+    });
+
+    _spitController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        setState(() {
+          _isSpittingAnimationRunning = false;
+        });
+        _logActivityAndShowCelebration();
+      }
+    });
+
     _updateTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
       if (mounted) {
         _updateGameLoop();
@@ -199,11 +241,14 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _floatingController.dispose();
     _wiggleController.dispose();
     _celebrationController.dispose();
+    _cheekPuffController.dispose();
+    _gargleBubbleController.dispose();
+    _waveController.dispose();
+    _spitController.dispose();
     _updateTimer?.cancel();
     _countdownTimer?.cancel();
     _tooltipTimer?.cancel();
     _gargleTimer?.cancel();
-    _spitStreamEmissionTimer?.cancel();
     super.dispose();
   }
 
@@ -813,66 +858,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         }
       }
 
-      // Spit droplet physics
-      const double dt = 0.016;
-      const double gravity = 700.0;
-      final double groundY = _cachedBounds == Rect.zero
-          ? 650.0
-          : _cachedBounds.bottom + 90.0;
-
-      for (int i = _naturalSpitDrops.length - 1; i >= 0; i--) {
-        final drop = _naturalSpitDrops[i];
-        drop.velocity = Offset(
-          drop.velocity.dx * 0.985,
-          drop.velocity.dy + gravity * dt,
-        );
-        drop.position += drop.velocity * dt;
-        drop.life -= 0.015;
-
-        if (drop.position.dy >= groundY) {
-          if (!drop.isSplash && _splashRipples.length < 18) {
-            _splashRipples.add(
-              _SplashRipple(
-                center: Offset(drop.position.dx, groundY),
-                radius: 4.0,
-                maxRadius: drop.radius * 2.8 + 12.0,
-              ),
-            );
-          }
-
-          if (!drop.isSplash && drop.radius > 4.5 && _naturalSpitDrops.length < 80) {
-            final rand = math.Random();
-            final bounceAngle = -(rand.nextDouble() * 0.7 + 0.15) * math.pi;
-            final bounceSpeed = rand.nextDouble() * 90.0 + 40.0;
-            _naturalSpitDrops.add(
-              _NaturalSpitDrop(
-                position: Offset(drop.position.dx, groundY - 2),
-                velocity: Offset(
-                  math.cos(bounceAngle) * bounceSpeed,
-                  math.sin(bounceAngle) * bounceSpeed,
-                ),
-                radius: drop.radius * 0.45,
-                color: drop.color.withValues(alpha: 0.7),
-                isSplash: true,
-                life: 0.5,
-              ),
-            );
-          }
-
-          _naturalSpitDrops.removeAt(i);
-        } else if (drop.life <= 0.0) {
-          _naturalSpitDrops.removeAt(i);
-        }
-      }
-
-      for (int i = _splashRipples.length - 1; i >= 0; i--) {
-        final ripple = _splashRipples[i];
-        ripple.radius += 1.2;
-        ripple.opacity = (1.0 - (ripple.radius / ripple.maxRadius)).clamp(0.0, 1.0);
-        if (ripple.opacity <= 0.0) {
-          _splashRipples.removeAt(i);
-        }
-      }
 
       if (_currentStage == BrushingStage.cleanMouthDone) {
         for (var conf in _confetti) {
@@ -1000,11 +985,20 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
         ? MatrixUtils.transformPoint(invMatrix, newBrushPos)
         : newBrushPos;
 
-    _produceFoamAlongPath(_previousBrushPositionLocal, mouthLocalPos);
+    // Instantaneous movement vector on screen
+    final Offset stepDelta = _lastScreenBrushPos != null
+        ? (newBrushPos - _lastScreenBrushPos!)
+        : Offset.zero;
+    _lastScreenBrushPos = newBrushPos;
+
+    final bool isCorrectDirection = _processBrushingMotion(newBrushPos, stepDelta, mouthLocalPos);
+
+    if (isCorrectDirection) {
+      _produceFoamAlongPath(_previousBrushPositionLocal, mouthLocalPos);
+    }
     _previousBrushPositionLocal = mouthLocalPos;
 
-    _checkMouthItemsContact(mouthLocalPos);
-    _validateStageGestures(newBrushPos, constraints);
+    _checkMouthItemsContact(mouthLocalPos, isCorrectDirection: isCorrectDirection);
   }
 
   bool _isPointOnMouthAndTeeth(Offset point) {
@@ -1098,7 +1092,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     }
   }
 
-  void _checkMouthItemsContact(Offset mouthLocalPos) {
+  void _checkMouthItemsContact(Offset mouthLocalPos, {required bool isCorrectDirection}) {
+    if (!isCorrectDirection) return;
     if (_cachedBounds == Rect.zero || _isStageTransitioning) return;
 
     // 1. Check Germs
@@ -1149,37 +1144,45 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _checkStageProgress();
   }
 
-  void _damageAllStageItems({required double damage}) {
+  void _damageItemsNearBrush(Offset mouthLocalPos, {required double radius, required double damage}) {
+    if (_cachedBounds == Rect.zero || _isStageTransitioning) return;
+
     for (var germ in _germs) {
       if (germ.health > 0) {
-        germ.health -= damage;
-        germ.isShaking = true;
-        if (germ.health <= 0) {
-          germ.health = 0;
-          final Offset germAbs = _getItemRenderPosition(germ.position);
-          _onGermDefeated(germAbs, germ.color);
+        final Offset germAbs = _getItemRenderPosition(germ.position);
+        if ((mouthLocalPos - germAbs).distance <= radius) {
+          germ.health -= damage;
+          germ.isShaking = true;
+          if (germ.health <= 0) {
+            germ.health = 0;
+            _onGermDefeated(germAbs, germ.color);
+          }
         }
       }
     }
     for (var food in _foods) {
       if (food.health > 0) {
-        food.health -= damage;
-        food.isShaking = true;
-        if (food.health <= 0) {
-          food.health = 0;
-          final Offset foodAbs = _getItemRenderPosition(food.position);
-          _onFoodCleaned(foodAbs, food.color);
+        final Offset foodAbs = _getItemRenderPosition(food.position);
+        if ((mouthLocalPos - foodAbs).distance <= radius) {
+          food.health -= damage;
+          food.isShaking = true;
+          if (food.health <= 0) {
+            food.health = 0;
+            _onFoodCleaned(foodAbs, food.color);
+          }
         }
       }
     }
     for (var dirt in _dirtSpots) {
       if (dirt.health > 0) {
-        dirt.health -= damage;
-        dirt.isShaking = true;
-        if (dirt.health <= 0) {
-          dirt.health = 0;
-          final Offset dirtAbs = _getItemRenderPosition(dirt.position);
-          _onDirtCleaned(dirtAbs);
+        final Offset dirtAbs = _getItemRenderPosition(dirt.position);
+        if ((mouthLocalPos - dirtAbs).distance <= radius) {
+          dirt.health -= damage;
+          dirt.isShaking = true;
+          if (dirt.health <= 0) {
+            dirt.health = 0;
+            _onDirtCleaned(dirtAbs);
+          }
         }
       }
     }
@@ -1244,258 +1247,185 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _checkStageProgress();
   }
 
-  void _validateStageGestures(Offset localPos, BoxConstraints constraints) {
-    switch (_currentStage) {
-      // Upper jaw outer and inner: Top to bottom motion
+  BrushingDirectionRequirement _getDirectionRequirement(BrushingStage stage) {
+    switch (stage) {
       case BrushingStage.upperFrontOuter:
       case BrushingStage.upperFrontInner:
       case BrushingStage.upperLeftOuter:
       case BrushingStage.upperLeftInner:
       case BrushingStage.upperRightOuter:
       case BrushingStage.upperRightInner:
-        _checkVerticalMotion(localPos, expectDownward: true);
-        break;
+        return BrushingDirectionRequirement.downward;
 
-      // Lower jaw outer and inner: Bottom to top motion
       case BrushingStage.lowerFrontOuter:
       case BrushingStage.lowerFrontInner:
       case BrushingStage.lowerLeftOuter:
       case BrushingStage.lowerLeftInner:
       case BrushingStage.lowerRightOuter:
       case BrushingStage.lowerRightInner:
-        _checkVerticalMotion(localPos, expectDownward: false);
-        break;
+        return BrushingDirectionRequirement.upward;
 
-      // Side molar chewing surfaces: Vertical back and forth motion
+      case BrushingStage.upperFrontChewing:
+      case BrushingStage.lowerFrontChewing:
+        return BrushingDirectionRequirement.horizontal;
+
       case BrushingStage.upperLeftChewing:
       case BrushingStage.upperRightChewing:
       case BrushingStage.lowerLeftChewing:
       case BrushingStage.lowerRightChewing:
-        _checkVerticalChewingMotion(localPos);
-        break;
+        return BrushingDirectionRequirement.verticalChewing;
 
-      // Front incisal edges: Horizontal back and forth motion
-      case BrushingStage.upperFrontChewing:
-      case BrushingStage.lowerFrontChewing:
-        _checkHorizontalChewingMotion(localPos);
-        break;
-
-      // Tongue
       case BrushingStage.brushTongue:
-        _checkTongueMotion(localPos);
-        break;
+        return BrushingDirectionRequirement.downward;
 
+      case BrushingStage.mouthOverview:
       case BrushingStage.continue2Minutes:
-        if (math.Random().nextDouble() < 0.2) {
-          _sparkles.add(
-            _Sparkle(
-              position: localPos - const Offset(0, 60),
-              vx: math.Random().nextDouble() * 2 - 1,
-              vy: math.Random().nextDouble() * -2 - 1,
-              size: math.Random().nextDouble() * 10 + 5,
-              color: Colors.white,
-              isStar: true,
-            ),
-          );
+        return BrushingDirectionRequirement.free;
+
+      case BrushingStage.chooseBrush:
+      case BrushingStage.chooseTime:
+      case BrushingStage.gargleMouth:
+      case BrushingStage.spitOut:
+      case BrushingStage.cleanMouthDone:
+        return BrushingDirectionRequirement.none;
+    }
+  }
+
+  String _getDirectionWarningMessage(BrushingDirectionRequirement req) {
+    switch (req) {
+      case BrushingDirectionRequirement.downward:
+        return 'فقط از بالا به پایین مسواک بزن! ⬇️';
+      case BrushingDirectionRequirement.upward:
+        return 'فقط از پایین به بالا مسواک بزن! ⬆️';
+      case BrushingDirectionRequirement.horizontal:
+        return 'فقط به چپ و راست مسواک بزن! ↔️';
+      case BrushingDirectionRequirement.verticalChewing:
+        return 'فقط به جلو و عقب مسواک بزن! ↕️';
+      case BrushingDirectionRequirement.free:
+      case BrushingDirectionRequirement.none:
+        return '';
+    }
+  }
+
+  bool _processBrushingMotion(Offset currentPos, Offset stepDelta, Offset mouthLocalPos) {
+    final req = _getDirectionRequirement(_currentStage);
+    if (req == BrushingDirectionRequirement.none) {
+      return false;
+    }
+    if (req == BrushingDirectionRequirement.free) {
+      return stepDelta.distance > 0.8;
+    }
+
+    _recentBrushPositions.add(currentPos);
+    if (_recentBrushPositions.length > 5) {
+      _recentBrushPositions.removeAt(0);
+    }
+
+    final double stepDist = stepDelta.distance;
+    // Stationary finger or tap
+    if (stepDist < 1.0) {
+      return false;
+    }
+
+    // Displacement over recent frames
+    final Offset windowDelta = _recentBrushPositions.length >= 2
+        ? (_recentBrushPositions.last - _recentBrushPositions.first)
+        : stepDelta;
+    final double windowDist = windowDelta.distance;
+
+    bool isCorrect = false;
+
+    switch (req) {
+      case BrushingDirectionRequirement.downward:
+        // Must move downwards (positive dy). Angle tolerance: vertical must clearly dominate (|dx| <= dy * 0.9)
+        final bool stepDown = stepDelta.dy > 1.0 && stepDelta.dy > stepDelta.dx.abs() * 0.9;
+        final bool windowDown = windowDist < 3.0 || (windowDelta.dy > 0 && windowDelta.dy > windowDelta.dx.abs() * 0.7);
+        if (stepDelta.dy <= 0.2) {
+          isCorrect = false;
+        } else {
+          isCorrect = stepDown && windowDown;
         }
         break;
 
-      default:
+      case BrushingDirectionRequirement.upward:
+        // Must move upwards (negative dy). Angle tolerance: vertical must clearly dominate (|dx| <= -dy * 0.9)
+        final bool stepUp = stepDelta.dy < -1.0 && (-stepDelta.dy) > stepDelta.dx.abs() * 0.9;
+        final bool windowUp = windowDist < 3.0 || (windowDelta.dy < 0 && (-windowDelta.dy) > windowDelta.dx.abs() * 0.7);
+        if (stepDelta.dy >= -0.2) {
+          isCorrect = false;
+        } else {
+          isCorrect = stepUp && windowUp;
+        }
+        break;
+
+      case BrushingDirectionRequirement.horizontal:
+        // Must move horizontally (|dx| > |dy| * 0.9)
+        final bool stepH = stepDelta.dx.abs() > 1.0 && stepDelta.dx.abs() > stepDelta.dy.abs() * 0.9;
+        final bool windowH = windowDist < 3.0 || (windowDelta.dx.abs() > windowDelta.dy.abs() * 0.7);
+        isCorrect = stepH && windowH;
+        break;
+
+      case BrushingDirectionRequirement.verticalChewing:
+        // Must move vertically (|dy| > |dx| * 0.9)
+        final bool stepV = stepDelta.dy.abs() > 1.0 && stepDelta.dy.abs() > stepDelta.dx.abs() * 0.9;
+        final bool windowV = windowDist < 3.0 || (windowDelta.dy.abs() > windowDelta.dy.abs() * 0.7);
+        isCorrect = stepV && windowV;
+        break;
+
+      case BrushingDirectionRequirement.free:
+      case BrushingDirectionRequirement.none:
         break;
     }
-  }
 
-  void _checkVerticalMotion(Offset currentPos, {bool expectDownward = true}) {
-    if (_lastCircleCheckPoint == null) {
-      _lastCircleCheckPoint = currentPos;
-      _lastStrokeDirection = null;
+    if (isCorrect) {
+      _wrongMotionAccumulator = 0.0;
+      _currentStrokeDistance += stepDist;
+      if (_currentStrokeDistance >= 24.0) {
+        _currentStrokeDistance = 0.0;
+        _onValidStrokeCompleted(mouthLocalPos);
+      }
+    } else {
+      // Finger is moving, but in the wrong direction
       _currentStrokeDistance = 0.0;
-      return;
-    }
-
-    final double dy = currentPos.dy - _lastCircleCheckPoint!.dy;
-    final double dx = currentPos.dx - _lastCircleCheckPoint!.dx;
-
-    if (dy.abs() > dx.abs() * 0.4 && dy.abs() > 3.0) {
-      String currentDir = dy > 0 ? 'D' : 'U';
-
-      if (_lastStrokeDirection == null) {
-        _lastStrokeDirection = currentDir;
-        _currentStrokeDistance = dy.abs();
-      } else if (_lastStrokeDirection == currentDir) {
-        _currentStrokeDistance += dy.abs();
-      } else {
-        if (_currentStrokeDistance >= 22.0) {
-          final bool wasCorrectDirection = expectDownward
-              ? _lastStrokeDirection == 'D'
-              : _lastStrokeDirection == 'U';
-
-          if (wasCorrectDirection) {
-            _strokeDirectionSwitches++;
-            HapticFeedback.lightImpact();
-            _damageAllStageItems(damage: 0.35);
-
-            if (_strokeDirectionSwitches >= 2) {
-              _strokeDirectionSwitches = 0;
-              setState(() {
-                _circleCount++;
-              });
-            }
-          } else {
-            _detectVerticalBrushingWarning(
-              currentPos,
-              message: expectDownward
-                  ? 'از بالا به پایین مسواک بزن! ⬇️'
-                  : 'از پایین به بالا مسواک بزن! ⬆️',
-            );
-          }
+      _wrongMotionAccumulator += stepDist;
+      if (_wrongMotionAccumulator >= 28.0) {
+        _wrongMotionAccumulator = 0.0;
+        final String warning = _getDirectionWarningMessage(req);
+        if (warning.isNotEmpty) {
+          _showTooltip(warning);
         }
-        _lastStrokeDirection = currentDir;
-        _currentStrokeDistance = dy.abs();
       }
     }
 
-    _lastCircleCheckPoint = currentPos;
+    return isCorrect;
   }
 
-  void _checkVerticalChewingMotion(Offset currentPos) {
-    if (_lastStrokePoint == null) {
-      _lastStrokePoint = currentPos;
-      _lastStrokeDirection = null;
-      _currentStrokeDistance = 0.0;
-      return;
-    }
-
-    final double dy = currentPos.dy - _lastStrokePoint!.dy;
-    final double dx = currentPos.dx - _lastStrokePoint!.dx;
-
-    if (dy.abs() > dx.abs() * 0.4 && dy.abs() > 3.0) {
-      String currentDir = dy > 0 ? 'D' : 'U';
-
-      if (_lastStrokeDirection == null) {
-        _lastStrokeDirection = currentDir;
-        _currentStrokeDistance = dy.abs();
-      } else if (_lastStrokeDirection == currentDir) {
-        _currentStrokeDistance += dy.abs();
-      } else {
-        if (_currentStrokeDistance >= 20.0) {
-          _strokeDirectionSwitches++;
-          HapticFeedback.lightImpact();
-          _damageAllStageItems(damage: 0.35);
-
-          if (_strokeDirectionSwitches >= 2) {
-            _strokeDirectionSwitches = 0;
-            setState(() {
-              _strokeCount++;
-            });
-          }
-        }
-        _lastStrokeDirection = currentDir;
-        _currentStrokeDistance = dy.abs();
+  void _onValidStrokeCompleted(Offset mouthLocalPos) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      _strokeCount++;
+      _circleCount++;
+      if (_currentStage == BrushingStage.brushTongue) {
+        _tongueSwipeCount++;
       }
-    }
+    });
 
-    _lastStrokePoint = currentPos;
-  }
+    // Provide localized reward cleaning to items near the brush
+    _damageItemsNearBrush(mouthLocalPos, radius: 80.0, damage: 0.15);
 
-  void _checkHorizontalChewingMotion(Offset currentPos) {
-    if (_lastStrokePoint == null) {
-      _lastStrokePoint = currentPos;
-      _lastStrokeDirection = null;
-      _currentStrokeDistance = 0.0;
-      return;
-    }
-
-    final double dx = currentPos.dx - _lastStrokePoint!.dx;
-    final double dy = currentPos.dy - _lastStrokePoint!.dy;
-
-    if (dx.abs() > dy.abs() * 0.4 && dx.abs() > 3.0) {
-      String currentDir = dx > 0 ? 'R' : 'L';
-
-      if (_lastStrokeDirection == null) {
-        _lastStrokeDirection = currentDir;
-        _currentStrokeDistance = dx.abs();
-      } else if (_lastStrokeDirection == currentDir) {
-        _currentStrokeDistance += dx.abs();
-      } else {
-        if (_currentStrokeDistance >= 20.0) {
-          _strokeDirectionSwitches++;
-          HapticFeedback.lightImpact();
-          _damageAllStageItems(damage: 0.35);
-
-          if (_strokeDirectionSwitches >= 2) {
-            _strokeDirectionSwitches = 0;
-            setState(() {
-              _strokeCount++;
-            });
-          }
-        }
-        _lastStrokeDirection = currentDir;
-        _currentStrokeDistance = dx.abs();
-      }
-    }
-
-    _lastStrokePoint = currentPos;
-  }
-
-  void _checkTongueMotion(Offset currentPos) {
-    if (_lastStrokePoint == null) {
-      _lastStrokePoint = currentPos;
-      _lastStrokeDirection = null;
-      _currentStrokeDistance = 0.0;
-      return;
-    }
-
-    final double dy = currentPos.dy - _lastStrokePoint!.dy;
-    final double dx = currentPos.dx - _lastStrokePoint!.dx;
-    final double dist = math.sqrt(dx * dx + dy * dy);
-
-    if (dist > 3.0) {
-      String currentDir = dy > 0 ? 'D' : 'U';
-
-      if (_lastStrokeDirection == null) {
-        _lastStrokeDirection = currentDir;
-        _currentStrokeDistance = dist;
-      } else if (_lastStrokeDirection == currentDir) {
-        _currentStrokeDistance += dist;
-      } else {
-        if (_currentStrokeDistance >= 20.0) {
-          _strokeDirectionSwitches++;
-          HapticFeedback.lightImpact();
-          _damageAllStageItems(damage: 0.35);
-
-          if (_strokeDirectionSwitches >= 2) {
-            _strokeDirectionSwitches = 0;
-            setState(() {
-              _circleCount++;
-              _tongueSwipeCount++;
-            });
-          }
-        }
-        _lastStrokeDirection = currentDir;
-        _currentStrokeDistance = dist;
-      }
-    }
-
-    _lastStrokePoint = currentPos;
-  }
-
-  void _detectVerticalBrushingWarning(Offset currentPos, {required String message}) {
-    _dragHistory.add(currentPos);
-    if (_dragHistory.length > 25) _dragHistory.removeAt(0);
-
-    if (_dragHistory.length >= 15) {
-      double totalDx = 0.0;
-      double totalDy = 0.0;
-      for (int i = 1; i < _dragHistory.length; i++) {
-        totalDx += (_dragHistory[i].dx - _dragHistory[i - 1].dx).abs();
-        totalDy += (_dragHistory[i].dy - _dragHistory[i - 1].dy).abs();
-      }
-
-      if (totalDx > totalDy * 1.8 && totalDx > 120.0) {
-        _showTooltip(message);
-        _dragHistory.clear();
-      }
+    // Emit sparkles at the brush head
+    final random = math.Random();
+    for (int k = 0; k < 4; k++) {
+      _sparkles.add(
+        _Sparkle(
+          position: mouthLocalPos + Offset(random.nextDouble() * 24 - 12, random.nextDouble() * 24 - 12),
+          vx: random.nextDouble() * 2.0 - 1.0,
+          vy: random.nextDouble() * -2.0 - 0.5,
+          size: random.nextDouble() * 8 + 5,
+          color: Colors.white,
+          isStar: true,
+        ),
+      );
     }
   }
 
@@ -1557,27 +1487,6 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _isSpitHandled = false;
     _isSpittingAnimationRunning = false;
     _gargleTimer?.cancel();
-    _gargleBubbles.clear();
-    _naturalSpitDrops.clear();
-    _splashRipples.clear();
-
-    final random = math.Random();
-    for (int i = 0; i < 24; i++) {
-      _gargleBubbles.add(
-        _GargleWaterBubble(
-          normalizedPos: Offset(
-            0.28 + random.nextDouble() * 0.44,
-            0.40 + random.nextDouble() * 0.36,
-          ),
-          radius: random.nextDouble() * 8.0 + 4.0,
-          speed: random.nextDouble() * 0.04 + 0.02,
-          phase: random.nextDouble() * math.pi * 2,
-          color: random.nextBool()
-              ? const Color(0xCC64B5F6)
-              : const Color(0xE0B3E5FC),
-        ),
-      );
-    }
     HapticFeedback.mediumImpact();
   }
 
@@ -1588,33 +1497,32 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     });
 
     _gargleTimer?.cancel();
-    _gargleTimer = Timer.periodic(const Duration(milliseconds: 35), (timer) {
+    _gargleTimer = Timer.periodic(const Duration(milliseconds: 40), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      setState(() {
-        _gargleProgress += 0.018;
-        _gargleWavePhase += 0.25;
-
-        if ((_gargleProgress * 100).toInt() % 15 == 0) {
-          HapticFeedback.lightImpact();
-        }
-
-        if (_gargleProgress >= 1.0) {
-          _gargleProgress = 1.0;
-          _stopGargling();
-          HapticFeedback.heavyImpact();
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted && _currentStage == BrushingStage.gargleMouth) {
-              setState(() {
-                _currentStage = BrushingStage.spitOut;
-                _isSpitHandled = false;
-              });
-            }
-          });
-        }
-      });
+      if (_gargleProgress < 1.0) {
+        setState(() {
+          _gargleProgress += 0.018;
+          if (_gargleProgress > 1.0) _gargleProgress = 1.0;
+          if ((_gargleProgress * 100).toInt() % 15 == 0) {
+            HapticFeedback.lightImpact();
+          }
+        });
+      } else {
+        timer.cancel();
+        _stopGargling();
+        HapticFeedback.heavyImpact();
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted && _currentStage == BrushingStage.gargleMouth) {
+            setState(() {
+              _currentStage = BrushingStage.spitOut;
+              _initSpitPhase();
+            });
+          }
+        });
+      }
     });
   }
 
@@ -1627,169 +1535,124 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     }
   }
 
+  void _initSpitPhase() {
+    _gargleTimer?.cancel();
+    _isGarglingHolding = false;
+    _isSpitHandled = false;
+    _isSpittingAnimationRunning = false;
+    _spitDroplets.clear();
+    _spitController.reset();
+  }
+
   void _handleSpit() {
-    if (_isSpitHandled || _isSpittingAnimationRunning) return;
-    _isSpitHandled = true;
-    _isSpittingAnimationRunning = true;
+    if (_isSpitHandled || _isSpittingAnimationRunning || _currentStage != BrushingStage.spitOut) return;
+    setState(() {
+      _isSpitHandled = true;
+      _isSpittingAnimationRunning = true;
+    });
 
     HapticFeedback.heavyImpact();
+    _spawnSpitDroplets();
+    _spitController.forward(from: 0.0);
+  }
 
-    final mouthCenter = Offset(
-      _cachedBounds == Rect.zero
-          ? 180.0
-          : _cachedBounds.left + _cachedBounds.width * 0.50,
-      _cachedBounds == Rect.zero
-          ? 450.0
-          : _cachedBounds.top + _cachedBounds.height * 0.48,
-    );
-
+  void _spawnSpitDroplets() {
     final random = math.Random();
-
-    for (var bubble in _surfaceFoam) {
-      final double angle = (random.nextDouble() * 0.6 + 0.2) * math.pi;
-      final double speed = random.nextDouble() * 220 + 150;
-      _naturalSpitDrops.add(
-        _NaturalSpitDrop(
-          position: bubble.position,
-          velocity: Offset(math.cos(angle) * speed * 0.7, math.sin(angle) * speed),
-          radius: bubble.radius,
-          color: Colors.white.withValues(alpha: 0.90),
-          isFoam: true,
+    _spitDroplets.clear();
+    for (int i = 0; i < 28; i++) {
+      final bool isFoam = random.nextBool();
+      _spitDroplets.add(
+        _SplashDroplet(
+          x: 0.0,
+          y: 0.0,
+          vx: (random.nextDouble() - 0.5) * 14.0,
+          vy: -2.0 - random.nextDouble() * 10.0,
+          radius: isFoam ? 3.0 + random.nextDouble() * 4.0 : 2.5 + random.nextDouble() * 5.0,
+          color: isFoam
+              ? Colors.white.withValues(alpha: 0.90)
+              : const Color(0xFF29B6F6).withValues(alpha: 0.85),
         ),
       );
     }
-    _surfaceFoam.clear();
+  }
 
-    int emissionFrames = 0;
-    const int totalEmissionFrames = 26;
-
-    _spitStreamEmissionTimer?.cancel();
-    _spitStreamEmissionTimer = Timer.periodic(const Duration(milliseconds: 20), (timer) {
-      emissionFrames++;
-      if (!mounted || emissionFrames > totalEmissionFrames) {
-        timer.cancel();
-        return;
+  void _updateSpitDroplets() {
+    if (_spitDroplets.isEmpty) return;
+    setState(() {
+      for (var droplet in _spitDroplets) {
+        droplet.x += droplet.vx;
+        droplet.y += droplet.vy;
+        droplet.vy += 0.8;
       }
+    });
+  }
 
-      setState(() {
-        final int dropsInFrame = random.nextInt(3) + 3;
-        for (int i = 0; i < dropsInFrame; i++) {
-          final double spreadAngle = (random.nextDouble() - 0.5) * 0.50;
-          final double downwardAngle = math.pi / 2 + spreadAngle;
-          final double speed = 240.0 + random.nextDouble() * 260.0;
+  void _logActivityAndShowCelebration() {
+    if (_isActivityLogged) return;
+    _isActivityLogged = true;
 
-          final bool isFoamy = random.nextDouble() < 0.35;
-          final double radius = isFoamy
-              ? random.nextDouble() * 6.0 + 5.0
-              : random.nextDouble() * 7.0 + 3.0;
+    setState(() {
+      _currentStage = BrushingStage.cleanMouthDone;
+      _initCelebration();
+    });
+    _animateCameraTo(BrushingStage.cleanMouthDone);
 
-          final Color dropColor = isFoamy
-              ? Colors.white.withValues(alpha: 0.92)
-              : (random.nextBool()
-                  ? const Color(0xEE4FC3F7)
-                  : const Color(0xEE29B6F6));
-
-          _naturalSpitDrops.add(
-            _NaturalSpitDrop(
-              position: mouthCenter + Offset(
-                (random.nextDouble() - 0.5) * 16.0,
-                (random.nextDouble() - 0.5) * 8.0,
-              ),
-              velocity: Offset(
-                math.cos(downwardAngle) * speed,
-                math.sin(downwardAngle) * speed,
-              ),
-              radius: radius,
-              color: dropColor,
-              isFoam: isFoamy,
+    final activeChild = HealthcareApi.instance.currentChild;
+    if (activeChild != null) {
+      HealthcareApi.instance.children.logActivity(
+        activeChild.id,
+        ActivityLogRequest(
+          activityType: 'brushing_interactive',
+          durationSeconds: _isFastMode ? 15 : 120,
+          completedSteps: const [
+            'chooseBrush',
+            'chooseTime',
+            'mouthOverview',
+            'upperFrontOuter',
+            'upperFrontInner',
+            'upperFrontChewing',
+            'upperLeftOuter',
+            'upperLeftInner',
+            'upperLeftChewing',
+            'upperRightOuter',
+            'upperRightInner',
+            'upperRightChewing',
+            'lowerFrontOuter',
+            'lowerFrontInner',
+            'lowerFrontChewing',
+            'lowerLeftOuter',
+            'lowerLeftInner',
+            'lowerLeftChewing',
+            'lowerRightOuter',
+            'lowerRightInner',
+            'lowerRightChewing',
+            'brushTongue',
+            'gargleMouth',
+            'spitOut',
+            'cleanMouthDone'
+          ],
+        ),
+      ).then((res) {
+        final oldStars = HealthcareApi.instance.currentChild?.stars ?? 0;
+        HealthcareApi.instance.currentChild = activeChild.copyWith(
+          stars: oldStars + res.starsEarned,
+        );
+      }).catchError((err) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('خطا در ثبت فعالیت: $err'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 6),
             ),
           );
         }
-
-        _naturalSpitDrops.add(
-          _NaturalSpitDrop(
-            position: mouthCenter,
-            velocity: Offset(
-              (random.nextDouble() - 0.5) * 160.0,
-              180.0 + random.nextDouble() * 180.0,
-            ),
-            radius: random.nextDouble() * 2.0 + 1.5,
-            color: const Color(0xCCB3E5FC),
-            isFoam: false,
-          ),
-        );
       });
-    });
+    }
 
-    Future.delayed(const Duration(milliseconds: 1700), () {
+    Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
-        setState(() {
-          _isSpittingAnimationRunning = false;
-          _naturalSpitDrops.clear();
-          _splashRipples.clear();
-          _currentStage = BrushingStage.cleanMouthDone;
-          _initCelebration();
-        });
-        _animateCameraTo(BrushingStage.cleanMouthDone);
-
-        final activeChild = HealthcareApi.instance.currentChild;
-        if (activeChild != null) {
-          HealthcareApi.instance.children.logActivity(
-            activeChild.id,
-            ActivityLogRequest(
-              activityType: 'brushing_interactive',
-              durationSeconds: _isFastMode ? 15 : 120,
-              completedSteps: const [
-                'chooseBrush',
-                'chooseTime',
-                'mouthOverview',
-                'upperFrontOuter',
-                'upperFrontInner',
-                'upperFrontChewing',
-                'upperLeftOuter',
-                'upperLeftInner',
-                'upperLeftChewing',
-                'upperRightOuter',
-                'upperRightInner',
-                'upperRightChewing',
-                'lowerFrontOuter',
-                'lowerFrontInner',
-                'lowerFrontChewing',
-                'lowerLeftOuter',
-                'lowerLeftInner',
-                'lowerLeftChewing',
-                'lowerRightOuter',
-                'lowerRightInner',
-                'lowerRightChewing',
-                'brushTongue',
-                'gargleMouth',
-                'spitOut',
-                'cleanMouthDone'
-              ],
-            ),
-          ).then((res) {
-            final oldStars = HealthcareApi.instance.currentChild?.stars ?? 0;
-            HealthcareApi.instance.currentChild = activeChild.copyWith(
-              stars: oldStars + res.starsEarned,
-            );
-          }).catchError((err) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('خطا در ثبت فعالیت: $err'),
-                  backgroundColor: Colors.orange,
-                  duration: const Duration(seconds: 6),
-                ),
-              );
-            }
-          });
-        }
-
-        Future.delayed(const Duration(seconds: 4), () {
-          if (mounted) {
-            _showCelebrationDialog();
-          }
-        });
+        _showCelebrationDialog();
       }
     });
   }
@@ -1821,15 +1684,14 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
     _bubbles.clear();
     _sparkles.clear();
     _dragHistory.clear();
-    _lastStrokePoint = null;
-    _lastStrokeDirection = null;
-    _lastCircleCheckPoint = null;
-    _strokeDirectionSwitches = 0;
     _currentStrokeDistance = 0.0;
     _circleCount = 0;
     _strokeCount = 0;
     _tongueSwipeCount = 0;
     _previousBrushPositionLocal = null;
+    _lastScreenBrushPos = null;
+    _recentBrushPositions.clear();
+    _wrongMotionAccumulator = 0.0;
 
     setState(() {
       switch (_currentStage) {
@@ -1940,10 +1802,11 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
           break;
         case BrushingStage.gargleMouth:
           _currentStage = BrushingStage.spitOut;
+          _initSpitPhase();
           break;
         case BrushingStage.spitOut:
-          _currentStage = BrushingStage.cleanMouthDone;
-          _initCelebration();
+          _spitController.stop();
+          _logActivityAndShowCelebration();
           break;
         default:
           break;
@@ -1992,7 +1855,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      'باشه، مسواک مناسب انتخاب می‌کنم! 👍',
+                      'باشه، متوجه شدم! 👍',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -2167,7 +2030,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
   String _getInstructionText() {
     switch (_currentStage) {
       case BrushingStage.chooseBrush:
-        return 'یک مسواک قشنگ انتخاب کن! 🪥';
+        return 'مقدار مناسب خمیر دندان روی مسواک را انتخاب کن! 🪥';
       case BrushingStage.chooseTime:
         return 'زمان مناسب مسواک زدن را انتخاب کن! ⏱️';
       case BrushingStage.mouthOverview:
@@ -2228,9 +2091,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       case BrushingStage.continue2Minutes:
         return 'مسواک زدن را ادامه بده تا ۲ دقیقه تمام شود! ⏳';
       case BrushingStage.gargleMouth:
-        return '۲۰. یک قلپ آب بردار و دهانت رو خوب غرغره کن! 💧🫧';
+        return '۲۰. یک قلپ آب بردار و دهانت رو خوب آب‌کشی و غرغره کن! 💧🫧';
       case BrushingStage.spitOut:
-        return '۲۱. حالا آب و کف را تف کن! 💦';
+        return '۲۱. حالا آب و کف خمیردندان را داخل سینک تف کن! 💦';
       case BrushingStage.cleanMouthDone:
         return 'دندون‌هات از تمیزی مثل مروارید دارن برق می‌زنن! 😍⭐';
     }
@@ -2279,9 +2142,9 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
       case BrushingStage.brushTongue:
         return 'تمیز کردن زبان';
       case BrushingStage.gargleMouth:
-        return 'غرغره با آب';
+        return 'مرحله نهایی • آب‌کشی و غرغره دهان';
       case BrushingStage.spitOut:
-        return 'تخلیه آب و کف';
+        return 'مرحله نهایی • تف کردن در سینک';
       case BrushingStage.cleanMouthDone:
         return 'پایان تمیزکاری';
       default:
@@ -2387,45 +2250,56 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
 
           if (_currentStage != BrushingStage.chooseBrush &&
               _currentStage != BrushingStage.chooseTime &&
-              _currentStage != BrushingStage.cleanMouthDone)
-            Row(
-              children: [
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Container(
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                      ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: (constraints.maxWidth - 32) * _cleanlinessProgress,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF2ECC71), Color(0xFF27AE60)],
+              _currentStage != BrushingStage.cleanMouthDone) ...[
+            Builder(
+              builder: (context) {
+                final double currentProgress = _currentStage == BrushingStage.gargleMouth
+                    ? _gargleProgress
+                    : (_currentStage == BrushingStage.spitOut
+                        ? (_isSpitHandled ? _spitController.value : 0.0)
+                        : _cleanlinessProgress);
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          Container(
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(7),
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            width: (constraints.maxWidth - 32) * currentProgress,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF2ECC71), Color(0xFF27AE60)],
+                              ),
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '${(_cleanlinessProgress * 100).toInt()}%',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
-                  ),
-                ),
-              ],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${(currentProgress * 100).toInt()}%',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: [Shadow(color: Colors.black45, blurRadius: 4)],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
+          ],
         ],
       ),
     );
@@ -2546,7 +2420,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
               ],
             ),
             child: const Text(
-              'مسواک مناسب خود را انتخاب کن! 🪥',
+              'اندازه مناسب خمیر دندان را انتخاب کن! 🪥',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -2563,7 +2437,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Text(
-              'کدام مسواک اندازه دهان و دندان‌های تو است؟ 🤔',
+              'روی کدام مسواک به اندازه یک نخود خمیر دندان قرار دارد؟ 🤔',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -2581,7 +2455,7 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 final isSelected = _selectedBrushIndex == index;
                 final isCorrect =
                     _brushes[index] ==
-                    'assets/Gemini_Generated_Image_x50vatx50vatx50v 1.png';
+                    'assets/Gemini_Generated_Image_bmoqd1bmoqd1bmoq 2.png';
 
                 return AnimatedBuilder(
                   animation: _floatingController,
@@ -2620,13 +2494,13 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                                 if (mounted) {
                                   if (_brushes[index].contains('bmoqd1bmoqd1bmoq 1')) {
                                     _showWrongBrushDialog(
-                                      'اوه! این مسواک خیلی بزرگه! 🐘',
-                                      'این مسواک برای بزرگسالان طراحی شده و سر برس آن برای دهان کوچک تو مناسب نیست. مسواک مخصوص کودکان را پیدا کن!',
+                                      'اوه! خمیر دندان خیلی زیاده! 😲',
+                                      'این مسواک خمیر دندان زیادی داره و ممکنه دهانت رو اذیت کنه. مسواکی رو انتخاب کن که به اندازه یک نخود خمیر دندان داشته باشه!',
                                     );
                                   } else {
                                     _showWrongBrushDialog(
-                                      'اوه! این مسواک خیلی سفته! 🪨',
-                                      'این مسواک موهای خیلی زبر و سختی داره و ممکنه به لثه‌های لطیفت آسیب بزنه. مسواک با موهای نرم مخصوص کودکان را انتخاب کن!',
+                                      'اوه! این مسواک خمیر دندان نداره! 🪥',
+                                      'این مسواک هیچ خمیر دندانی نداره! بدون خمیر دندان دندان‌ها تمیز نمی‌شن. مسواکی رو انتخاب کن که به اندازه یک نخود خمیر دندان داشته باشه!',
                                     );
                                   }
                                 }
@@ -3547,6 +3421,8 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 // 3D Transformed Mouth World
                 if (_currentStage != BrushingStage.chooseBrush &&
                     _currentStage != BrushingStage.chooseTime &&
+                    _currentStage != BrushingStage.gargleMouth &&
+                    _currentStage != BrushingStage.spitOut &&
                     _currentStage != BrushingStage.cleanMouthDone)
                   Positioned.fill(
                     child: _buildBrushingWorld(constraints),
@@ -3597,11 +3473,17 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                 // Gesture detector covering active brushing stages
                 if (_currentStage != BrushingStage.chooseBrush &&
                     _currentStage != BrushingStage.chooseTime &&
+                    _currentStage != BrushingStage.gargleMouth &&
+                    _currentStage != BrushingStage.spitOut &&
                     _currentStage != BrushingStage.cleanMouthDone)
                   Positioned.fill(
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onPanStart: (details) {
+                        _lastScreenBrushPos = null;
+                        _recentBrushPositions.clear();
+                        _currentStrokeDistance = 0.0;
+                        _wrongMotionAccumulator = 0.0;
                         _handleBrushing(details.localPosition, constraints);
                       },
                       onPanUpdate: (details) =>
@@ -3610,136 +3492,234 @@ class _InteractiveBrushScreenState extends State<InteractiveBrushScreen>
                         setState(() {
                           _isDragging = false;
                           _previousBrushPositionLocal = null;
+                          _lastScreenBrushPos = null;
+                          _recentBrushPositions.clear();
+                          _currentStrokeDistance = 0.0;
+                          _wrongMotionAccumulator = 0.0;
                         });
                       },
                       onPanCancel: () {
                         setState(() {
                           _isDragging = false;
                           _previousBrushPositionLocal = null;
+                          _lastScreenBrushPos = null;
+                          _recentBrushPositions.clear();
+                          _currentStrokeDistance = 0.0;
+                          _wrongMotionAccumulator = 0.0;
                         });
                       },
                     ),
                   ),
 
-                // Gargle interactive minigame
-                if (_currentStage == BrushingStage.gargleMouth) ...[
+                // Animated wave at bottom during gargle & spit phases
+                if (_currentStage == BrushingStage.gargleMouth ||
+                    _currentStage == BrushingStage.spitOut)
                   Positioned.fill(
                     child: IgnorePointer(
-                      child: CustomPaint(
-                        painter: _GarglingMouthPainter(
-                          cachedBounds: _cachedBounds,
-                          gargleProgress: _gargleProgress,
-                          wavePhase: _gargleWavePhase,
-                          isGargling: _isGarglingHolding,
-                          bubbles: _gargleBubbles,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 60,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: GestureDetector(
-                        onTapDown: (_) => _startGargling(),
-                        onTapUp: (_) => _stopGargling(),
-                        onTapCancel: () => _stopGargling(),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: _isGarglingHolding
-                                  ? [const Color(0xFF0288D1), const Color(0xFF01579B)]
-                                  : [const Color(0xFF29B6F6), const Color(0xFF0288D1)],
+                      child: AnimatedBuilder(
+                        animation: _waveController,
+                        builder: (context, child) {
+                          return CustomPaint(
+                            painter: _WavePainter(
+                              waveAnimation: _waveController.value,
+                              fillLevel: 0.22,
+                              color: const Color(0xFF29B6F6).withValues(alpha: 0.25),
                             ),
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF0288D1).withValues(alpha: 0.4),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.water_drop, color: Colors.white, size: 24),
-                              const SizedBox(width: 8),
-                              Text(
-                                _isGarglingHolding ? 'در حال غرغره... 🫧' : 'نگه‌دار تا غرغره کنی! 💧',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ),
                   ),
-                ],
 
-                // Natural spit stream painter
-                if (_currentStage == BrushingStage.spitOut) ...[
+                // Kid Gargling Scene
+                if (_currentStage == BrushingStage.gargleMouth)
                   Positioned.fill(
-                    child: IgnorePointer(
-                      child: CustomPaint(
-                        painter: _NaturalSpitPainter(
-                          drops: _naturalSpitDrops,
-                          ripples: _splashRipples,
-                          cachedBounds: _cachedBounds,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (!_isSpitHandled)
-                    Positioned(
-                      bottom: 70,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: SquishPopButton(
-                          onTap: _handleSpit,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFE74C3C), Color(0xFFC0392B)],
-                              ),
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFE74C3C).withValues(alpha: 0.4),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.cleaning_services, color: Colors.white, size: 22),
-                                SizedBox(width: 8),
-                                Text(
-                                  'تخلیه آب و کف (تف کردن) 💦',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
+                    child: Column(
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).padding.top + 130),
+                        Expanded(
+                          child: Center(
+                            child: AnimatedBuilder(
+                              animation: Listenable.merge([_cheekPuffController, _gargleBubbleController]),
+                              builder: (context, child) {
+                                final double puff = _isGarglingHolding
+                                    ? math.sin(_cheekPuffController.value * math.pi) * 16.0
+                                    : 0.0;
+                                return Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    if (_isGarglingHolding)
+                                      Container(
+                                        width: 240 + (math.sin(_gargleBubbleController.value * math.pi * 2) * 15),
+                                        height: 240 + (math.sin(_gargleBubbleController.value * math.pi * 2) * 15),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: const Color(0xFF29B6F6).withValues(alpha: 0.25),
+                                        ),
+                                      ),
+                                    CustomPaint(
+                                      size: const Size(220, 260),
+                                      painter: _GarglingKidPainter(
+                                        isGargling: _isGarglingHolding,
+                                        puffAmount: puff,
+                                        bubbleAnim: _gargleBubbleController.value,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ),
-                      ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'میزان آب‌کشی و غرغره: ${(_gargleProgress * 100).toInt()}%',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0288D1),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 50),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: LinearProgressIndicator(
+                                  value: _gargleProgress,
+                                  minHeight: 14,
+                                  backgroundColor: Colors.grey.shade300,
+                                  color: const Color(0xFF0288D1),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 45),
+                          child: GestureDetector(
+                            onTapDown: (_) => _startGargling(),
+                            onTapUp: (_) => _stopGargling(),
+                            onTapCancel: () => _stopGargling(),
+                            child: SquishPopButton(
+                              squishScale: 0.88,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: _isGarglingHolding
+                                        ? [const Color(0xFF0288D1), const Color(0xFF01579B)]
+                                        : [const Color(0xFF29B6F6), const Color(0xFF0288D1)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(30),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF0288D1).withValues(alpha: 0.4),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    )
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _isGarglingHolding ? Icons.loop : Icons.touch_app,
+                                      color: Colors.white,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _isGarglingHolding
+                                          ? 'کودک در حال آب‌کشی و غرغره... 🫧'
+                                          : 'نگه‌دار تا کودک غرغره کند! 💧',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                ],
+                  ),
+
+                // Kid Spitting Scene
+                if (_currentStage == BrushingStage.spitOut)
+                  Positioned.fill(
+                    child: Column(
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).padding.top + 130),
+                        Expanded(
+                          child: Center(
+                            child: AnimatedBuilder(
+                              animation: _spitController,
+                              builder: (context, child) {
+                                return CustomPaint(
+                                  size: Size(constraints.maxWidth, 340),
+                                  painter: _SpittingKidScenePainter(
+                                    spitProgress: _spitController.value,
+                                    droplets: _spitDroplets,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 45),
+                          child: SquishPopButton(
+                            onTap: _handleSpit,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 44, vertical: 18),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF29B6F6), Color(0xFF0288D1)],
+                                ),
+                                borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0288D1).withValues(alpha: 0.4),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 5),
+                                  )
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _isSpittingAnimationRunning ? Icons.water_drop : Icons.cleaning_services,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    _isSpittingAnimationRunning
+                                        ? 'در حال تخلیه آب و کف... 🫧'
+                                        : 'حالا کودک تف کند! 💦',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 // Airborne particles & bubbles
                 Positioned.fill(
@@ -4104,53 +4084,22 @@ class _Confetti {
   });
 }
 
-class _GargleWaterBubble {
-  Offset normalizedPos;
-  final double radius;
-  final double speed;
-  final double phase;
-  final Color color;
-
-  _GargleWaterBubble({
-    required this.normalizedPos,
-    required this.radius,
-    required this.speed,
-    required this.phase,
-    required this.color,
-  });
-}
-
-class _NaturalSpitDrop {
-  Offset position;
-  Offset velocity;
-  final double radius;
-  final Color color;
-  double life;
-  final bool isFoam;
-  final bool isSplash;
-
-  _NaturalSpitDrop({
-    required this.position,
-    required this.velocity,
-    required this.radius,
-    required this.color,
-    this.life = 1.0,
-    this.isFoam = false,
-    this.isSplash = false,
-  });
-}
-
-class _SplashRipple {
-  final Offset center;
+class _SplashDroplet {
+  double x;
+  double y;
+  double vx;
+  double vy;
   double radius;
-  final double maxRadius;
-  double opacity;
+  Color color;
 
-  _SplashRipple({
-    required this.center,
+  _SplashDroplet({
+    required this.x,
+    required this.y,
+    required this.vx,
+    required this.vy,
     required this.radius,
-    required this.maxRadius,
-  }) : opacity = 1.0;
+    required this.color,
+  });
 }
 
 // -------------------------------------------------------------
@@ -4361,181 +4310,424 @@ class _SurfaceFoamPainter extends CustomPainter {
   }
 }
 
-class _GarglingMouthPainter extends CustomPainter {
-  final Rect cachedBounds;
-  final double gargleProgress;
-  final double wavePhase;
+class _GarglingKidPainter extends CustomPainter {
   final bool isGargling;
-  final List<_GargleWaterBubble> bubbles;
+  final double puffAmount;
+  final double bubbleAnim;
 
-  _GarglingMouthPainter({
-    required this.cachedBounds,
-    required this.gargleProgress,
-    required this.wavePhase,
+  _GarglingKidPainter({
     required this.isGargling,
-    required this.bubbles,
+    required this.puffAmount,
+    required this.bubbleAnim,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (cachedBounds == Rect.zero) return;
+    final double w = size.width;
+    final double h = size.height;
 
-    final mouthRect = Rect.fromLTWH(
-      cachedBounds.left + cachedBounds.width * 0.22,
-      cachedBounds.top + cachedBounds.height * 0.38,
-      cachedBounds.width * 0.56,
-      cachedBounds.height * 0.36,
+    final Offset headCenter = Offset(w * 0.5, h * 0.44);
+    final double headRadius = w * 0.32;
+
+    final paint = Paint();
+
+    // Ears
+    paint.color = const Color(0xFFFFD2A6);
+    final double earPuff = isGargling ? puffAmount * 0.4 : 0.0;
+    canvas.drawCircle(Offset(headCenter.dx - headRadius - earPuff, headCenter.dy), 14, paint);
+    canvas.drawCircle(Offset(headCenter.dx + headRadius + earPuff, headCenter.dy), 14, paint);
+
+    paint.color = const Color(0xFFFFB5C5).withValues(alpha: 0.5);
+    canvas.drawCircle(Offset(headCenter.dx - headRadius - earPuff, headCenter.dy), 7, paint);
+    canvas.drawCircle(Offset(headCenter.dx + headRadius + earPuff, headCenter.dy), 7, paint);
+
+    // Shirt
+    paint.color = const Color(0xFF2980B9);
+    final shirtPath = Path();
+    shirtPath.moveTo(headCenter.dx - w * 0.36, h * 0.84);
+    shirtPath.lineTo(headCenter.dx + w * 0.36, h * 0.84);
+    shirtPath.lineTo(headCenter.dx + w * 0.45, h);
+    shirtPath.lineTo(headCenter.dx - w * 0.45, h);
+    shirtPath.close();
+    canvas.drawPath(shirtPath, paint);
+
+    // Collar
+    paint.color = Colors.white;
+    final collarPath = Path();
+    collarPath.moveTo(headCenter.dx - 22, h * 0.84);
+    collarPath.lineTo(headCenter.dx, h * 0.92);
+    collarPath.lineTo(headCenter.dx + 22, h * 0.84);
+    collarPath.close();
+    canvas.drawPath(collarPath, paint);
+
+    // Star badge
+    final starPaint = Paint()..color = Colors.amber;
+    canvas.drawCircle(Offset(headCenter.dx + 26, h * 0.92), 7, starPaint);
+
+    // Head with puffed cheeks
+    paint.color = const Color(0xFFFFD2A6);
+    final double puffX = isGargling ? puffAmount * 2.0 : 0.0;
+    final Rect headRect = Rect.fromCenter(
+      center: headCenter,
+      width: (headRadius * 2.0) + puffX,
+      height: headRadius * 1.9,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(headRect, Radius.circular(headRadius * 0.9)),
+      paint,
     );
 
-    final waterHeight = mouthRect.height * (0.35 + 0.60 * gargleProgress);
-    final waterTop = mouthRect.bottom - waterHeight;
+    // Hair
+    paint.color = const Color(0xFF5D4037);
+    final hairPath = Path();
+    hairPath.moveTo(headCenter.dx - headRadius * 1.0, headCenter.dy - headRadius * 0.1);
+    hairPath.quadraticBezierTo(headCenter.dx - headRadius * 0.6, headCenter.dy - headRadius * 1.45, headCenter.dx, headCenter.dy - headRadius * 1.3);
+    hairPath.quadraticBezierTo(headCenter.dx + headRadius * 0.6, headCenter.dy - headRadius * 1.45, headCenter.dx + headRadius * 1.0, headCenter.dy - headRadius * 0.1);
+    hairPath.quadraticBezierTo(headCenter.dx + headRadius * 0.6, headCenter.dy - headRadius * 0.6, headCenter.dx, headCenter.dy - headRadius * 0.65);
+    hairPath.quadraticBezierTo(headCenter.dx - headRadius * 0.6, headCenter.dy - headRadius * 0.6, headCenter.dx - headRadius * 1.0, headCenter.dy - headRadius * 0.1);
+    canvas.drawPath(hairPath, paint);
 
-    canvas.save();
-    canvas.clipRRect(RRect.fromRectAndRadius(mouthRect, const Radius.circular(40)));
+    final tuft1 = Path();
+    tuft1.moveTo(headCenter.dx - 25, headCenter.dy - headRadius * 0.65);
+    tuft1.quadraticBezierTo(headCenter.dx - 10, headCenter.dy - headRadius * 1.1, headCenter.dx + 5, headCenter.dy - headRadius * 0.6);
+    tuft1.close();
+    canvas.drawPath(tuft1, paint);
 
-    final waterPath = Path();
-    waterPath.moveTo(mouthRect.left, mouthRect.bottom);
-    waterPath.lineTo(mouthRect.left, waterTop);
+    final tuft2 = Path();
+    tuft2.moveTo(headCenter.dx - 5, headCenter.dy - headRadius * 0.65);
+    tuft2.quadraticBezierTo(headCenter.dx + 15, headCenter.dy - headRadius * 1.15, headCenter.dx + 30, headCenter.dy - headRadius * 0.55);
+    tuft2.close();
+    canvas.drawPath(tuft2, paint);
 
-    const int steps = 30;
-    final stepWidth = mouthRect.width / steps;
-    final waveAmp = isGargling ? 9.0 : 4.0;
+    // Eyes
+    final eyePaint = Paint()..color = const Color(0xFF2C3E50);
+    final irisPaint = Paint()..color = const Color(0xFF16A085);
+    final reflect1 = Paint()..color = Colors.white;
+    final reflect2 = Paint()..color = Colors.white.withValues(alpha: 0.7);
 
-    for (int i = 0; i <= steps; i++) {
-      final x = mouthRect.left + i * stepWidth;
-      final y = waterTop + math.sin(wavePhase + (i * 0.5)) * waveAmp;
-      waterPath.lineTo(x, y);
-    }
+    final Offset leftEye = Offset(headCenter.dx - headRadius * 0.36, headCenter.dy - headRadius * 0.08);
+    final Offset rightEye = Offset(headCenter.dx + headRadius * 0.36, headCenter.dy - headRadius * 0.08);
 
-    waterPath.lineTo(mouthRect.right, mouthRect.bottom);
-    waterPath.close();
+    canvas.drawCircle(leftEye, 10, eyePaint);
+    canvas.drawCircle(leftEye, 8, irisPaint);
+    canvas.drawCircle(Offset(leftEye.dx - 3, leftEye.dy - 3), 3.5, reflect1);
+    canvas.drawCircle(Offset(leftEye.dx + 3, leftEye.dy + 3), 1.8, reflect2);
 
-    final waterGradient = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [
-        const Color(0x994FC3F7),
-        const Color(0xCC0288D1),
-        const Color(0xEE01579B),
-      ],
-    );
+    canvas.drawCircle(rightEye, 10, eyePaint);
+    canvas.drawCircle(rightEye, 8, irisPaint);
+    canvas.drawCircle(Offset(rightEye.dx - 3, rightEye.dy - 3), 3.5, reflect1);
+    canvas.drawCircle(Offset(rightEye.dx + 3, rightEye.dy + 3), 1.8, reflect2);
 
-    final waterPaint = Paint()
-      ..shader = waterGradient.createShader(mouthRect)
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(waterPath, waterPaint);
+    // Eyebrows
+    final browPaint = Paint()
+      ..color = const Color(0xFF5D4037)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5
+      ..strokeCap = StrokeCap.round;
 
-    final crestPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.6)
+    canvas.drawLine(Offset(leftEye.dx - 10, leftEye.dy - 16), Offset(leftEye.dx + 8, leftEye.dy - 18), browPaint);
+    canvas.drawLine(Offset(rightEye.dx - 8, rightEye.dy - 18), Offset(rightEye.dx + 10, rightEye.dy - 16), browPaint);
+
+    // Cute Nose
+    final nosePaint = Paint()
+      ..color = const Color(0xFFE59866)
+      ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(waterPath, crestPaint);
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(Rect.fromCenter(center: Offset(headCenter.dx, headCenter.dy + headRadius * 0.15), width: 8, height: 6), 0, math.pi, false, nosePaint);
 
-    for (var bubble in bubbles) {
-      final bx = cachedBounds.left + bubble.normalizedPos.dx * cachedBounds.width;
-      final by = cachedBounds.top +
-          (bubble.normalizedPos.dy +
-                  math.sin(bubble.phase + wavePhase * bubble.speed * 10) * 0.04) *
-              cachedBounds.height;
+    // Cheerful Blushing
+    final blushPaint = Paint()
+      ..color = const Color(0xFFFF8A80).withValues(alpha: 0.65)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    canvas.drawCircle(Offset(headCenter.dx - headRadius * 0.65 - (puffAmount * 0.5), headCenter.dy + 16), 18, blushPaint);
+    canvas.drawCircle(Offset(headCenter.dx + headRadius * 0.65 + (puffAmount * 0.5), headCenter.dy + 16), 18, blushPaint);
 
-      if (by >= waterTop - 5 && by <= mouthRect.bottom) {
-        final bPaint = Paint()
-          ..color = bubble.color
-          ..style = PaintingStyle.fill;
-        canvas.drawCircle(Offset(bx, by), bubble.radius, bPaint);
+    // Mouth (Gargling with water & bubbles or smiling)
+    if (isGargling) {
+      final liquidPaint = Paint()
+        ..color = const Color(0xFF29B6F6)
+        ..style = PaintingStyle.fill;
 
-        final hPaint = Paint()
-          ..color = Colors.white.withValues(alpha: 0.8)
-          ..style = PaintingStyle.fill;
-        canvas.drawCircle(
-          Offset(bx - bubble.radius * 0.3, by - bubble.radius * 0.3),
-          bubble.radius * 0.3,
-          hPaint,
-        );
+      final Rect mouthRect = Rect.fromCenter(
+        center: Offset(headCenter.dx, headCenter.dy + headRadius * 0.42),
+        width: 48 + (puffAmount * 1.1),
+        height: 32,
+      );
+      canvas.drawOval(mouthRect, liquidPaint);
+
+      // Bubbles swirling in mouth
+      final bubblePaint = Paint()..color = Colors.white.withValues(alpha: 0.92);
+      final random = math.Random(101);
+      for (int i = 0; i < 9; i++) {
+        final double bx = headCenter.dx - 20 + (random.nextDouble() * 40);
+        final double by = headCenter.dy + headRadius * 0.36 + (random.nextDouble() * 16) + (math.sin(bubbleAnim * math.pi * 2 + i) * 3);
+        final double r = 3.0 + random.nextDouble() * 4.5;
+        canvas.drawCircle(Offset(bx, by), r, bubblePaint);
       }
+    } else {
+      final smilePaint = Paint()
+        ..color = const Color(0xFF2C3E50)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.5
+        ..strokeCap = StrokeCap.round;
+      final smilePath = Path();
+      smilePath.moveTo(headCenter.dx - 16, headCenter.dy + headRadius * 0.4);
+      smilePath.quadraticBezierTo(headCenter.dx, headCenter.dy + headRadius * 0.62, headCenter.dx + 16, headCenter.dy + headRadius * 0.4);
+      canvas.drawPath(smilePath, smilePaint);
     }
-
-    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _GarglingMouthPainter oldDelegate) {
-    return oldDelegate.gargleProgress != gargleProgress ||
-        oldDelegate.wavePhase != wavePhase ||
-        oldDelegate.isGargling != isGargling;
+  bool shouldRepaint(covariant _GarglingKidPainter oldDelegate) {
+    return oldDelegate.isGargling != isGargling ||
+        oldDelegate.puffAmount != puffAmount ||
+        oldDelegate.bubbleAnim != bubbleAnim;
   }
 }
 
-class _NaturalSpitPainter extends CustomPainter {
-  final List<_NaturalSpitDrop> drops;
-  final List<_SplashRipple> ripples;
-  final Rect cachedBounds;
+class _SpittingKidScenePainter extends CustomPainter {
+  final double spitProgress;
+  final List<_SplashDroplet> droplets;
 
-  _NaturalSpitPainter({
-    required this.drops,
-    required this.ripples,
-    required this.cachedBounds,
+  _SpittingKidScenePainter({
+    required this.spitProgress,
+    required this.droplets,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final ripplePaint = Paint()..style = PaintingStyle.stroke;
-    for (var ripple in ripples) {
-      ripplePaint.color = const Color(0xFF64B5F6).withValues(alpha: ripple.opacity * 0.6);
-      ripplePaint.strokeWidth = 2.0;
-      canvas.drawCircle(ripple.center, ripple.radius, ripplePaint);
+    final double w = size.width;
+    final double h = size.height;
 
-      ripplePaint.color = Colors.white.withValues(alpha: ripple.opacity * 0.4);
-      ripplePaint.strokeWidth = 1.0;
-      canvas.drawCircle(ripple.center, ripple.radius * 0.65, ripplePaint);
+    final Offset kidHeadCenter = Offset(w * 0.5, 95);
+    final double headRadius = 48;
+
+    final paint = Paint();
+
+    // Ears
+    paint.color = const Color(0xFFFFD2A6);
+    canvas.drawCircle(Offset(kidHeadCenter.dx - headRadius, kidHeadCenter.dy), 12, paint);
+    canvas.drawCircle(Offset(kidHeadCenter.dx + headRadius, kidHeadCenter.dy), 12, paint);
+
+    // Shirt
+    paint.color = const Color(0xFF2980B9);
+    final shirtPath = Path();
+    shirtPath.moveTo(kidHeadCenter.dx - 55, kidHeadCenter.dy + 42);
+    shirtPath.lineTo(kidHeadCenter.dx + 55, kidHeadCenter.dy + 42);
+    shirtPath.lineTo(kidHeadCenter.dx + 70, kidHeadCenter.dy + 95);
+    shirtPath.lineTo(kidHeadCenter.dx - 70, kidHeadCenter.dy + 95);
+    shirtPath.close();
+    canvas.drawPath(shirtPath, paint);
+
+    // White collar
+    paint.color = Colors.white;
+    final collar = Path();
+    collar.moveTo(kidHeadCenter.dx - 20, kidHeadCenter.dy + 42);
+    collar.lineTo(kidHeadCenter.dx, kidHeadCenter.dy + 56);
+    collar.lineTo(kidHeadCenter.dx + 20, kidHeadCenter.dy + 42);
+    collar.close();
+    canvas.drawPath(collar, paint);
+
+    // Head
+    paint.color = const Color(0xFFFFD2A6);
+    canvas.drawCircle(kidHeadCenter, headRadius, paint);
+
+    // Hair
+    paint.color = const Color(0xFF5D4037);
+    final hairPath = Path();
+    hairPath.moveTo(kidHeadCenter.dx - headRadius * 1.0, kidHeadCenter.dy - headRadius * 0.1);
+    hairPath.quadraticBezierTo(kidHeadCenter.dx - headRadius * 0.6, kidHeadCenter.dy - headRadius * 1.45, kidHeadCenter.dx, kidHeadCenter.dy - headRadius * 1.3);
+    hairPath.quadraticBezierTo(kidHeadCenter.dx + headRadius * 0.6, kidHeadCenter.dy - headRadius * 1.45, kidHeadCenter.dx + headRadius * 1.0, kidHeadCenter.dy - headRadius * 0.1);
+    hairPath.quadraticBezierTo(kidHeadCenter.dx + headRadius * 0.6, kidHeadCenter.dy - headRadius * 0.6, kidHeadCenter.dx, kidHeadCenter.dy - headRadius * 0.65);
+    hairPath.quadraticBezierTo(kidHeadCenter.dx - headRadius * 0.6, kidHeadCenter.dy - headRadius * 0.6, kidHeadCenter.dx - headRadius * 1.0, kidHeadCenter.dy - headRadius * 0.1);
+    canvas.drawPath(hairPath, paint);
+
+    final tuft1 = Path();
+    tuft1.moveTo(kidHeadCenter.dx - 22, kidHeadCenter.dy - headRadius * 0.65);
+    tuft1.quadraticBezierTo(kidHeadCenter.dx - 8, kidHeadCenter.dy - headRadius * 1.1, kidHeadCenter.dx + 8, kidHeadCenter.dy - headRadius * 0.6);
+    tuft1.close();
+    canvas.drawPath(tuft1, paint);
+
+    // Eyes
+    final eyePaint = Paint()..color = const Color(0xFF2C3E50);
+    final irisPaint = Paint()..color = const Color(0xFF16A085);
+    final reflect1 = Paint()..color = Colors.white;
+
+    final Offset leftEye = Offset(kidHeadCenter.dx - 18, kidHeadCenter.dy - 8);
+    final Offset rightEye = Offset(kidHeadCenter.dx + 18, kidHeadCenter.dy - 8);
+
+    canvas.drawCircle(leftEye, 9, eyePaint);
+    canvas.drawCircle(leftEye, 7, irisPaint);
+    canvas.drawCircle(Offset(leftEye.dx - 2.5, leftEye.dy - 2.5), 3, reflect1);
+
+    canvas.drawCircle(rightEye, 9, eyePaint);
+    canvas.drawCircle(rightEye, 7, irisPaint);
+    canvas.drawCircle(Offset(rightEye.dx - 2.5, rightEye.dy - 2.5), 3, reflect1);
+
+    // Blush
+    final blushPaint = Paint()
+      ..color = const Color(0xFFFF8A80).withValues(alpha: 0.65)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+    canvas.drawCircle(Offset(kidHeadCenter.dx - 32, kidHeadCenter.dy + 14), 14, blushPaint);
+    canvas.drawCircle(Offset(kidHeadCenter.dx + 32, kidHeadCenter.dy + 14), 14, blushPaint);
+
+    // Mouth: open spitting or happy proud smile with clean teeth
+    final Offset mouthPos = Offset(kidHeadCenter.dx, kidHeadCenter.dy + 24);
+    if (spitProgress < 0.9) {
+      final mouthPaint = Paint()..color = const Color(0xFFE74C3C);
+      canvas.drawCircle(mouthPos, 12, mouthPaint);
+    } else {
+      // Clean teeth happy smile!
+      final smilePaint = Paint()
+        ..color = const Color(0xFF2ECC71)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4.5
+        ..strokeCap = StrokeCap.round;
+      final smilePath = Path();
+      smilePath.moveTo(kidHeadCenter.dx - 18, kidHeadCenter.dy + 20);
+      smilePath.quadraticBezierTo(kidHeadCenter.dx, kidHeadCenter.dy + 36, kidHeadCenter.dx + 18, kidHeadCenter.dy + 20);
+      canvas.drawPath(smilePath, smilePaint);
+
+      // Sparkling clean white teeth
+      final teethPaint = Paint()..color = Colors.white;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(center: Offset(kidHeadCenter.dx, kidHeadCenter.dy + 24), width: 18, height: 8),
+          const Radius.circular(3),
+        ),
+        teethPaint,
+      );
     }
 
-    final dropPaint = Paint()..style = PaintingStyle.fill;
-    final highlightPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.85)
+    // Bathroom Sink
+    final Paint sinkPaint = Paint()
+      ..color = const Color(0xFFECF0F1)
       ..style = PaintingStyle.fill;
 
-    for (var drop in drops) {
-      final double alpha = (drop.life).clamp(0.0, 1.0);
-      dropPaint.color = drop.color.withValues(alpha: alpha * 0.85);
+    final Paint sinkRimPaint = Paint()
+      ..color = const Color(0xFFBDC3C7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6;
 
-      final double speed = drop.velocity.distance;
-      if (speed > 80.0 && !drop.isSplash) {
-        final double elongation = (speed / 120.0).clamp(1.2, 3.2);
-        final double angle = math.atan2(drop.velocity.dy, drop.velocity.dx);
+    final Offset sinkCenter = Offset(w * 0.5, h * 0.82);
+    final Rect sinkRect = Rect.fromCenter(center: sinkCenter, width: w * 0.68, height: 52);
+
+    canvas.drawOval(sinkRect, sinkPaint);
+    canvas.drawOval(sinkRect, sinkRimPaint);
+
+    // Sink Drain
+    final Paint drainPaint = Paint()..color = const Color(0xFF7F8C8D);
+    canvas.drawCircle(sinkCenter, 14, drainPaint);
+
+    // Parabolic fluid spray (water + toothpaste foam droplets & mist)
+    if (spitProgress > 0.05 && spitProgress < 0.95) {
+      final Offset targetSink = Offset(w * 0.5, h * 0.8);
+      final double streamLen = spitProgress.clamp(0.0, 1.0);
+      final Offset controlPoint = Offset(w * 0.62, (mouthPos.dy + targetSink.dy) / 2);
+
+      final dropPaint = Paint()..color = const Color(0xFF29B6F6).withValues(alpha: 0.90);
+      final highlightPaint = Paint()..color = Colors.white.withValues(alpha: 0.85);
+      final mistPaint = Paint()..color = const Color(0xFF81D4FA).withValues(alpha: 0.70);
+      final foamPaint = Paint()..color = Colors.white.withValues(alpha: 0.90);
+
+      // Natural parabolic spray composed of individual elongated droplets & mist
+      final int numDrops = (streamLen * 28).toInt();
+      for (int i = 0; i < numDrops; i++) {
+        final double t = i / 28.0;
+        if (t > streamLen) break;
+
+        final double omt = 1.0 - t;
+        final double bx = omt * omt * mouthPos.dx + 2 * omt * t * controlPoint.dx + t * t * targetSink.dx;
+        final double by = omt * omt * mouthPos.dy + 2 * omt * t * controlPoint.dy + t * t * targetSink.dy + (math.sin(t * math.pi) * 8.0);
+
+        final double dropR = (1.0 - t * 0.45) * 6.5 + math.sin(i * 1.5) * 1.8;
+        if (dropR <= 0.5) continue;
+
+        final double dx = 2 * omt * (controlPoint.dx - mouthPos.dx) + 2 * t * (targetSink.dx - controlPoint.dx);
+        final double dy = 2 * omt * (controlPoint.dy - mouthPos.dy) + 2 * t * (targetSink.dy - controlPoint.dy);
+        final double angle = math.atan2(dy, dx);
+
+        final bool isFoamDrop = i % 3 == 0;
 
         canvas.save();
-        canvas.translate(drop.position.dx, drop.position.dy);
+        canvas.translate(bx, by);
         canvas.rotate(angle);
-
-        final Rect ovalRect = Rect.fromCenter(
+        final Rect dropRect = Rect.fromCenter(
           center: Offset.zero,
-          width: drop.radius * 2 * elongation,
-          height: drop.radius * 1.5,
+          width: dropR * 2.2,
+          height: dropR * 1.2,
         );
-        canvas.drawOval(ovalRect, dropPaint);
-
-        canvas.drawCircle(
-          Offset(drop.radius * (elongation - 1) * 0.4, -drop.radius * 0.25),
-          drop.radius * 0.35,
-          highlightPaint,
-        );
-
+        canvas.drawOval(dropRect, isFoamDrop ? foamPaint : dropPaint);
+        canvas.drawCircle(Offset(-dropR * 0.35, -dropR * 0.2), dropR * 0.35, highlightPaint);
         canvas.restore();
-      } else {
-        canvas.drawCircle(drop.position, drop.radius, dropPaint);
-        canvas.drawCircle(
-          drop.position + Offset(-drop.radius * 0.3, -drop.radius * 0.3),
-          drop.radius * 0.3,
-          highlightPaint,
-        );
+
+        if (i % 2 == 0) {
+          final double sprayOffX = math.sin(i * 2.3) * (dropR * 1.4);
+          final double sprayOffY = math.cos(i * 1.9) * (dropR * 1.4);
+          canvas.drawCircle(Offset(bx + sprayOffX, by + sprayOffY), 1.5 + (i % 3), isFoamDrop ? foamPaint : mistPaint);
+        }
       }
+    }
+
+    // Splash droplets and foam in the sink
+    if (spitProgress > 0.25) {
+      canvas.save();
+      canvas.translate(sinkCenter.dx, sinkCenter.dy);
+      for (var droplet in droplets) {
+        final Paint dropPaint = Paint()..color = droplet.color;
+        canvas.drawCircle(Offset(droplet.x, droplet.y), droplet.radius, dropPaint);
+      }
+      canvas.restore();
     }
   }
 
   @override
-  bool shouldRepaint(covariant _NaturalSpitPainter oldDelegate) {
-    return true;
+  bool shouldRepaint(covariant _SpittingKidScenePainter oldDelegate) {
+    return oldDelegate.spitProgress != spitProgress || oldDelegate.droplets != droplets;
+  }
+}
+
+class _WavePainter extends CustomPainter {
+  final double waveAnimation;
+  final double fillLevel;
+  final Color color;
+
+  _WavePainter({
+    required this.waveAnimation,
+    required this.fillLevel,
+    this.color = const Color(0xFF29B6F6),
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (fillLevel <= 0.0) return;
+
+    final double w = size.width;
+    final double h = size.height;
+    final double targetHeight = h * fillLevel;
+
+    final Paint wavePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+    path.moveTo(0, h);
+    path.lineTo(0, h - targetHeight);
+    for (double i = 0; i <= w; i += 10) {
+      final double y = h - targetHeight + math.cos((i / w * 2 * math.pi) - (waveAnimation * 2 * math.pi)) * 12;
+      path.lineTo(i, y);
+    }
+    path.lineTo(w, h);
+    path.close();
+    canvas.drawPath(path, wavePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WavePainter oldDelegate) {
+    return oldDelegate.waveAnimation != waveAnimation ||
+        oldDelegate.fillLevel != fillLevel ||
+        oldDelegate.color != color;
   }
 }
 
